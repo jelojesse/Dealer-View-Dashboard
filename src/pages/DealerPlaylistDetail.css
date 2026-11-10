@@ -103,16 +103,7 @@
 .pg-playlist-detail .pd-tile__name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:20px}
 .pg-playlist-detail .pd-num{margin-right:5px}
 .pg-playlist-detail .pd-dur{flex:none;font-size:10px;line-height:12px}
-/* sidebar */
-.pg-playlist-detail .pd-side{display:flex;flex-direction:column;gap:20px;padding:20px}
 .pg-playlist-detail .pd-upload{width:100%;justify-content:center;text-decoration:none}
-.pg-playlist-detail .ml-row{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:0 6px;border:0;border-radius:var(--radius-sm);background:transparent;text-align:left;font-family:inherit;font-size:14px;line-height:20px;color:var(--fg-primary);cursor:pointer}
-.pg-playlist-detail .ml-row .ntv-icon{color:var(--fg-secondary);flex:none}
-.pg-playlist-detail .ml-row:hover{background:var(--primary-050)}
-.pg-playlist-detail .pd-folders{display:flex;align-items:center;gap:4px;font-size:14px;line-height:20px;color:var(--fg-primary)}
-.pg-playlist-detail .pd-n{font-size:12px;line-height:16px;color:var(--fg-secondary)}
-.pg-playlist-detail .pd-sidefoot{display:flex;justify-content:space-between;margin-top:auto;padding-top:10px;font-size:10px;line-height:15px;color:var(--fg-secondary)}
-.pg-playlist-detail .pd-sidefoot strong{color:var(--fg-primary)}
 /* content grid: 8 equal columns, 10px gaps between contents; every row is one tile tall (image 173.75x95.68 ratio + 40px caption).
    cqw = inner width of the content card; (100cqw - 7 gaps of 10px) / 8 columns = one tile width */
 .pg-playlist-detail .pd-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-auto-rows:calc((100cqw - 70px) / 8 * 95.68 / 173.75 + 40px);gap:10px}
@@ -158,3 +149,35 @@
 .pg-playlist-detail .pd-swap__img{position:relative;display:block;aspect-ratio:16/9;padding:8px;box-sizing:border-box}
 .pg-playlist-detail .pd-swap__img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .pg-playlist-detail .pd-swap__name{padding:8px 10px;background:var(--bg-app);font-size:12px;line-height:16px;font-weight:600;color:var(--fg-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Right container — Figma "Media Content List Container" (node 5596:36270): Default / Open Folder / My Contents / Floating Contents */
+.pg-playlist-detail .pd-side{display:flex;flex-direction:column;gap:20px;height:790px;padding:20px;box-sizing:border-box;overflow:hidden}
+.pg-playlist-detail .pd-sec{display:flex;flex-direction:column;gap:10px;flex:1 1 0;min-height:0}
+.pg-playlist-detail .pd-sec__list{display:flex;flex-direction:column;gap:10px;min-height:0}
+.pg-playlist-detail .pd-sec .pd-sec__list{flex:1 1 0;overflow-y:auto;overflow-x:hidden}
+.pg-playlist-detail .pd-sec__list--media{gap:4px}
+.pg-playlist-detail .ml-row{display:flex;align-items:center;gap:10px;width:100%;height:40px;flex:none;padding:10px 16px;box-sizing:border-box;border:0;border-radius:var(--radius-lg);background:var(--bg-surface);text-align:left;font:500 14px/20px var(--font-sans);color:var(--fg-primary);cursor:pointer}
+.pg-playlist-detail .ml-row .ntv-icon{color:var(--fg-secondary);flex:none}
+.pg-playlist-detail .ml-row:hover{background:var(--primary-050)}
+.pg-playlist-detail .pd-folders{display:flex;align-items:center;gap:4px;font:500 14px/20px var(--font-sans);color:var(--fg-primary)}
+.pg-playlist-detail .pd-n{font-size:12px;line-height:20px;font-weight:400;color:var(--fg-secondary)}
+.pg-playlist-detail .pd-sec__head{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:32px}
+.pg-playlist-detail .pd-back{display:flex;align-items:center;gap:8px;min-width:0;padding:0;border:0;background:none;font:500 14px/20px var(--font-sans);color:var(--fg-primary);cursor:pointer;text-align:left}
+.pg-playlist-detail .pd-back .ntv-icon{color:var(--fg-secondary);flex:none}
+.pg-playlist-detail .pd-back__fab{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;flex:none;box-sizing:border-box;border:1px solid var(--fg-secondary);border-radius:var(--radius-sm);background:var(--bg-surface)}
+.pg-playlist-detail .pd-back:hover .pd-back__fab{border-color:var(--accent-action)}
+.pg-playlist-detail .pd-back:hover .pd-back__fab .ntv-icon{color:var(--accent-action)}
+.pg-playlist-detail .pd-sec__name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-playlist-detail .pd-sec__n{color:var(--fg-secondary);font-weight:500}
+.pg-playlist-detail .pd-media{display:flex;align-items:center;gap:10px;width:100%;height:64px;flex:none;padding:10px 16px;box-sizing:border-box;border:0;border-radius:var(--radius-lg);background:var(--bg-surface);text-align:left;font-family:inherit;cursor:pointer}
+.pg-playlist-detail .pd-media:hover{background:var(--primary-050)}
+.pg-playlist-detail .pd-media__thumb{position:relative;width:66px;height:100%;flex:none;overflow:hidden;border-radius:var(--radius-sm);background:var(--primary-100)}
+.pg-playlist-detail .pd-media__thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pg-playlist-detail .pd-media__info{display:flex;flex-direction:column;align-items:flex-start;gap:4px;flex:1;min-width:0}
+.pg-playlist-detail .pd-media__name{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:500 14px/20px var(--font-sans);color:var(--fg-primary)}
+.pg-playlist-detail .pd-media__act{display:inline-flex;flex:none;color:var(--fg-secondary);opacity:0}
+.pg-playlist-detail .pd-media:hover .pd-media__act{opacity:1;color:var(--accent-action)}
+.pg-playlist-detail .pd-media.is-in .pd-media__act{opacity:1;color:var(--success-main)}
+.pg-playlist-detail .pd-sidefoot{display:flex;align-items:center;justify-content:space-between;flex:none;font-size:10px;line-height:12px;color:var(--fg-secondary)}
+.pg-playlist-detail .pd-sidefoot strong{font-weight:700}
+.pg-playlist-detail .pd-sidefoot button{padding:0;border:0;background:none;font:700 10px/12px var(--font-sans);color:var(--fg-primary);cursor:pointer}
+.pg-playlist-detail .pd-upload{width:100%;flex:none;justify-content:center;text-decoration:none}

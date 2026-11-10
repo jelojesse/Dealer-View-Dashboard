@@ -43,11 +43,11 @@ class Component extends DCLogic {
     var items = p.items.map(function (id, i) { var m = byId(D.media, id); var blk = !!(p.block && i === 0); var sc = (p.schedules || {})[id];
       return m ? { key: 'k' + i, blk: blk, m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: !sc, start: sc ? sc[0] : '', end: sc ? sc[1] : '',
         members: blk ? (p.blockMembers || []).map(function (mid) { return byId(D.media, mid); }).filter(Boolean) : null } : null; }).filter(Boolean);
-    this.state = { view: 'grid', kinds: [], q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', target: '', mvPos: '1', swQ: '', libQ: '', push: false, ad: null, md: null, info: null, toast: null };
+    this.state = { view: 'grid', kinds: [], q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', target: '', mvPos: '1', swQ: '', libQ: '', libLimit: 10, push: false, ad: null, md: null, info: null, toast: null };
   }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
-    var self = this, s = this.state, p = s.p, itemVMs = [];
+    var self = this, s = this.state, p = s.p, itemVMs = [], libAll = [];
     var secs = function (d) { return parseInt(d, 10) || 15; };
     var loop = s.items.reduce(function (a, it) { return a + secs(it.dur); }, 0);
     var selKeys = Object.keys(s.sel).filter(function (k) { return s.sel[k]; });
@@ -85,12 +85,14 @@ class Component extends DCLogic {
       markLabel: s.items.length > 0 && selKeys.length === s.items.length ? 'Unmark All' : 'Mark All',
       bulkModify: function () { var k = selKeys[0], it = self.state.items.filter(function (x) { return x.key === k; })[0]; if (it) self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, start: it.start || '2026-11-15', end: it.end || '2026-12-31', bulk: selKeys } }); },
       isGrid: s.view === 'grid', isList: s.view === 'list', toGrid: function () { self.setState({ view: 'grid' }); }, toList: function () { self.setState({ view: 'list' }); },
-      libQ: s.libQ, setLibQ: function (v) { self.setState({ libQ: val(v), folder: val(v) ? '__search' : '' }); },
+      libQ: s.libQ, setLibQ: function (v) { self.setState({ libQ: val(v), folder: val(v) ? '__search' : '', libLimit: 10 }); },
       inFolder: !!s.folder, notInFolder: !s.folder,
-      folderName: s.folder === '__search' ? 'Search results' : (s.folder === '__assigned' ? 'Assigned to Dealer' : (s.folder === '__floating' ? 'Floating Contents' : s.folder)),
-      backFolders: function () { self.setState({ folder: '', libQ: '' }); },
-      openAssigned: function () { self.setState({ folder: '__assigned' }); }, openFloating: function () { self.setState({ folder: '__floating' }); },
-      folders: ['Food Assets', 'Promo Videos', 'Brand Logos', 'Seasonal', 'Menus'].map(function (f) { return { name: f, n: D.media.filter(function (m) { return m.folder === f; }).length, open: function () { self.setState({ folder: f }); } }; }),
+      folderName: s.folder === '__search' ? 'Search results' : (s.folder === '__assigned' ? 'My Contents' : (s.folder === '__floating' ? 'Floating Contents' : s.folder)),
+      folderIcon: s.folder === '__assigned' ? 'users' : (s.folder === '__floating' ? 'ghost' : (s.folder === '__search' ? 'magnifying-glass' : '')),
+      isRealFolder: !!s.folder && s.folder.indexOf('__') !== 0,
+      backFolders: function () { self.setState({ folder: '', libQ: '', libLimit: 10 }); },
+      openAssigned: function () { self.setState({ folder: '__assigned', libLimit: 10 }); }, openFloating: function () { self.setState({ folder: '__floating', libLimit: 10 }); },
+      folders: ['Food Assets', 'Promo Videos', 'Brand Logos', 'Seasonal', 'Menus'].map(function (f) { return { name: f, n: D.media.filter(function (m) { return m.folder === f; }).length, open: function () { self.setState({ folder: f, libLimit: 10 }); } }; }),
       folderCount: 5, folderShown: 5,
       hostGroups: (function () { var g = {}; scs.forEach(function (sc) { if (!contains(sc.name + ' ' + hostName(sc.host), s.scQ)) return; (g[sc.host] = g[sc.host] || []).push(sc); }); return Object.keys(g).map(function (hid) { var open = s.openHost === hid || (!s.openHost && hid === Object.keys(g)[0]); return { name: hostName(hid), count: g[hid].length, open: open, icon: open ? 'angle-up' : 'angle-down', toggle: function () { self.setState({ openHost: open ? '-' : hid }); },
         screens: g[hid].map(function (sc) { var z = Object.keys(sc.zones).filter(function (k) { return sc.zones[k] === p.name; }); return { name: sc.name, template: sc.template, zone: z.join(', ') || '—', bg: s.pvScreen === sc.id ? 'var(--accent-30)' : 'transparent', pick: function () { self.setState({ pvScreen: sc.id }); } }; }) }; }); })(),
@@ -154,8 +156,10 @@ class Component extends DCLogic {
       empty: s.items.length === 0,
       screens: scs.map(function (sc, i) { var z = Object.keys(sc.zones).filter(function (k) { return sc.zones[k] === p.name; }); return { n: i + 1, name: sc.name, host: hostName(sc.host), zone: z.join(', ') || '—', template: sc.template, lic: sc.lic.length, open: navFn('DealerScreenDetail.dc.html', { id: sc.id }) }; }),
       noScreens: scs.length === 0,
-      libQ: s.libQ, setLibQ: function (v) { self.setState({ libQ: val(v) }); },
-      lib: D.media.filter(function (m, i) { if (s.folder === '__search') return contains(m.title, s.libQ); if (s.folder === '__assigned') return !!m.adv; if (s.folder === '__floating') return !m.used; return m.folder === s.folder; }).map(function (m) { var has = !!inPl[m.id], B = { image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'] }[m.kind] || ['IMAGE', 'var(--info-main)']; return { badge: B[0], badgeColor: B[1], image: m.image, title: m.title, kind: m.kind, dur: m.duration || '15 sec', icon: has ? 'check' : 'plus', add: function () { if (has) { toast(self, m.title + ' is already in this playlist', 'info'); return; } addItems([m]); toast(self, m.title + ' added'); } }; }),
+      lib: (libAll = D.media.filter(function (m, i) { if (s.folder === '__search') return contains(m.title, s.libQ); if (s.folder === '__assigned') return !!m.adv; if (s.folder === '__floating') return !m.used; return m.folder === s.folder; }).map(function (m) { var has = !!inPl[m.id], B = { image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'] }[m.kind] || ['IMAGE', 'var(--info-main)']; var pl = PILL[m.kind] || PILL.image; return { badge: B[0], badgeColor: B[1], pillBg: pl[0], pillFg: pl[1], has: has, image: m.image, title: m.title, kind: m.kind, dur: m.duration || '15 sec', icon: has ? 'check' : 'plus', media: m, add: function () { if (has) { toast(self, m.title + ' is already in this playlist', 'info'); return; } addItems([m]); toast(self, m.title + ' added'); } }; })).slice(0, s.libLimit),
+      libTotal: libAll.length, libShown: Math.min(s.libLimit, libAll.length), libMore: libAll.length > s.libLimit,
+      moreLib: function () { self.setState({ libLimit: self.state.libLimit + 10 }); },
+      addAll: function () { var fresh = libAll.filter(function (x) { return !x.has; }); if (!fresh.length) { toast(self, 'Everything in this folder is already in the playlist', 'info'); return; } addItems(fresh.map(function (x) { return x.media; })); toast(self, fresh.length + ' item(s) added'); },
       pushOpen: s.push,
       pushTargets: (function () { var t = []; scs.forEach(function (sc) { sc.lic.forEach(function (lid) { var l = byId(D.licenses, lid); if (l) t.push({ alias: l.alias, willFail: l.status !== 'online' }); }); }); return t; })(),
       openPush: function () { self.setState({ push: true }); }, closePush: function () { self.setState({ push: false }); }, pushDone: function () {},
@@ -372,52 +376,67 @@ defineTemplate(Component, (v) => (
               <aside className="dv-card pd-side">
                 <NTV.Input size="l" placeholder="Search Content or Folder" iconLeft="magnifying-glass" label="Search content or folder" value={v.libQ} onChange={v.setLibQ} />
                 <a href="DealerMedia.dc.html" className="ntv-btn ntv-btn--secondary ntv-btn--default ntv-btn--xl pd-upload">
-                  <NTV.Icon name="arrow-up-from-bracket" size={v.i14} />
+                  <NTV.Icon name="upload" size={v.i14} />
                   <span>Upload Content</span>
                 </a>
                 {v.inFolder ? (
-                  <>
-                    <button type="button" className="dv-a" onClick={v.backFolders} style={{ alignSelf: "flex-start", fontSize: "12px" }}>‹ Folders</button>
-                    <strong style={{ fontSize: "13px" }}>{v.folderName}</strong>
-                    {(v.lib || []).map((_m, $index) => (
-                    <React.Fragment key={$index}>
-                      <div className="pd-lib">
-                        <span className="dv-thumb" style={{ width: "64px", height: "36px" }}><img src={_m?.image} alt="" /></span>
-                        <span style={{ minWidth: "0" }}>
-                          <strong style={{ display: "block", fontSize: "12px", lineHeight: "18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{_m?.title}</strong>
-                          <span className="dv-sub" style={{ fontSize: "10px", color: `${s(_m?.badgeColor)}` }}>{_m?.badge}</span>
-                        </span>
-                        <button type="button" className="dv-ib" aria-label="Add to playlist" onClick={_m?.add}><NTV.Icon name={_m?.icon} size={v.i12} /></button>
-                      </div>
-                    </React.Fragment>
-                  ))}
-                  </>
+                  <div className="pd-sec">
+                    <div className="pd-sec__head">
+                      <button type="button" className="pd-back" onClick={v.backFolders}>
+                        <span className="pd-back__fab" aria-hidden="true"><span style={{ display: "inline-flex", transform: "rotate(180deg)" }}><NTV.Icon name="angle-right" size={10} /></span></span>
+                        {v.folderIcon ? <NTV.Icon name={v.folderIcon} size={20} /> : null}
+                        <span className="pd-sec__name">{v.folderName}</span>
+                        <span className="pd-sec__n">({v.libTotal})</span>
+                      </button>
+                      {v.isRealFolder ? <NTV.Button variant="primary" tone="active" size="m" iconRight="plus" onClick={v.addAll}>Add all</NTV.Button> : null}
+                    </div>
+                    <div className="pd-sec__list pd-sec__list--media">
+                      {(v.lib || []).map((_m, $index) => (
+                        <button key={$index} type="button" className={`pd-media ${_m?.has ? "is-in" : ""}`} onClick={_m?.add} title={_m?.has ? "Already in this playlist" : "Add to playlist"}>
+                          <span className="pd-media__thumb"><img src={_m?.image} alt="" /></span>
+                          <span className="pd-media__info">
+                            <span className="pd-media__name">{_m?.title}</span>
+                            <span className="pd-pill" style={{ background: _m?.pillBg, color: _m?.pillFg }}>{_m?.badge}</span>
+                          </span>
+                          <span className="pd-media__act"><NTV.Icon name={_m?.icon} size={v.i12} /></span>
+                        </button>
+                      ))}
+                      {(v.lib || []).length === 0 ? <span className="pd-n" style={{ padding: "10px 16px" }}>No content found.</span> : null}
+                    </div>
+                    {v.isRealFolder ? null : (
+                      <div className="pd-sidefoot"><span>Showing <strong>{v.libShown}</strong> of {v.libTotal} items</span>{v.libMore ? <button type="button" onClick={v.moreLib}>Show More...</button> : null}</div>
+                    )}
+                  </div>
                 ) : null}
                 {v.notInFolder ? (
                   <>
-                    <button type="button" className="ml-row" onClick={v.openAssigned}>
-                    <NTV.Icon name="users" size={20} />
-                    Assigned to Dealer
-                  </button>
-                    <button type="button" className="ml-row" onClick={v.openFloating}>
-                    <NTV.Icon name="ghost" size={20} />
-                    Floating Contents
-                  </button>
-                    <span className="pd-folders">
-                    <NTV.Icon name="angle-down" size={v.i14} />
-                    {"Folders "}
-                    <span className="pd-n">({v.folderCount})</span>
-                  </span>
-                    {(v.folders || []).map((_f, $index) => (
-                    <React.Fragment key={$index}>
-                      <button type="button" className="ml-row" onClick={_f?.open} style={{ paddingLeft: "14px" }}>
-                        <NTV.Icon name="folder" size={20} />
-                        {_f?.name}
-                        <span className="pd-n">({_f?.n})</span>
+                    <div className="pd-sec__list">
+                      <button type="button" className="ml-row" onClick={v.openAssigned}>
+                        <NTV.Icon name="users" size={20} />
+                        My Contents
                       </button>
-                    </React.Fragment>
-                  ))}
-                    <div className="pd-sidefoot"><span>Showing <strong>{v.folderShown}</strong> of {v.folderCount} folders</span></div>
+                      <button type="button" className="ml-row" onClick={v.openFloating}>
+                        <NTV.Icon name="ghost" size={20} />
+                        Floating Contents
+                      </button>
+                    </div>
+                    <div className="pd-sec">
+                      <span className="pd-folders">
+                        <NTV.Icon name="angle-down" size={v.i14} />
+                        Folders
+                        <span className="pd-sec__n">({v.folderCount})</span>
+                      </span>
+                      <div className="pd-sec__list">
+                        {(v.folders || []).map((_f, $index) => (
+                          <button key={$index} type="button" className="ml-row" onClick={_f?.open}>
+                            <NTV.Icon name="folder" size={20} />
+                            {_f?.name}
+                            <span className="pd-n">({_f?.n})</span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="pd-sidefoot"><span>Showing <strong>{v.folderShown}</strong> of {v.folderCount} folders</span></div>
+                    </div>
                   </>
                 ) : null}
               </aside>
