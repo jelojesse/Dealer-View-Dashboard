@@ -17,6 +17,7 @@ import './DealerHosts.css';
 /* ============================== Logic ============================== */
 
 var HCOL = { Active: 'var(--success-main)', Inactive: 'var(--danger-main)' };
+var PAGE = 10; // rows shown at first and added by "Show More..."
 var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 var TZ_BY_STATE = { AK: 'US/Alaska', HI: 'US/Hawaii', AZ: 'US/Arizona',
   CA: 'US/Pacific', WA: 'US/Pacific', OR: 'US/Pacific', NV: 'US/Pacific',
@@ -25,7 +26,7 @@ var TZ_BY_STATE = { AK: 'US/Alaska', HI: 'US/Hawaii', AZ: 'US/Arizona',
 var tzFor = function (st) { return TZ_BY_STATE[st] || 'US/Eastern'; };
 var SERIES = { '2026': [12, 15, 18, 21, 25, 27, 30, 32, 35, 38, 41, 43], '2025': [2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] };
 class Component extends DCLogic {
-  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', status: f.status || '', analytics: !!props.analytics, limit: 20, blocked: null, month: '', year: '2026', graph: 'Line Graph', hover: -1, filterOpen: false, toast: null }; }
+  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', status: f.status || '', analytics: !!props.analytics, limit: PAGE, blocked: null, month: '', year: '2026', graph: 'Line Graph', hover: -1, filterOpen: false, toast: null }; }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
     var self = this, s = this.state;
@@ -58,16 +59,16 @@ class Component extends DCLogic {
       top: top.map(function (h, i) { return { n: i + 1, name: h.name, lic: h.lic.length, open: navFn('DealerHostDetail.dc.html', { id: h.id }) }; }),
       legend: [{ label: 'Active', color: HCOL.Active }, { label: 'Inactive', color: HCOL.Inactive }],
       statusOptions: ['All Status', 'Active', 'Inactive'], statusValue: s.status || 'All Status',
-      setStatus: function (v) { var x = val(v); self.setState({ status: x === 'All Status' ? '' : x, limit: 20 }); },
+      setStatus: function (v) { var x = val(v); self.setState({ status: x === 'All Status' ? '' : x, limit: PAGE }); },
       filterOpen: s.filterOpen, filterLabel: s.status ? 'Filter by: ' + s.status : 'Filter by',
       toggleFilter: function () { self.setState({ filterOpen: !self.state.filterOpen }); },
       closeFilter: function () { self.setState({ filterOpen: false }); },
       filterItems: ['All Status', 'Active', 'Inactive'].map(function (o) {
         var on = (o === 'All Status' ? '' : o) === s.status;
         return { label: o, on: on, dot: o === 'All Status' ? null : HCOL[o],
-          pick: function () { self.setState({ status: o === 'All Status' ? '' : o, limit: 20, filterOpen: false }); } };
+          pick: function () { self.setState({ status: o === 'All Status' ? '' : o, limit: PAGE, filterOpen: false }); } };
       }),
-      query: s.query, setQuery: function (v) { self.setState({ query: val(v), limit: 20 }); },
+      query: s.query, setQuery: function (v) { self.setState({ query: val(v), limit: PAGE }); },
       rows: vis.map(function (h, i) {
         return { n: i + 1, name: h.name, photo: h.photo, category: h.category, address: h.address, city: h.city, state: h.state, zip: h.zip, tz: tzFor(h.state), lic: h.lic.length, status: h.status, color: HCOL[h.status] || HCOL.Active, created: h.created,
           open: navFn('DealerHostDetail.dc.html', { id: h.id }),
@@ -76,7 +77,7 @@ class Component extends DCLogic {
           remove: function () { self.setState({ blocked: h }); } };
       }),
       empty: vis.length === 0, shown: vis.length, matched: matches.length, hasMore: matches.length > vis.length,
-      more: function () { self.setState({ limit: self.state.limit + 20 }); },
+      more: function () { self.setState({ limit: self.state.limit + PAGE }); },
       blocked: { open: !!s.blocked, name: s.blocked ? s.blocked.name : '', n: s.blocked ? s.blocked.lic.length : 0, go: navFn('DealerHostDetail.dc.html', { id: s.blocked && s.blocked.id }) },
       closeBlocked: function () { self.setState({ blocked: null }); },
       exportIt: function () { toast(self, 'Exporting ' + matches.length + ' hosts to Excel…', 'info'); },
