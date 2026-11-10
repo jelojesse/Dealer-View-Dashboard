@@ -115,7 +115,7 @@ defineTemplate(Component, (v) => (
             <div style={{ width: "220px", flex: "none" }}>
               <NTV.Select size="l" placeholder="Filter by status" options={v.statusOptions} value={v.statusValue} onChange={v.setStatus} />
             </div>
-            <div className="dv-row" style={{ gap: "16px" }}>
+            <div className="dv-row" style={{ gap: "12px" }}>
               <NTV.Input size="l" placeholder="Search Playlist Name" iconLeft="magnifying-glass" label="Search playlists" value={v.query} onChange={v.setQuery} style={{ width: "420px" }} />
               <NTV.Button variant="secondary" size="xl" iconRight="file-excel" onClick={v.exportIt}>Export</NTV.Button>
             </div>

@@ -14,4 +14,4 @@
 .drp__foot{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:16px;padding-top:16px;border-top:1px solid var(--container-border)}
 .drp__sum{display:flex;gap:16px;font:400 12px/20px var(--font-sans);color:var(--fg-secondary)}
 .drp__sum b{color:var(--fg-primary);font-weight:700}
-.drp__btns{display:flex;gap:10px}
+.drp__btns{display:flex;gap:12px}

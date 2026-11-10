@@ -297,7 +297,7 @@ defineTemplate(Component, (v) => (
                   <h2 id="lic-title" className="dv-h2" style={{ color: `${s(v.licTitleColor)}` }}>License List</h2>
                   <p className="dv-sub">{v.playingText}</p>
                 </div>
-                <div style={{ display: "flex", gap: "10px" }}>
+                <div style={{ display: "flex", gap: "12px" }}>
                   <NTV.Button variant="primary" tone={v.licTone} size="xl" iconRight="minus" disabled={v.cannotUnassign} onClick={v.openUnassign}>Unassign Licenses</NTV.Button>
                   <NTV.Button variant="primary" tone={v.licTone} size="xl" iconRight="plus" disabled={v.demo} onClick={v.openAssign}>Assign Licenses</NTV.Button>
                 </div>

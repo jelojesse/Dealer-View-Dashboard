@@ -136,7 +136,7 @@ defineTemplate(Component, (v) => (
                 </>
               ) : null}
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "16px" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "12px" }}>
               <NTV.Input size="l" placeholder="Search Screen Name, Host or Tags" iconLeft="magnifying-glass" label="Search screens" value={v.query} onChange={v.setQuery} style={{ width: "460px", maxWidth: "100%" }} />
               <NTV.Button variant="primary" size="xl" iconRight="trash" disabled={v.noneSelected} onClick={v.askBulk}>Bulk Delete</NTV.Button>
               <NTV.Button variant="secondary" size="xl" iconRight="file-excel" onClick={v.exportIt}>Export</NTV.Button>

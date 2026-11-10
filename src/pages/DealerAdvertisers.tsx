@@ -98,7 +98,7 @@ defineTemplate(Component, (v) => (
           </section>
           <div className="dv-between">
             <FilterBy groups={v.filterGroups} value={v.filters} onChange={v.setFilters} />
-            <div className="dv-row" style={{ flexWrap: "wrap", gap: "16px" }}>
+            <div className="dv-row" style={{ flexWrap: "wrap", gap: "12px" }}>
               <NTV.Input size="l" placeholder="Search Advertiser Name, Category, Region or State" iconLeft="magnifying-glass" iconRight="sparkles" label="Search advertisers" value={v.query} onChange={v.setQuery} style={{ width: "460px", maxWidth: "100%" }} />
               <NTV.Button variant="secondary" size="xl" iconRight="file-excel" onClick={v.exportIt}>Export</NTV.Button>
             </div>
