@@ -1,0 +1,3 @@
+/* Styles for ZoneListItem (from the design).  */
+.zone-item__head:hover{background:var(--bg-app)}
+.zone-item__opt:hover{background:var(--primary-050);color:var(--fg-primary)}

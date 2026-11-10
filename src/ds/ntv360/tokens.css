@@ -1,0 +1,61 @@
+/* NTV360 tokens as CSS custom properties, generated from tokens.json in the NTV360 design system.
+   components/bundle.css reads these names. */
+:root {
+  --font-sans: "Nunito", "Segoe UI", system-ui, sans-serif;
+
+  --primary-main: #091635; --primary-30: #fafafa; --primary-050: #f3f3f5; --primary-100: #e6e7ea;
+  --primary-200: #d8dadf; --primary-300: #c9ccd2; --primary-400: #9ba0ac; --primary-500: #777f90;
+  --primary-600: #586176; --primary-700: #3b455e; --primary-800: #1a2643; --primary-900: #0b1837; --primary-950: #060f24;
+  --white: #ffffff; --black: #000000;
+
+  --accent-main: #d10334; --accent-30: #fff2e8; --accent-50: #ffebdc; --accent-100: #ffe3cd; --accent-200: #ffd3b0;
+  --accent-300: #ffc28d; --accent-400: #fd7902; --accent-500: #ee2913; --accent-600: #cb0333;
+
+  --danger-main: #e73535; --danger-030: #fef8f8; --danger-050: #fdf1f1; --danger-100: #fbe1e1; --danger-200: #f9d0d0;
+  --danger-300: #f7bdbd; --danger-500: #e83e3e; --danger-600: #b82a2a;
+  --success-main: #3adb30; --success-050: #e3fae1; --success-400: #31b828; --success-600: #1e7019;
+  --info-main: #095af3; --info-030: #f6f9fe; --info-050: #eef4fe; --info-100: #dce8fd; --info-400: #709ff8; --info-600: #0854e3; --info-800: #03235d;
+  --warning-main: #ffa500; --warning-050: #fff2db; --warning-300: #ffc150; --warning-500: #af7100; --warning-600: #875700;
+  --teal-main: #26a69a; --teal-050: #e9f6f5; --teal-400: #3fb0a6; --teal-600: #196d65;
+  --purple-main: #3926a6; --purple-050: #f4f3fa; --purple-600: #6152b8;
+  --red-orange-main: #ff5900; --red-orange-050: #fff1e9; --red-orange-600: #ac3c00;
+  --hot-pink-main: #8e0064; --hot-pink-050: #f9f1f7; --hot-pink-600: #a53383;
+
+  --chart-1: #095af3; --chart-2: #c99eef; --chart-3: #32e080; --chart-4: #f6284e; --chart-5: #ffae00; --chart-6: #ffbf88;
+  --status-online: #3adb30; --status-pending: #ff9d00; --status-offline: #f23a55; --status-inactive: #646c80; --status-unassigned: #9ba0ac;
+
+  --fg-primary: var(--primary-main); --fg-secondary: var(--primary-600); --fg-disabled: #5b6478; --fg-faint: var(--primary-400);
+  --fg-toggle-view: var(--accent-main);
+  --bg-app: var(--primary-30); --bg-surface: var(--white); --bg-disabled: #e5e7eb; --bg-active: var(--primary-main);
+  --bg-filter-option: var(--accent-50); --bg-toggle-view: var(--accent-30); --bg-toggle-view-fab: var(--primary-main);
+  --container-border: #e5e7eb; --container-mid-surface: #ffffff;
+  --state-lock: #f3f4f6; --state-outline: var(--primary-400);
+  --list-bg: var(--white); --list-border: var(--primary-050);
+  --accent-action: #d10334;
+
+  --rem-half: 2px; --rem-1: 4px; --rem-1-half: 6px; --rem-2: 8px; --rem-2-half: 10px; --rem-3: 12px; --rem-4: 16px;
+  --rem-5: 20px; --rem-6: 24px; --rem-8: 32px; --rem-10: 40px; --rem-12: 48px; --rem-16: 64px;
+  --global-padding: 20px; --global-gap: 20px; --card-padding: 20px; --card-gap: 16px; --card-text-gap: 4px;
+  --table-padding: 20px; --table-cell-padding-x: 16px; --table-gap: 16px; --modal-padding: 20px; --modal-gap: 20px;
+  --related-item-gap: 8px; --component-stack-gap: 16px; --group-separation-gap: 24px; --section-spacing: 32px;
+
+  --radius-xs: 2px; --radius-sm: 4px; --radius-md: 6px; --radius-lg: 10px; --radius-full: 9999px;
+
+  --shadow-card: 2px 2px 32px 0 #d0d2da40; --shadow-soft: 0 0 10px 0 #0000000d;
+  --shadow-raised: 0 6px 10px 0 #0000000d; --shadow-focus: 0 0 10px 0 #d10334;
+
+  --gradient-button: linear-gradient(90deg, #c41e5c -20%, #e8342a 78%, #ff6b00 144%);
+  --gradient-button-hover: linear-gradient(40deg, #a00558 0%, #ef060f 50%, #d10334 100%);
+  --gradient-brand: linear-gradient(135deg, #ff8500 15%, #f4310c 53%, #d10334 85%);
+}
+
+[data-theme="dark"], .ntv-dark {
+  --fg-primary: var(--white); --fg-secondary: var(--primary-400); --fg-disabled: #9ca3af; --fg-faint: var(--primary-300);
+  --fg-toggle-view: var(--primary-600);
+  --bg-app: #0b0f1a; --bg-surface: #131a2b; --bg-disabled: #252c3d; --bg-active: var(--primary-800);
+  --bg-filter-option: #0b0f1a; --bg-toggle-view: var(--primary-800); --bg-toggle-view-fab: #ff6a3d;
+  --container-border: var(--primary-700); --container-mid-surface: #1a2643;
+  --state-lock: #252c3d; --state-outline: var(--primary-600);
+  --list-bg: #223052; --list-border: var(--primary-700);
+  --accent-action: #ff6a3d;
+}

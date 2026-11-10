@@ -1,0 +1,4 @@
+/* Styles for ScreenPreview (from the design).  */
+.sp-zone{outline:none}
+.sp-zone:hover{box-shadow:inset 0 0 0 2px var(--accent-300)}
+.sp-zone:focus-visible{box-shadow:inset 0 0 0 2px var(--accent-action)}
