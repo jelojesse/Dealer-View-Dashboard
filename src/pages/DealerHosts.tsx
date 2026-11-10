@@ -18,9 +18,14 @@ import './DealerHosts.css';
 
 var HCOL = { Active: 'var(--success-main)', Inactive: 'var(--danger-main)' };
 var LIC_RANGES = [
-  { key: '0-5', label: '0-5 Licenses', min: 0, max: 5 },
-  { key: '6-10', label: '6-10 Licenses', min: 6, max: 10 },
-  { key: '11+', label: '11 and Above Licenses', min: 11, max: Infinity }
+  { key: '0-5', label: '0-5 Licenses', chip: '0-5', min: 0, max: 5 },
+  { key: '6-10', label: '6-10 Licenses', chip: '6-10', min: 6, max: 10 },
+  { key: '11+', label: '11 and Above Licenses', chip: '11 and Above', min: 11, max: Infinity }
+];
+// Filter by groups. tone = chip color for that parent filter (see NTV.FilterChip)
+var FILTER_GROUPS = [
+  { title: 'Status', field: 'statuses', tone: 'info', options: [{ key: 'Active', label: 'Active' }, { key: 'Inactive', label: 'Inactive' }] },
+  { title: 'Licenses', field: 'licRanges', tone: 'red-orange', options: LIC_RANGES }
 ];
 var PAGE = 10; // rows shown at first and added by "Show More..."
 var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -69,16 +74,21 @@ class Component extends DCLogic {
       legend: [{ label: 'Active', color: HCOL.Active }, { label: 'Inactive', color: HCOL.Inactive }],
       filterLabel: (s.statuses.length + s.licRanges.length) ? 'Filter by (' + (s.statuses.length + s.licRanges.length) + ')' : 'Filter by',
       // Groups for NTV.FilterDropdown: collapsible sections of checkboxes (collapsed by default, applied immediately)
-      filterGroups: [
-        { title: 'Status', field: 'statuses', options: [{ key: 'Active', label: 'Active' }, { key: 'Inactive', label: 'Inactive' }] },
-        { title: 'Licenses', field: 'licRanges', options: LIC_RANGES }
-      ].map(function (g) {
+      filterGroups: FILTER_GROUPS.map(function (g) {
         return { title: g.title, options: g.options.map(function (o) {
           return { label: o.label, checked: s[g.field].indexOf(o.key) !== -1, onChange: function (on) {
             var cur = self.state[g.field], nx = on ? cur.concat([o.key]) : cur.filter(function (k) { return k !== o.key; });
             var u = { limit: PAGE }; u[g.field] = nx; self.setState(u); } };
         }) };
       }),
+      // Chips under the filter bar — one per checked option, colored by its parent filter (tone)
+      activeChips: FILTER_GROUPS.reduce(function (acc, g) {
+        return acc.concat(g.options.filter(function (o) { return s[g.field].indexOf(o.key) !== -1; }).map(function (o) {
+          return { key: g.field + ':' + o.key, label: g.title, value: o.chip || o.label, tone: g.tone, onRemove: function () {
+            var u = { limit: PAGE }; u[g.field] = self.state[g.field].filter(function (k) { return k !== o.key; }); self.setState(u); } };
+        }));
+      }, []),
+      clearFilters: function () { self.setState({ statuses: [], licRanges: [], limit: PAGE }); },
       query: s.query, setQuery: function (v) { self.setState({ query: val(v), limit: PAGE }); },
       rows: vis.map(function (h, i) {
         return { n: i + 1, name: h.name, photo: h.photo, category: h.category, address: h.address, city: h.city, state: h.state, zip: h.zip, tz: tzFor(h.state), lic: h.lic.length, status: h.status, color: HCOL[h.status] || HCOL.Active, created: h.created,
@@ -284,6 +294,7 @@ defineTemplate(Component, (v) => (
               <NTV.Button variant="secondary" size="xl" iconRight="file-excel" onClick={v.exportIt}>Export</NTV.Button>
             </div>
           </div>
+          <NTV.ActiveFilters chips={v.activeChips} onClear={v.clearFilters} style={{ marginTop: "-10px" }} />
           <section className="dv-card" aria-label="Hosts Data" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div className="dv-between">
               <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>Hosts Data</h2>

@@ -137,6 +137,21 @@ button { font-family: inherit; }
 .ntv-filterdd__head .ntv-icon { color: var(--fg-primary); }
 .ntv-filterdd__item { display: flex; min-height: 40px; padding: 0 12px; font-size: 14px; line-height: 20px; color: var(--fg-secondary); }
 .ntv-filterdd__item:hover { background: var(--bg-app); }
+/* Active filter chips (Figma DS node 18843:18133) */
+.ntv-activefilters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font: 400 12px/18px var(--font-sans); color: var(--fg-secondary); }
+.ntv-activefilters__clear { border: 0; background: none; padding: 0; font: inherit; color: var(--accent-action); cursor: pointer; }
+.ntv-activefilters__clear:hover { text-decoration: underline; }
+.ntv-fchip { --t: var(--red-orange-main); display: inline-flex; align-items: center; gap: 10px; height: 24px; padding: 0 12px; box-sizing: border-box;
+  border: 1px solid var(--t); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--t) 10%, var(--bg-surface));
+  font: 400 12px/18px var(--font-sans); color: var(--t); white-space: nowrap; }
+.ntv-fchip__text { display: inline-flex; gap: 5px; }
+.ntv-fchip__text strong { font-weight: 700; }
+.ntv-fchip__x { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; padding: 0; border: 0; border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--t) 18%, transparent); color: var(--t); cursor: pointer; }
+.ntv-fchip__x:hover { background: var(--t); color: var(--white); }
+.ntv-fchip--red-orange { --t: var(--red-orange-main); } .ntv-fchip--info { --t: var(--info-main); } .ntv-fchip--teal { --t: var(--teal-main); }
+.ntv-fchip--purple { --t: var(--purple-main); } .ntv-fchip--hot-pink { --t: var(--hot-pink-main); } .ntv-fchip--warning { --t: var(--warning-600); }
+.ntv-fchip--success { --t: var(--success-600, var(--success-main)); } .ntv-fchip--danger { --t: var(--danger-main); }
 .ntv-filterdd--right .ntv-menu { left: auto; right: 0; }
 .ntv-autocomplete { display: flex; flex-direction: column; gap: var(--rem-2); }
 .ntv-autocomplete__field { border-color: var(--primary-100); }
