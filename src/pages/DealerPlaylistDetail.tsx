@@ -9,7 +9,7 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
-import { addNav, arrived, byId, contains, hostName, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
+import { addNav, arrived, byId, contains, go, hostName, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
 import ContentBlock from '../components/ContentBlock';
 import ContentThumb from '../components/ContentThumb';
 import DealerNav from '../components/DealerNav';
@@ -19,12 +19,26 @@ import './DealerPlaylistDetail.css';
 
 /* ============================== Logic ============================== */
 
+// Grid view: consecutive block members (channel tile + its member images) collapse into ONE
+// group entry spanning the summed columns (capped at the 8-column grid); others stay single tiles.
+function groupBlocks(items) {
+  var out = [], cur = null;
+  (items || []).forEach(function (it) {
+    if (it.inBlk) {
+      if (!cur) { cur = { isGroup: true, isTile: false, tiles: [], cols: 0 }; out.push(cur); }
+      cur.tiles.push(it); cur.cols += it.span;
+    } else { cur = null; out.push({ isGroup: false, isTile: true, tile: it }); }
+  });
+  out.forEach(function (e) { if (e.isGroup) { e.span = Math.min(e.cols, 8); e.inner = 'repeat(' + e.span + ', minmax(0, 1fr))'; } });
+  return out;
+}
+
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     var f = arrived('DealerPlaylistDetail.dc.html') || {};
     var p = byId(D.playlists, f.id) || D.playlists[0];
-    var items = p.items.map(function (id, i) { var m = byId(D.media, id); return m ? { key: 'k' + i, blk: !!(p.block && i === 0), m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: true } : null; }).filter(Boolean);
+    var items = p.items.map(function (id, i) { var m = byId(D.media, id); return m ? { key: 'k' + i, blk: !!(p.block && i === 0), inBlk: !!(p.block && p.items.length > 2 && i < 4), m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: true } : null; }).filter(Boolean);
     this.state = { view: 'grid', kind: '', q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', libQ: '', push: false, ad: null, md: null, info: null, toast: null };
   }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
@@ -48,7 +62,7 @@ class Component extends DCLogic {
     var md = s.md, mi = md ? s.items.filter(function (x) { return x.key === md.key; })[0] : null;
     var setMd = function (o) { self.setState({ md: Object.assign({}, self.state.md, o) }); };
     var info = s.info || { name: '', desc: '' };
-    return {
+    var R = {
       none: null, i12: 12, i14: 14, i32: 32, w460: 460, w500: 500, w640: 640, w960: 960,
       crumbs: [{ label: 'Playlist', href: 'DealerPlaylists.dc.html' }, p.name],
       name: p.name, desc: p.desc, count: s.items.length, loop: loop >= 60 ? Math.floor(loop / 60) + 'm ' + (loop % 60) + 's' : loop + 's',
@@ -61,9 +75,10 @@ class Component extends DCLogic {
       isGrid: s.view === 'grid', isList: s.view === 'list', toGrid: function () { self.setState({ view: 'grid' }); }, toList: function () { self.setState({ view: 'list' }); },
       libQ: s.libQ, setLibQ: function (v) { self.setState({ libQ: val(v), folder: val(v) ? '__search' : '' }); },
       inFolder: !!s.folder, notInFolder: !s.folder,
-      folderName: s.folder === '__search' ? 'Search results' : (s.folder === '__assigned' ? 'Assigned to Dealer' : (s.folder === '__floating' ? 'Floating Contents' : s.folder)),
+      folderName: s.folder === '__search' ? 'Search results' : (s.folder === '__assigned' ? 'My Contents' : s.folder),
       backFolders: function () { self.setState({ folder: '', libQ: '' }); },
-      openAssigned: function () { self.setState({ folder: '__assigned' }); }, openFloating: function () { self.setState({ folder: '__floating' }); },
+      openAssigned: function () { self.setState({ folder: '__assigned' }); },
+      uploadContent: function () { go('DealerMedia.dc.html'); },
       folders: ['Food Assets', 'Promo Videos', 'Brand Logos', 'Seasonal', 'Menus'].map(function (f) { return { name: f, n: D.media.filter(function (m) { return m.folder === f; }).length, open: function () { self.setState({ folder: f }); } }; }),
       folderCount: 5,
       hostGroups: (function () { var g = {}; scs.forEach(function (sc) { if (!contains(sc.name + ' ' + hostName(sc.host), s.scQ)) return; (g[sc.host] = g[sc.host] || []).push(sc); }); return Object.keys(g).map(function (hid) { var open = s.openHost === hid || (!s.openHost && hid === Object.keys(g)[0]); return { name: hostName(hid), count: g[hid].length, open: open, icon: open ? 'angle-up' : 'angle-down', toggle: function () { self.setState({ openHost: open ? '-' : hid }); },
@@ -83,7 +98,7 @@ class Component extends DCLogic {
         var B = it.blk ? ['CHANNEL', 'var(--warning-main)'] : ({ image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'], block: ['BLOCK', 'var(--purple-main)'] }[it.m.kind] || ['IMAGE', 'var(--info-main)']);
         var sel = !!s.sel[it.key], idx = s.items.indexOf(it);
         return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : 'transparent', capColor: it.blk ? '#fff' : 'var(--fg-primary)', n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)', sched: it.always ? 'Always' : 'Nov 15 – Dec 31',
-          checked: sel, cls: sel ? 'sel' : (it.blk ? 'blk' : ''),
+          checked: sel, inBlk: !!it.inBlk, cls: sel ? 'sel' : (it.blk && !it.inBlk ? 'blk' : ''),
           toggle: function () { var o = Object.assign({}, self.state.sel); o[it.key] = !o[it.key]; self.setState({ sel: o }); },
           up: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); move(idx, -1); }, down: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); move(idx, 1); },
           modify: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always } }); } };
@@ -91,8 +106,7 @@ class Component extends DCLogic {
       empty: s.items.length === 0,
       screens: scs.map(function (sc, i) { var z = Object.keys(sc.zones).filter(function (k) { return sc.zones[k] === p.name; }); return { n: i + 1, name: sc.name, host: hostName(sc.host), zone: z.join(', ') || '—', template: sc.template, lic: sc.lic.length, open: navFn('DealerScreenDetail.dc.html', { id: sc.id }) }; }),
       noScreens: scs.length === 0,
-      libQ: s.libQ, setLibQ: function (v) { self.setState({ libQ: val(v) }); },
-      lib: D.media.filter(function (m, i) { if (s.folder === '__search') return contains(m.title, s.libQ); if (s.folder === '__assigned') return !!m.adv; if (s.folder === '__floating') return !m.used; return m.folder === s.folder; }).map(function (m) { var has = !!inPl[m.id], B = { image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'] }[m.kind] || ['IMAGE', 'var(--info-main)']; return { badge: B[0], badgeColor: B[1], image: m.image, title: m.title, kind: m.kind, dur: m.duration || '15 sec', icon: has ? 'check' : 'plus', add: function () { if (has) { toast(self, m.title + ' is already in this playlist', 'info'); return; } addItems([m]); toast(self, m.title + ' added'); } }; }),
+      lib: D.media.filter(function (m, i) { if (s.folder === '__search') return contains(m.title, s.libQ); if (s.folder === '__assigned') return !!m.adv; return m.folder === s.folder; }).map(function (m) { var has = !!inPl[m.id], B = { image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'] }[m.kind] || ['IMAGE', 'var(--info-main)']; return { badge: B[0], badgeColor: B[1], image: m.image, title: m.title, kind: m.kind, dur: m.duration || '15 sec', icon: has ? 'check' : 'plus', add: function () { if (has) { toast(self, m.title + ' is already in this playlist', 'info'); return; } addItems([m]); toast(self, m.title + ' added'); } }; }),
       pushOpen: s.push,
       pushTargets: (function () { var t = []; scs.forEach(function (sc) { sc.lic.forEach(function (lid) { var l = byId(D.licenses, lid); if (l) t.push({ alias: l.alias, willFail: l.status !== 'online' }); }); }); return t; })(),
       openPush: function () { self.setState({ push: true }); }, closePush: function () { self.setState({ push: false }); }, pushDone: function () {},
@@ -140,12 +154,37 @@ class Component extends DCLogic {
         save: function () { self.setState({ p: Object.assign({}, self.state.p, { name: self.state.info.name.trim(), desc: self.state.info.desc }), modal: '' }); toast(self, 'Playlist info saved'); } },
       toast: toastVals(s.toast)
     };
+    R.gridEntries = groupBlocks(R.items);
+    return R;
   }
 }
 
 ;(function () { var P = 'DealerPlaylistDetail.dc.html'; var C = Component; var R = C.prototype.renderVals; C.prototype.renderVals = function () { var self = this; if (P && !self.__nw) { self.__nw = setInterval(function () { try { if (peekNav(P)) { var n = new C(self.props); self.setState(n.state); } } catch (e) {} }, 250); } return addNav(R.apply(this, arguments)); }; var U = C.prototype.componentWillUnmount; C.prototype.componentWillUnmount = function () { if (this.__nw) clearInterval(this.__nw); if (U) return U.apply(this, arguments); }; })();
 
 /* ============================== Markup ============================== */
+
+// One playlist tile in grid view (used both standalone and inside a block group).
+const renderTile = (v, _it) => (
+  <div className={`pd-tile ${s(_it?.cls)}`} onClick={_it?.toggle} style={{ gridColumn: `span ${s(_it?.span)}` }}>
+    <div className="dv-thumb" style={{ aspectRatio: `${s(_it?.ratio)}`, borderRadius: "0" }}>
+      <img src={_it?.image} alt="" />
+      <span style={{ position: "absolute", left: "6px", top: "6px", padding: "0 6px", borderRadius: "4px", background: "#fff", fontSize: "9px", lineHeight: "16px", fontWeight: "700", color: `${s(_it?.badgeColor)}` }}>{_it?.badge}</span>
+    </div>
+    <div className="dv-row" style={{ gap: "4px", padding: "5px 6px", fontSize: "11px", lineHeight: "16px", background: `${s(_it?.capBg)}`, color: `${s(_it?.capColor)}` }}>
+      <span style={{ flex: "1", minWidth: "0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{_it?.n}{" "}{_it?.title}</span>
+      <span>{_it?.dur}</span>
+      {v.reorder ? (
+        <>
+          <button type="button" className="dv-ib" style={{ width: "18px", height: "18px" }} aria-label="Move earlier" onClick={_it?.up}><NTV.Icon name="angle-up" size={v.i10} /></button>
+          <button type="button" className="dv-ib" style={{ width: "18px", height: "18px" }} aria-label="Move later" onClick={_it?.down}><NTV.Icon name="angle-down" size={v.i10} /></button>
+        </>
+      ) : null}
+      {v.notReorder ? (
+        <button type="button" className="dv-ib" style={{ width: "18px", height: "18px" }} aria-label="Modify" onClick={_it?.modify}><NTV.Icon name="gear" size={v.i10} /></button>
+      ) : null}
+    </div>
+  </div>
+);
 
 defineTemplate(Component, (v) => (
     <div className="pg-playlist-detail" style={{ display: "contents" }}>
@@ -165,7 +204,7 @@ defineTemplate(Component, (v) => (
               <p className="dv-sub">{v.desc}</p>
             </div>
             <div className="dv-row">
-              <NTV.Button variant="primary" size="xl" iconRight="arrow-up-from-bracket" disabled={v.noScreens} onClick={v.openPush}>Push Updates</NTV.Button>
+              <NTV.Button variant="secondary" size="xl" iconRight="arrow-up-from-bracket" disabled={v.noScreens} onClick={v.openPush}>Push Updates</NTV.Button>
               <NTV.Button variant="primary" size="xl" iconRight="plus" onClick={v.openAdd}>Add Content</NTV.Button>
             </div>
           </div>
@@ -184,19 +223,16 @@ defineTemplate(Component, (v) => (
                   <h2 className="dv-h3">Media Contents</h2>
                   <span className="dv-sub">All contents ({v.count}{") · "}{v.loop}{" per loop"}</span>
                 </div>
-                <div className="dv-between">
+                <div className="dv-between pd-toolbar">
                   <div className="dv-row">
-                    <NTV.Button variant="secondary" size="m" iconLeft="filter" iconRight={v.none} onClick={v.cycleKind}>{v.kindLabel}</NTV.Button>
-                    <NTV.Button variant={v.reorderVariant} size="m" iconLeft="grip-vertical" iconRight={v.none} onClick={v.toggleReorder}>{v.reorderLabel}</NTV.Button>
+                    <NTV.Button variant="secondary" size="xl" iconLeft="filter" iconRight={v.none} onClick={v.cycleKind}>{v.kindLabel}</NTV.Button>
+                    <NTV.Button variant={v.reorderVariant} size="xl" iconLeft="grip-vertical" iconRight={v.none} onClick={v.toggleReorder}>{v.reorderLabel}</NTV.Button>
                   </div>
                   <div className="dv-row">
                     <NTV.Input size="l" placeholder="Search Playlist Content" iconLeft="magnifying-glass" label="Search playlist content" value={v.q} onChange={v.setQ} style={{ width: "230px" }} />
-                    <button type="button" className="ntv-btn ntv-btn--m" onClick={v.toggleAll} style={{ background: "var(--fg-primary)", color: "var(--white)", border: "0" }}>
-                      <NTV.Icon name="check" size={v.i12} />
-                      <span>{v.markLabel}</span>
-                    </button>
-                    <NTV.Button variant="primary" size="m" iconRight="pen-to-square" disabled={v.noneSel} onClick={v.bulkModify}>Bulk Modify</NTV.Button>
-                    <NTV.Button variant="primary" size="m" iconRight="trash" disabled={v.noneSel} onClick={v.askBulk}>Bulk Delete</NTV.Button>
+                    <NTV.Button variant="primary" size="xl" className="pd-mark" iconLeft="check" onClick={v.toggleAll}>{v.markLabel}</NTV.Button>
+                    <NTV.Button variant="primary" size="xl" iconRight="pen-to-square" disabled={v.noneSel} onClick={v.bulkModify}>Bulk Modify</NTV.Button>
+                    <NTV.Button variant="primary" size="xl" iconRight="trash" disabled={v.noneSel} onClick={v.askBulk}>Bulk Delete</NTV.Button>
                     <div className="dv-vt" role="group" aria-label="View">
                       <button type="button" aria-label="Grid view" aria-pressed={v.isGrid} onClick={v.toGrid}><NTV.Icon name="grid-2" size={v.i14} /></button>
                       <button type="button" aria-label="List view" aria-pressed={v.isList} onClick={v.toList}><NTV.Icon name="rectangle-history" size={v.i14} /></button>
@@ -206,29 +242,16 @@ defineTemplate(Component, (v) => (
                 {v.isGrid ? (
                   <>
                     <div className="dv-grid" style={{ gridTemplateColumns: "repeat(8, minmax(0, 1fr))", gap: "10px" }}>
-                    {(v.items || []).map((_it, $index) => (
+                    {(v.gridEntries || []).map((_e, $index) => (
                       <React.Fragment key={$index}>
-                        <div className={`pd-tile ${s(_it?.cls)}`} onClick={_it?.toggle} style={{ gridColumn: `span ${s(_it?.span)}` }}>
-                          <div className="dv-thumb" style={{ aspectRatio: `${s(_it?.ratio)}`, borderRadius: "0" }}>
-                            <img src={_it?.image} alt="" />
-                            <span style={{ position: "absolute", left: "6px", top: "6px", padding: "0 6px", borderRadius: "4px", background: "#fff", fontSize: "9px", lineHeight: "16px", fontWeight: "700", color: `${s(_it?.badgeColor)}` }}>{_it?.badge}</span>
+                        {_e?.isGroup ? (
+                          <div className="pd-block" role="group" aria-label="Content block" style={{ gridColumn: `span ${s(_e?.span)}`, gridTemplateColumns: `${s(_e?.inner)}` }}>
+                            {(_e?.tiles || []).map((_it, $j) => (
+                              <React.Fragment key={$j}>{renderTile(v, _it)}</React.Fragment>
+                            ))}
                           </div>
-                          <div className="dv-row" style={{ gap: "4px", padding: "5px 6px", fontSize: "11px", lineHeight: "16px", background: `${s(_it?.capBg)}`, color: `${s(_it?.capColor)}` }}>
-                            <span style={{ flex: "1", minWidth: "0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{_it?.n}{" "}{_it?.title}</span>
-                            <span>{_it?.dur}</span>
-                            {v.reorder ? (
-                              <>
-                                <button type="button" className="dv-ib" style={{ width: "18px", height: "18px" }} aria-label="Move earlier" onClick={_it?.up}><NTV.Icon name="angle-up" size={v.i10} /></button>
-                                <button type="button" className="dv-ib" style={{ width: "18px", height: "18px" }} aria-label="Move later" onClick={_it?.down}><NTV.Icon name="angle-down" size={v.i10} /></button>
-                              </>
-                            ) : null}
-                            {v.notReorder ? (
-                              <>
-                                <button type="button" className="dv-ib" style={{ width: "18px", height: "18px" }} aria-label="Modify" onClick={_it?.modify}><NTV.Icon name="gear" size={v.i10} /></button>
-                              </>
-                            ) : null}
-                          </div>
-                        </div>
+                        ) : null}
+                        {_e?.isTile ? renderTile(v, _e?.tile) : null}
                       </React.Fragment>
                     ))}
                   </div>
@@ -257,7 +280,7 @@ defineTemplate(Component, (v) => (
                             <div>
                               <span className="dv-thumb" style={{ display: "block", width: "56px", height: "34px" }}><img src={_it?.image} alt="" /></span>
                             </div>
-                            <div>{_it?.n}{" "}{_it?.title}</div>
+                            <div>{_it?.n}{" "}{_it?.title}{_it?.inBlk ? <span className="pd-blk-badge">Block</span> : null}</div>
                             <div>
                               <span style={{ fontSize: "9px", fontWeight: "700", color: `${s(_it?.badgeColor)}` }}>{_it?.badge}</span>
                             </div>
@@ -295,10 +318,8 @@ defineTemplate(Component, (v) => (
               </section>
               <aside className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 <NTV.Input size="l" placeholder="Search Content or Folder" iconLeft="magnifying-glass" label="Search content or folder" value={v.libQ} onChange={v.setLibQ} />
-                <a href="DealerMedia.dc.html" className="ntv-btn ntv-btn--xl" style={{ textDecoration: "none", justifyContent: "center", border: "1px solid var(--fg-secondary)", background: "var(--bg-surface)", color: "var(--fg-primary)" }}>
-                  <NTV.Icon name="arrow-up-from-bracket" size={v.i12} />
-                  <span>Upload Content</span>
-                </a>
+                <NTV.Button variant="secondary" size="xl" className="pd-upload" iconLeft="upload" onClick={v.uploadContent}>Upload Content</NTV.Button>
+                <a data-go="DealerMedia.dc.html" href="DealerMedia.dc.html" hidden tabIndex={-1} aria-hidden="true" />
                 {v.inFolder ? (
                   <>
                     <button type="button" className="dv-a" onClick={v.backFolders} style={{ alignSelf: "flex-start", fontSize: "12px" }}>‹ Folders</button>
@@ -321,11 +342,7 @@ defineTemplate(Component, (v) => (
                   <>
                     <button type="button" className="ml-row" onClick={v.openAssigned}>
                     <NTV.Icon name="users" size={v.i14} />
-                    Assigned to Dealer
-                  </button>
-                    <button type="button" className="ml-row" onClick={v.openFloating}>
-                    <NTV.Icon name="clock" size={v.i14} />
-                    Floating Contents
+                    My Contents
                   </button>
                     <span className="dv-row" style={{ gap: "6px", fontSize: "13px", padding: "4px 0" }}>
                     <NTV.Icon name="angle-down" size={v.i10} />

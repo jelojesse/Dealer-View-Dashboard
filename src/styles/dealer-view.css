@@ -8,3 +8,7 @@ body{margin:0;background:var(--bg-app);font-family:var(--font-sans);color:var(--
 /* Dropdown with a value: secondary style instead of dark navy/bold. */
 .ntv-select.is-filled .ntv-select__trigger{background:var(--bg-surface);border-color:var(--fg-secondary);color:var(--fg-secondary);font-weight:400}
 .ntv-select.is-filled .ntv-select__trigger:hover,.ntv-select.is-open .ntv-select__trigger{border-color:var(--accent-action);color:var(--accent-action)}
+/* Breadcrumbs: parent crumbs stay secondary grey like the angle-right separator
+   (page CSS `.pg-x a{color:accent}` was overriding the bundle). Current crumb stays bold accent. */
+.ntv-crumbs a.ntv-crumbs__item{color:var(--fg-secondary)}
+.ntv-crumbs a.ntv-crumbs__item:hover{color:var(--accent-action)}

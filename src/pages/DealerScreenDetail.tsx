@@ -107,6 +107,11 @@ class Component extends DCLogic {
       previewHint: demo ? 'Click a zone to see its playlist' : 'Click a zone to edit its playlist',
       zonesHint: demo ? 'Zones of ' + tpl.title + ' and their playlists' : 'Below are the zones of ' + tpl.title + '. Click a Zone to edit its Playlist',
       typeOptions: ['Ad', 'Menu', 'Announcement'],
+      typeOpen: !!s.typeOpen, i12: 12, i14: 14,
+      toggleType: function () { self.setState({ typeOpen: !self.state.typeOpen }); },
+      closeType: function () { self.setState({ typeOpen: false }); },
+      typeKey: function (e) { if (e.key === 'Escape') self.setState({ typeOpen: false }); },
+      typeItems: ['Ad', 'Menu', 'Announcement'].map(function (t) { return { label: t, on: s.type === t, pick: function () { self.setState({ typeOpen: false }); edit('type')(t); } }; }),
       setTitle: edit('title'), setDesc: edit('desc'), setType: edit('type'), setNotes: edit('notes'),
       clean: !s.dirty,
       save: function () { if (onCount === 0) { self.setState({ dirty: false }); toast(self, 'Screen saved'); } else self.setState({ push: true }); },
@@ -116,11 +121,6 @@ class Component extends DCLogic {
       pushDone: function () { self.setState({ dirty: false }); },
       bgSelected: s.zone === 'background',
       selectBackground: function () { self.setState({ zone: 'background', expanded: demo ? '' : 'background' }); },
-      zoneChips: tpl.zones.map(function (label) {
-        var id = zid(label), sel = s.zone === id, has = !!s.playlists[id];
-        return { label: label, selected: sel, border: sel ? 'var(--accent-action)' : 'var(--container-border)', bg: sel ? 'var(--accent-30)' : 'var(--bg-surface)', color: sel ? 'var(--accent-action)' : 'var(--fg-primary)', dot: has ? 'var(--success-400)' : 'var(--primary-300)',
-          pick: function () { self.setState({ zone: id, expanded: demo ? '' : id }); } };
-      }),
       withLogo: s.template === 'standard-v2',
       zone: s.zone || 'none',
       selectZone: function (z) { self.setState({ zone: z, expanded: demo ? '' : z }); },
@@ -197,10 +197,10 @@ defineTemplate(Component, (v) => (
               <p style={{ margin: "0", fontSize: "16px", lineHeight: "24px", color: "var(--fg-secondary)" }}>{v.desc}</p>
             </div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: "12px" }}>
-              <NTV.Button variant="primary" size="xl" iconRight="copy" onClick={v.openClone}>Clone Screen</NTV.Button>
+              <NTV.Button variant="secondary" size="xl" iconRight="copy" onClick={v.openClone}>Clone Screen</NTV.Button>
               {v.notDemo ? (
                 <>
-                  <NTV.Button variant="primary" size="xl" iconRight="trash" onClick={v.openDelete}>Delete Screen</NTV.Button>
+                  <NTV.Button variant="danger" size="xl" iconRight="trash" onClick={v.openDelete}>Delete Screen</NTV.Button>
                   <NTV.Button variant="primary" size="xl" iconRight="floppy-disk" disabled={v.clean} onClick={v.save}>Save</NTV.Button>
                 </>
               ) : null}
@@ -222,11 +222,27 @@ defineTemplate(Component, (v) => (
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "10px" }}>
                 <div>
-                  <span className="dv-label">Screen Type</span>
+                  <span className="dv-label" id="sd-type-label">Screen Type</span>
                   {v.notDemo ? (
-                    <>
-                      <NTV.Select size="l" options={v.typeOptions} value={v.type} onChange={v.setType} />
-                    </>
+                    <div className="sd-type" onKeyDown={v.typeKey}>
+                      <button type="button" className={'dv-field sd-type__trigger' + (v.typeOpen ? ' is-open' : '')} aria-haspopup="listbox" aria-expanded={v.typeOpen} aria-labelledby="sd-type-label" onClick={v.toggleType}>
+                        <span>{v.type}</span>
+                        <NTV.Icon name={v.typeOpen ? 'angle-up' : 'angle-down'} size={v.i14} />
+                      </button>
+                      {v.typeOpen ? (
+                        <>
+                          <div aria-hidden="true" className="sd-type__backdrop" onClick={v.closeType} />
+                          <div className="ntv-menu sd-type__menu" role="listbox" aria-labelledby="sd-type-label">
+                            {(v.typeItems || []).map((_o) => (
+                              <button key={_o.label} type="button" role="option" aria-selected={_o.on} className={'ntv-option' + (_o.on ? ' is-selected' : '')} onClick={_o.pick}>
+                                <span>{_o.label}</span>
+                                {_o.on ? <NTV.Icon name="check" size={v.i12} /> : null}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      ) : null}
+                    </div>
                   ) : null}
                   {v.demo ? (
                     <>
@@ -271,16 +287,6 @@ defineTemplate(Component, (v) => (
                 </div>
                 <button type="button" aria-pressed={v.bgSelected} onClick={v.selectBackground} style={{ display: "inline-flex", alignItems: "center", height: "28px", padding: "4px 8px", border: "0", borderRadius: "var(--radius-sm)", background: "#5273c0", color: "var(--white)", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", lineHeight: "20px", fontWeight: "500" }}>Select Background</button>
               </div>
-              <div role="group" aria-label="Zones" style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                {(v.zoneChips || []).map((_c, $index) => (
-                  <React.Fragment key={$index}>
-                    <button type="button" className="sd-chip" aria-pressed={_c?.selected} onClick={_c?.pick} style={{ display: "inline-flex", alignItems: "center", gap: "6px", height: "28px", padding: "0 10px", borderRadius: "var(--radius-full)", border: `1px solid ${s(_c?.border)}`, background: `${s(_c?.bg)}`, color: `${s(_c?.color)}`, cursor: "pointer", fontFamily: "inherit", fontSize: "12px", lineHeight: "20px", fontWeight: "600" }}>
-                      <span aria-hidden="true" style={{ width: "8px", height: "8px", borderRadius: "var(--radius-full)", background: `${s(_c?.dot)}` }} />
-                      <span>{_c?.label}</span>
-                    </button>
-                  </React.Fragment>
-                ))}
-              </div>
               <ScreenPreview background="wood" withLogo={v.withLogo} selected={v.zone} onSelect={v.selectZone} />
             </section>
           </div>
@@ -291,7 +297,7 @@ defineTemplate(Component, (v) => (
                   <h2 id="lic-title" className="dv-h2" style={{ color: `${s(v.licTitleColor)}` }}>License List</h2>
                   <p className="dv-sub">{v.playingText}</p>
                 </div>
-                <div style={{ display: "flex", gap: "10px" }}>
+                <div style={{ display: "flex", gap: "12px" }}>
                   <NTV.Button variant="primary" tone={v.licTone} size="xl" iconRight="minus" disabled={v.cannotUnassign} onClick={v.openUnassign}>Unassign Licenses</NTV.Button>
                   <NTV.Button variant="primary" tone={v.licTone} size="xl" iconRight="plus" disabled={v.demo} onClick={v.openAssign}>Assign Licenses</NTV.Button>
                 </div>
@@ -345,7 +351,7 @@ defineTemplate(Component, (v) => (
                   </>
                 ) : null}
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", flex: "1 1 0", minHeight: "240px", overflowY: "auto", paddingRight: "2px" }}>
+              <div className="sd-zones" style={{ display: "flex", flexDirection: "column", gap: "10px", flex: "1 1 0", minHeight: "320px", overflowY: "auto", paddingRight: "4px" }}>
                 {(v.zoneList || []).map((_z, $index) => (
                   <React.Fragment key={$index}>
                     <ZoneListItem label={_z?.label} playlist={_z?.playlistName} expanded={_z?.expanded} selected={_z?.selected} playlists={_z?.options} onToggle={_z?.toggle} />

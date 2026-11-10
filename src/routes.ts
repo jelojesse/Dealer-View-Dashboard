@@ -14,6 +14,7 @@ import DealerLicenses from './pages/DealerLicenses';
 import DealerLicenseDetail from './pages/DealerLicenseDetail';
 import DealerLocator from './pages/DealerLocator';
 import DealerMedia from './pages/DealerMedia';
+import DealerMediaDetail from './pages/DealerMediaDetail';
 import DealerPlaylists from './pages/DealerPlaylists';
 import DealerPlaylistDetail from './pages/DealerPlaylistDetail';
 import DealerChannels from './pages/DealerChannels';
@@ -39,6 +40,7 @@ export const ROUTES: PageRoute[] = [
   { file: 'DealerLicenseDetail.dc.html', path: '/licenses/detail', title: "License Details", component: DealerLicenseDetail },
   { file: 'DealerLocator.dc.html', path: '/locator', title: "Locator", component: DealerLocator },
   { file: 'DealerMedia.dc.html', path: '/media', title: "Media Library", component: DealerMedia },
+  { file: 'DealerMediaDetail.dc.html', path: '/media/detail', title: "Media Details", component: DealerMediaDetail },
   { file: 'DealerPlaylists.dc.html', path: '/playlists', title: "Playlists", component: DealerPlaylists },
   { file: 'DealerPlaylistDetail.dc.html', path: '/playlists/detail', title: "Playlist Details", component: DealerPlaylistDetail },
   { file: 'DealerChannels.dc.html', path: '/channels', title: "Channel Manager", component: DealerChannels },

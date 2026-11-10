@@ -102,3 +102,37 @@
 .pg-license-detail .ld-snap .dv-thumb{display:block;flex:none;width:120px;height:75px}
 .pg-license-detail .ld-snap figcaption{font-size:10px;line-height:14px;color:var(--fg-secondary);text-align:center}
 .pg-license-detail .ld-noshot{display:inline-flex;align-items:center;height:52px;padding:0 16px;border-radius:var(--radius-sm);background:var(--bg-app);font-size:14px;color:var(--fg-secondary)}
+/* Taking-screenshot wait modal */
+.pg-license-detail .ld-shooting{display:flex;flex-direction:column;align-items:center;gap:20px;width:420px;max-width:calc(100vw - 32px);padding:48px 32px;background:var(--bg-surface);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);text-align:center}
+.pg-license-detail .ld-shooting__icon{display:inline-flex;color:var(--accent-action);animation:ld-pulse 1.2s ease-in-out infinite}
+.pg-license-detail .ld-shooting strong{font-size:16px;line-height:24px;font-weight:600;color:var(--fg-primary)}
+@keyframes ld-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+@media (prefers-reduced-motion:reduce){.pg-license-detail .ld-shooting__icon{animation:none}}
+/* Settings tab (License Page V2 · Setting) */
+.pg-license-detail .ld-settings{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}
+.pg-license-detail .ld-settings__col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.pg-license-detail .ld-settings__col+.ld-settings__col{gap:20px}
+.pg-license-detail .ld-set{display:flex;flex-direction:column;gap:12px;padding:16px 20px}
+.pg-license-detail .ld-set__row{display:flex;align-items:center;justify-content:space-between;gap:20px}
+.pg-license-detail .ld-set__txt h3{margin:0 0 6px;font-size:14px;line-height:20px;font-weight:700;color:var(--fg-primary)}
+.pg-license-detail .ld-set__txt p{margin:0;font-size:12px;line-height:20px;color:var(--fg-primary)}
+.pg-license-detail .ld-set__field{display:flex;flex-direction:column;gap:6px}
+.pg-license-detail .ld-set__field>span{font-size:14px;line-height:24px;font-weight:700;color:var(--fg-primary)}
+.pg-license-detail .ld-add{display:flex;flex-direction:column;gap:16px}
+.pg-license-detail .ld-reboots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.pg-license-detail .ld-reboots__col{display:flex;flex-direction:column;gap:10px;padding:0 12px;min-width:0}
+.pg-license-detail .ld-reboots__col:first-child{padding-left:0}
+.pg-license-detail .ld-reboots__col+.ld-reboots__col{border-left:1px solid var(--container-border)}
+.pg-license-detail .ld-reboot{display:flex;align-items:center;gap:8px}
+.pg-license-detail .ld-reboot__label{flex:1 1 auto;font-size:12px;line-height:20px;font-weight:700;color:var(--fg-primary);white-space:nowrap}
+.pg-license-detail .ld-time{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 8px;border:1px solid var(--container-border);border-radius:var(--radius-sm);background:var(--bg-surface);font-size:12px;color:var(--fg-secondary)}
+.pg-license-detail .ld-time:focus-within{border-color:var(--accent-action)}
+.pg-license-detail .ld-time input{width:20px;padding:0;border:0;background:transparent;font:inherit;color:var(--fg-primary);text-align:center;outline:none}
+.pg-license-detail .ld-time button{margin-left:6px;padding:0;border:0;background:transparent;font:inherit;color:var(--fg-secondary);cursor:pointer}
+.pg-license-detail .ld-time button:hover{color:var(--accent-action)}
+.pg-license-detail .ld-clear{flex:none;display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border:0;border-radius:var(--radius-sm);background:var(--danger-050);color:var(--danger-main);cursor:pointer}
+.pg-license-detail .ld-clear:hover{background:var(--danger-100)}
+.pg-license-detail .ld-disclaimer{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:12px;line-height:20px;color:var(--fg-primary)}
+.pg-license-detail .ld-bg{position:relative;height:300px;border-radius:var(--radius-sm);background-color:var(--bg-app);background-image:conic-gradient(var(--container-border) 25%,transparent 0 50%,var(--container-border) 0 75%,transparent 0);background-size:80px 80px}
+.pg-license-detail .ld-bg__edit{position:absolute;top:12px;left:12px}
+@media (max-width:1100px){.pg-license-detail .ld-settings{grid-template-columns:minmax(0,1fr)}}

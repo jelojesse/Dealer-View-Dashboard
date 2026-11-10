@@ -1,0 +1,17 @@
+/* DateRangePicker: DateField-style trigger + two DS calendar months with clickable days. */
+.drp{position:relative;display:inline-block}
+.drp__trigger{display:inline-flex;align-items:center;gap:10px;height:40px;padding:8px 14px;border:1px solid var(--fg-secondary);border-radius:var(--radius-sm);background:var(--bg-surface);font:600 16px/24px var(--font-sans);color:var(--fg-secondary);cursor:pointer;white-space:nowrap;box-sizing:border-box}
+.drp__trigger:hover,.drp__trigger.is-open{border-color:var(--accent-action);color:var(--accent-action)}
+.drp__panel{position:absolute;z-index:40;top:calc(100% + 8px);left:0;padding:20px;background:var(--bg-surface);border:1px solid var(--container-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card);box-sizing:border-box}
+.drp--right .drp__panel{left:auto;right:0}
+.drp__months{display:flex;gap:28px}
+.drp__month{display:flex;flex-direction:column;gap:12px}
+.drp__spacer{width:18px}
+.drp__day{border:0;background:transparent;cursor:pointer;font:inherit}
+.drp__day:not(.is-start):not(.is-mid):not(.is-end):hover .ntv-day__num{background:var(--accent-50);color:var(--accent-action)}
+.drp__day:focus-visible{outline:2px solid var(--accent-action);outline-offset:-2px}
+.drp__blank{visibility:hidden}
+.drp__foot{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:16px;padding-top:16px;border-top:1px solid var(--container-border)}
+.drp__sum{display:flex;gap:16px;font:400 12px/20px var(--font-sans);color:var(--fg-secondary)}
+.drp__sum b{color:var(--fg-primary);font-weight:700}
+.drp__btns{display:flex;gap:12px}

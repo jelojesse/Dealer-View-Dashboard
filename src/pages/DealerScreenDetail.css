@@ -75,5 +75,13 @@
 .pg-screen-detail .dv-kv2{display:flex;flex-direction:column;font-size:12px;line-height:18px}
 .pg-screen-detail .dv-kv2>span:first-child{color:var(--fg-secondary)}
 .pg-screen-detail .dv-kv2>span:last-child{font-weight:600;color:var(--fg-primary)}
-.pg-screen-detail .sd-chip:hover{border-color:var(--accent-action)!important}
 .pg-screen-detail .ct-zone{display:grid;grid-template-columns:140px minmax(0,1fr) 24px;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--container-border);border-radius:var(--radius-sm)}
+/* Template zone list: items keep their natural height so the list scrolls instead of squashing them. */
+.pg-screen-detail .sd-zones>*{flex:none}
+/* Screen Type dropdown: full-width field, DS menu, closes on outside click / Escape. */
+.pg-screen-detail .sd-type{position:relative}
+.pg-screen-detail .sd-type__trigger{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;text-align:left}
+.pg-screen-detail .sd-type__trigger.is-open{border-color:var(--accent-action);color:var(--accent-action)}
+.pg-screen-detail .sd-type__backdrop{position:fixed;inset:0;z-index:19}
+.pg-screen-detail .sd-type__menu{left:0;right:0;min-width:0;top:calc(100% + 4px);box-shadow:var(--shadow-card)}
+.pg-screen-detail .sd-type__menu .ntv-option.is-selected{color:var(--accent-action);font-weight:600}

@@ -21,7 +21,7 @@ var HCOL = { Active: 'var(--success-main)', Inactive: 'var(--danger-main)' };
 var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 var SERIES = { '2026': [12, 15, 18, 21, 25, 27, 30, 32, 35, 38, 41, 43], '2025': [2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] };
 class Component extends DCLogic {
-  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', filters: f.status ? { status: [f.status] } : {}, analytics: !!props.analytics, limit: 20, blocked: null, month: '', year: '2026', graph: 'Line Graph', hover: -1, toast: null }; }
+  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', filters: f.status ? { status: [f.status] } : {}, analytics: !!props.analytics, limit: 20, blocked: null, year: '2026', graph: 'Line Graph', hover: -1, toast: null }; }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
     var self = this, s = this.state;
@@ -33,7 +33,7 @@ class Component extends DCLogic {
     var step = 820 / 11, X = function (i) { return 50 + i * step; };
     var YL = function (v) { return 260 - v / 50 * 240; }, YR = function (v) { return 260 - v / 5 * 240; };
     var path = function (vals, Y) { return vals.map(function (v, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); }).join(' '); };
-    var hi = s.hover >= 0 ? s.hover : (s.month ? MONTHS.indexOf(s.month) : -1);
+    var hi = s.hover;
     var top = D.hosts.slice().sort(function (a, b) { return b.lic.length - a.lic.length || a.name.localeCompare(b.name); }).slice(0, 10);
     return {
       none: null, i14: 14, w460: 460,
@@ -41,7 +41,6 @@ class Component extends DCLogic {
       total: D.hosts.length, activeCount: count('Active'), inactiveCount: count('Inactive'),
       analytics: s.analytics, analyticsLabel: s.analytics ? 'Hide Analytics' : 'Show Analytics', analyticsIcon: s.analytics ? 'angle-up' : 'angle-down',
       toggleAnalytics: function () { self.setState({ analytics: !self.state.analytics }); },
-      monthOptions: MONTHS, month: s.month, setMonth: function (v) { self.setState({ month: val(v), hover: -1 }); },
       yearOptions: ['2026', '2025'], year: s.year, setYear: function (v) { self.setState({ year: val(v), hover: -1 }); },
       graphOptions: ['Line Graph', 'Bar Graph'], graph: s.graph, setGraph: function (v) { self.setState({ graph: val(v) }); },
       ch: { isLine: s.graph === 'Line Graph', isBar: s.graph === 'Bar Graph', step: step.toFixed(1),
@@ -138,9 +137,6 @@ defineTemplate(Component, (v) => (
                       </span>
                     </div>
                     <div style={{ width: "210px", flex: "none" }}>
-                      <NTV.Select size="l" placeholder="Month" options={v.monthOptions} value={v.month} onChange={v.setMonth} />
-                    </div>
-                    <div style={{ width: "210px", flex: "none" }}>
                       <NTV.Select size="l" placeholder="Year" options={v.yearOptions} value={v.year} onChange={v.setYear} />
                     </div>
                     <div style={{ width: "210px", flex: "none" }}>
@@ -191,7 +187,6 @@ defineTemplate(Component, (v) => (
                   {(v.ch?.grid || []).map((_g, $index) => (
                     <React.Fragment key={$index}>
                       <span className="ax-y" style={{ top: `${s(_g?.tp)}`, left: "0", width: "4%" }}>{_g?.l}</span>
-                      <span className="ax-y" style={{ top: `${s(_g?.tp)}`, left: "auto", right: "0", width: "2%", color: "var(--info-main)" }}>{_g?.r}</span>
                     </React.Fragment>
                   ))}
                   {(v.ch?.months || []).map((_m, $index) => (
@@ -230,24 +225,26 @@ defineTemplate(Component, (v) => (
                     <p className="dv-sub">Hosts with the most licenses.</p>
                   </div>
                 </div>
-                {(v.top || []).map((_t, $index) => (
-                  <React.Fragment key={$index}>
-                    <a href="DealerHostDetail.dc.html" onClick={_t?.open} className="dv-between" style={{ flexWrap: "nowrap", textDecoration: "none", color: "var(--fg-primary)", fontSize: "14px", lineHeight: "24px" }} data-nav={_t?.openNav}>
-                      <span>{_t?.n}{". "}{_t?.name}</span>
-                      <span>
-                        <strong>{_t?.lic}</strong>{" "}
-                        <span className="dv-sub" style={{ display: "inline" }}>License(s)</span>
-                      </span>
-                    </a>
-                  </React.Fragment>
-                ))}
+                <div className="hs-top">
+                  {(v.top || []).map((_t, $index) => (
+                    <React.Fragment key={$index}>
+                      <a href="DealerHostDetail.dc.html" onClick={_t?.open} className="dv-between" style={{ flexWrap: "nowrap", textDecoration: "none", color: "var(--fg-primary)", fontSize: "14px", lineHeight: "24px" }} data-nav={_t?.openNav}>
+                        <span>{_t?.n}{". "}{_t?.name}</span>
+                        <span>
+                          <strong>{_t?.lic}</strong>{" "}
+                          <span className="dv-sub" style={{ display: "inline" }}>License(s)</span>
+                        </span>
+                      </a>
+                    </React.Fragment>
+                  ))}
+                </div>
               </div>
             </section>
             </>
           ) : null}
           <div className="dv-between">
             <FilterBy groups={v.filterGroups} value={v.filters} onChange={v.setFilters} />
-            <div className="dv-row" style={{ flexWrap: "wrap", gap: "16px" }}>
+            <div className="dv-row" style={{ flexWrap: "wrap", gap: "12px" }}>
               <NTV.Input size="l" placeholder="Search Host Name, Address, City, Postal Code, DMA Name or #Tag" iconLeft="magnifying-glass" iconRight="sparkles" label="Search hosts" value={v.query} onChange={v.setQuery} style={{ width: "500px", maxWidth: "100%" }} />
               <NTV.Button variant="secondary" size="xl" iconRight="file-excel" onClick={v.exportIt}>Export</NTV.Button>
             </div>
@@ -267,7 +264,7 @@ defineTemplate(Component, (v) => (
                   ))}
                 </div>
               </div>
-              <div className="dv-row" style={{ gap: "20px" }}>
+              <div className="dv-row" style={{ gap: "12px" }}>
                 <NTV.IconButton icon="arrows-rotate" label="Refresh table" variant="secondary" size="m" onClick={v.refresh} />
                 <NTV.IconButton icon="gear" label="Table settings" variant="secondary" size="m" />
               </div>

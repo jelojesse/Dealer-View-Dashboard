@@ -80,11 +80,25 @@
 .pg-media .ml-folder:hover{border-color:var(--accent-action)}
 .pg-media .ml-folder.on{background:var(--accent-action);border-color:var(--accent-action);color:var(--white)}
 .pg-media .ml-folder.on .dv-ib{color:var(--white)}
-.pg-media .ml-card{position:relative;border:2px solid transparent;border-radius:var(--radius-md);overflow:hidden;background:var(--bg-surface);box-shadow:0 0 0 1px var(--container-border);cursor:pointer}
+.pg-media .ml-card{position:relative;border:2px solid transparent;border-radius:var(--radius-md);background:var(--bg-surface);box-shadow:0 0 0 1px var(--container-border);cursor:pointer}
+.pg-media .ml-card .ml-thumb{border-radius:calc(var(--radius-md) - 2px) calc(var(--radius-md) - 2px) 0 0}
 .pg-media .ml-card:hover{box-shadow:0 0 0 1px var(--accent-action)}
 .pg-media .ml-card.sel{border-color:var(--accent-action)}
 .pg-media .ml-badge{position:absolute;left:6px;top:6px;padding:0 6px;border-radius:4px;background:var(--white);font-size:9px;line-height:16px;font-weight:700;letter-spacing:.3px}
 .pg-media .ml-sec{display:flex;align-items:center;gap:6px;border:0;background:none;padding:0;font-family:inherit;font-size:14px;line-height:20px;color:var(--fg-primary);cursor:pointer}
 .pg-media .ml-add{display:flex;align-items:center;justify-content:center;aspect-ratio:16/10;border-radius:var(--radius-md);background:var(--primary-100);border:0;cursor:pointer;color:var(--fg-secondary)}
 .pg-media .ml-add:hover{color:var(--accent-action)}
-.pg-media .ml-check{position:absolute;right:6px;top:6px;width:18px;height:18px;border-radius:4px;background:var(--accent-action);color:#fff;display:flex;align-items:center;justify-content:center}
+/* Card hover (Figma 6160:129446): badge hides; checkbox top-left + round ⋯ top-right appear.
+   Selected cards keep the checkbox visible; an open menu keeps the hover state. */
+.pg-media .ml-cb{position:absolute;left:6px;top:6px;z-index:2;display:flex;opacity:0}
+.pg-media .ml-cb .ntv-check__box{background:var(--white)}
+.pg-media .ml-cb .ntv-check__box.is-on{background:var(--accent-action)}
+.pg-media .ml-more{position:absolute;right:6px;top:6px;z-index:3;opacity:0}
+.pg-media .ml-card:hover .ml-badge,.pg-media .ml-card:focus-within .ml-badge,.pg-media .ml-card.is-menu .ml-badge,.pg-media .ml-card.sel .ml-badge{visibility:hidden}
+.pg-media .ml-card:hover .ml-cb,.pg-media .ml-card:focus-within .ml-cb,.pg-media .ml-card.is-menu .ml-cb,.pg-media .ml-card.sel .ml-cb,
+.pg-media .ml-card:hover .ml-more,.pg-media .ml-card:focus-within .ml-more,.pg-media .ml-card.is-menu .ml-more{opacity:1}
+.pg-media .ml-card.is-menu{z-index:5}
+.pg-media .ml-eye{color:var(--fg-secondary)}
+/* All Folders modal (Figma 6160:132420) */
+.pg-media .ml-afgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-content:start;height:364px;overflow-y:auto;padding:12px;border-radius:var(--radius-md);background:var(--bg-app)}
+.pg-media .ml-folder--big{height:60px;padding:0 10px 0 16px;gap:16px;font-size:14px;line-height:20px}

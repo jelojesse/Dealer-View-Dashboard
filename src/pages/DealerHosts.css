@@ -20,6 +20,7 @@
 .pg-hosts .dv-kv>span:first-child{font-size:12px;line-height:20px;color:var(--fg-secondary)}
 .pg-hosts .dv-kv>span:last-child{font-size:14px;line-height:24px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pg-hosts .dv-table{overflow:auto;border:1px solid var(--container-border);border-radius:var(--radius-md);background:var(--bg-surface)}
+.pg-hosts .dv-table{max-height:560px}
 .pg-hosts .dv-tr{display:grid;align-items:center;min-height:44px;border-top:1px solid var(--container-border);font-size:12px;line-height:20px}
 .pg-hosts .dv-tr>div{padding:0 14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .pg-hosts .dv-tr.dv-th{position:sticky;top:0;z-index:1;border-top:0;background:var(--bg-app);font-weight:700;color:var(--fg-secondary);align-items:stretch}
@@ -77,3 +78,4 @@
 .pg-hosts .dv-kv2>span:last-child{font-weight:600;color:var(--fg-primary)}
 .pg-hosts .ax-y{position:absolute;text-align:right;transform:translateY(-50%);font-size:10px;line-height:12px;color:var(--fg-secondary)}
 .pg-hosts .ax-x{position:absolute;transform:translateX(-50%);font-size:12px;line-height:14px;color:var(--fg-secondary);white-space:nowrap}
+.pg-hosts .hs-top{display:flex;flex-direction:column;gap:10px;padding:16px;background:var(--bg-app);border:1px solid var(--container-border);border-radius:var(--radius-md)}
