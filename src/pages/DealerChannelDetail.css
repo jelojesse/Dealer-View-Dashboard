@@ -75,3 +75,21 @@
 .pg-channel-detail .dv-kv2{display:flex;flex-direction:column;font-size:12px;line-height:18px}
 .pg-channel-detail .dv-kv2>span:first-child{color:var(--fg-secondary)}
 .pg-channel-detail .dv-kv2>span:last-child{font-weight:600;color:var(--fg-primary)}
+/* Channel Contents toolbar: every control 40px tall, 14/20 button labels */
+.pg-channel-detail .ch-toolbar .ntv-btn{font-size:14px;line-height:20px}
+.pg-channel-detail .ch-toolbar .ntv-btn.is-open{border-color:var(--accent-action);color:var(--accent-action)}
+.pg-channel-detail .ch-toolbar .dv-vt button{width:40px;height:38px}
+/* Content tiles: selected (marked) + picked states */
+.pg-channel-detail .ch-tile{position:relative;padding:0;border:2px solid var(--container-border);border-radius:var(--radius-md);overflow:hidden;background:var(--bg-surface);cursor:pointer;text-align:left;font-family:inherit}
+.pg-channel-detail .ch-tile:hover{border-color:var(--primary-300)}
+.pg-channel-detail .ch-tile.is-picked{border-color:var(--accent-action)}
+.pg-channel-detail .ch-tile.is-marked{border-color:var(--accent-action);background:var(--accent-30)}
+.pg-channel-detail .ch-tile.is-marked .dv-thumb::after{content:"";position:absolute;inset:0;background:var(--accent-action);opacity:.18}
+.pg-channel-detail .ch-tile.is-reorder{cursor:grab}
+.pg-channel-detail .ch-tile.is-drag{opacity:.45}
+.pg-channel-detail .ch-badge{position:absolute;left:6px;top:6px;z-index:1;padding:0 6px;border-radius:4px;background:var(--white);font-size:9px;line-height:16px;font-weight:700}
+.pg-channel-detail .ch-tile__check{position:absolute;right:6px;top:6px;z-index:1;display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:4px;background:var(--white);color:var(--fg-secondary)}
+.pg-channel-detail .ch-tile__check .ntv-check{gap:0}
+.pg-channel-detail .ch-tile__name{padding:6px 8px 0;font-size:11px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--fg-primary)}
+.pg-channel-detail .ch-tile__meta{display:flex;justify-content:space-between;padding:0 8px 6px;font-size:10px;line-height:16px;color:var(--fg-secondary)}
+.pg-channel-detail .ch-list .dv-tr>div:first-child{padding:0 0 0 12px;text-overflow:clip;display:flex;align-items:center}

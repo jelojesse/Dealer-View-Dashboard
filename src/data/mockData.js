@@ -3883,6 +3883,7 @@ export const D = {
       "name": "Aqua Pulse",
       "image": "images/6adab0ca96b86926f11aad7f0eb7b9f2.jpg",
       "genre": "Documentary",
+      "genres": ["Documentary", "Nature", "Animals"],
       "mins": 20,
       "contents": 19,
       "mine": false
@@ -3892,6 +3893,7 @@ export const D = {
       "name": "Beyond the Blue",
       "image": "images/90dfb812256e36dad7fc3b34686400c4.jpg",
       "genre": "Documentary",
+      "genres": ["Documentary", "Nature", "Education", "Animals"],
       "mins": 15,
       "contents": 7,
       "mine": true
@@ -3901,6 +3903,7 @@ export const D = {
       "name": "BioVerse",
       "image": "images/ac49ae4e81b9c13eb3230fa56905ecb2.jpg",
       "genre": "Education",
+      "genres": ["Education", "Documentary"],
       "mins": 34,
       "contents": 13,
       "mine": false
@@ -3910,6 +3913,7 @@ export const D = {
       "name": "DreamLoom",
       "image": "images/7ee183964219b9fe530118053af6740e.jpg",
       "genre": "Education",
+      "genres": ["Education", "Entertainment", "Lifestyle"],
       "mins": 30,
       "contents": 6,
       "mine": false
@@ -3919,6 +3923,7 @@ export const D = {
       "name": "Elemental Earth",
       "image": "images/71c8a33daa079ffdae1246994804cdca.jpg",
       "genre": "Nature",
+      "genres": ["Nature", "Documentary", "Education", "Animals"],
       "mins": 20,
       "contents": 31,
       "mine": true
@@ -3928,6 +3933,7 @@ export const D = {
       "name": "Fit Vibe",
       "image": "images/a89f7d2c385bc9099871fa80cdf1556f.jpg",
       "genre": "Lifestyle",
+      "genres": ["Lifestyle"],
       "mins": 5,
       "contents": 4,
       "mine": true
@@ -3937,6 +3943,7 @@ export const D = {
       "name": "FlavorFrame",
       "image": "images/0627c2363858277fcaaa53752275874e.jpg",
       "genre": "Lifestyle",
+      "genres": ["Lifestyle", "Entertainment"],
       "mins": 25,
       "contents": 12,
       "mine": true
@@ -3946,6 +3953,7 @@ export const D = {
       "name": "Fun Central",
       "image": "images/205de5a990ca3320d5f226e4e75aa37e.jpg",
       "genre": "Education",
+      "genres": ["Education", "Entertainment", "Animals"],
       "mins": 20,
       "contents": 19,
       "mine": false
@@ -3955,6 +3963,7 @@ export const D = {
       "name": "Golden Horizon",
       "image": "images/bcafa59b489a3c975c169a3430d7397b.jpg",
       "genre": "Entertainment",
+      "genres": ["Entertainment", "Lifestyle", "Documentary"],
       "mins": 15,
       "contents": 7,
       "mine": false
@@ -3964,6 +3973,7 @@ export const D = {
       "name": "The Hidden Cove",
       "image": "images/8aaf5411170b2384e892ffe6786f0091.jpg",
       "genre": "Nature",
+      "genres": ["Nature", "Animals", "Documentary"],
       "mins": 34,
       "contents": 13,
       "mine": true
@@ -3973,6 +3983,7 @@ export const D = {
       "name": "High Thread",
       "image": "images/f54e623e36f4e8e92e2308d40c139f1a.jpg",
       "genre": "Fashion",
+      "genres": ["Fashion", "Lifestyle"],
       "mins": 30,
       "contents": 6,
       "mine": false
@@ -3982,6 +3993,7 @@ export const D = {
       "name": "Kingdom Unleashed",
       "image": "images/4779fa8dbebad332e33feef08f84982f.jpg",
       "genre": "Animals",
+      "genres": ["Animals", "Nature", "Documentary", "Education"],
       "mins": 20,
       "contents": 31,
       "mine": false
@@ -3991,6 +4003,7 @@ export const D = {
       "name": "Mind Hub",
       "image": "images/6bf7d122265d38cd9e9cfebb15ab95b3.jpg",
       "genre": "Education",
+      "genres": ["Education", "Lifestyle"],
       "mins": 5,
       "contents": 4,
       "mine": true
@@ -4000,6 +4013,7 @@ export const D = {
       "name": "MindSpree",
       "image": "images/315f0e5abe205ed32ae3ca66d044665a.jpg",
       "genre": "Education",
+      "genres": ["Education"],
       "mins": 25,
       "contents": 12,
       "mine": false
@@ -4009,6 +4023,7 @@ export const D = {
       "name": "NextTGen Car",
       "image": "images/36a30731a635969584e0501f95b2e369.jpg",
       "genre": "Technology",
+      "genres": ["Technology", "Entertainment", "Lifestyle"],
       "mins": 20,
       "contents": 19,
       "mine": false
@@ -4018,6 +4033,7 @@ export const D = {
       "name": "Play Core",
       "image": "images/02b29c7340204f5ef58d946101ef7179.jpg",
       "genre": "Entertainment",
+      "genres": ["Entertainment", "Technology"],
       "mins": 15,
       "contents": 7,
       "mine": false
@@ -4027,6 +4043,7 @@ export const D = {
       "name": "RevLine",
       "image": "images/079f989423297f488279a6ca14a2b905.jpg",
       "genre": "Technology",
+      "genres": ["Technology", "Entertainment"],
       "mins": 34,
       "contents": 13,
       "mine": false
@@ -4036,6 +4053,7 @@ export const D = {
       "name": "ShredZone",
       "image": "images/9993a2afdfc2fe0bb3a4af982819f67d.jpg",
       "genre": "Entertainment",
+      "genres": ["Entertainment", "Lifestyle", "Technology", "Fashion"],
       "mins": 30,
       "contents": 6,
       "mine": false
@@ -4045,6 +4063,7 @@ export const D = {
       "name": "SketchQuest",
       "image": "images/0454fc2c195f0f36db40016f48589ca7.jpg",
       "genre": "Entertainment",
+      "genres": ["Entertainment", "Education"],
       "mins": 20,
       "contents": 31,
       "mine": false
@@ -4054,6 +4073,7 @@ export const D = {
       "name": "Strand & Shine",
       "image": "images/7b0e162a24e32de08e1fdc2c0d66659d.jpg",
       "genre": "Lifestyle",
+      "genres": ["Lifestyle", "Fashion"],
       "mins": 5,
       "contents": 4,
       "mine": false
@@ -4063,6 +4083,7 @@ export const D = {
       "name": "Swamp Echoes",
       "image": "images/e5502f9b3002e87199c05b0af5ea9327.jpg",
       "genre": "Animals",
+      "genres": ["Animals", "Nature", "Documentary"],
       "mins": 25,
       "contents": 12,
       "mine": false
@@ -4072,6 +4093,7 @@ export const D = {
       "name": "The Vibe Lane",
       "image": "images/3c685ce959d7b32845912dfa534d39df.jpg",
       "genre": "Entertainment",
+      "genres": ["Entertainment", "Lifestyle", "Fashion"],
       "mins": 20,
       "contents": 19,
       "mine": false
@@ -4081,6 +4103,7 @@ export const D = {
       "name": "World Beat",
       "image": "images/d9ee7dda6996f0add6a3253424f111e7.jpg",
       "genre": "Lifestyle",
+      "genres": ["Lifestyle", "Entertainment"],
       "mins": 15,
       "contents": 7,
       "mine": false

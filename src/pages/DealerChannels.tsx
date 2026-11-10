@@ -11,30 +11,43 @@ import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
 import { addNav, contains, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
+import FilterBy, { passes } from '../components/FilterBy';
 import './DealerChannels.css';
 
 /* ============================== Logic ============================== */
 
 function mineIds() { try { var v = JSON.parse(localStorage.getItem('ntvChannels') || 'null'); if (v) return v; } catch (e) {} return D.channels.filter(function (c) { return c.mine; }).map(function (c) { return c.id; }); }
+var SORTS = ['Name (A–Z)', 'Name (Z–A)', 'Most Contents', 'Longest'];
+/* Pale tint per genre for the card tag (DS status tints). */
+var GENRE_TINT = { Documentary: ['var(--info-050)', 'var(--info-600)'], Education: ['var(--success-050)', 'var(--success-600)'], Technology: ['var(--success-050)', 'var(--success-600)'], Nature: ['var(--danger-050)', 'var(--danger-600)'], Fashion: ['var(--danger-050)', 'var(--danger-600)'], Lifestyle: ['var(--danger-050)', 'var(--danger-main)'], Animals: ['var(--warning-050)', 'var(--warning-600)'], Entertainment: ['var(--purple-050)', 'var(--purple-600)'] };
+function genresOf(c) { return c.genres && c.genres.length ? c.genres : [c.genre]; }
 function saveMine(ids) { try { localStorage.setItem('ntvChannels', JSON.stringify(ids)); } catch (e) {} }
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { mine: props.empty ? [] : mineIds(), genre: 'All', sort: 'Name (A–Z)', view: 'grid', query: '', showcase: false, scQ: '', toast: null }; }
-  componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
+  constructor(props) { super(props); this.state = { mine: props.empty ? [] : mineIds(), filters: {}, sortOpen: false, sort: 'Name (A–Z)', view: 'grid', query: '', showcase: false, scQ: '', toast: null }; }
+  componentDidMount() {
+    var self = this; this._sortRef = this._sortRef || React.createRef();
+    this._onDoc = function (e) { if (self.state.sortOpen && self._sortRef.current && !self._sortRef.current.contains(e.target)) self.setState({ sortOpen: false }); };
+    this._onKey = function (e) { if (e.key === 'Escape' && self.state.sortOpen) self.setState({ sortOpen: false }); };
+    document.addEventListener('mousedown', this._onDoc); document.addEventListener('keydown', this._onKey);
+  }
+  componentWillUnmount() { if (this._tt) clearTimeout(this._tt); document.removeEventListener('mousedown', this._onDoc); document.removeEventListener('keydown', this._onKey); }
   renderVals() {
     var self = this, s = this.state;
     var mine = D.channels.filter(function (c) { return s.mine.indexOf(c.id) !== -1; });
-    var genres = ['All']; mine.forEach(function (c) { if (genres.indexOf(c.genre) === -1) genres.push(c.genre); });
-    var shown = mine.filter(function (c) { return (s.genre === 'All' || c.genre === s.genre) && contains(c.name, s.query); }).sort(function (a, b) { if (s.sort === 'Most Contents') return b.contents - a.contents; if (s.sort === 'Longest') return b.mins - a.mins; return s.sort === 'Name (Z–A)' ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name); });
+    if (!this._sortRef) this._sortRef = React.createRef();
+    var genres = []; mine.forEach(function (c) { genresOf(c).forEach(function (g) { if (genres.indexOf(g) === -1) genres.push(g); }); }); genres.sort();
+    var shown = mine.filter(function (c) { return genresOf(c).some(function (g) { return passes(s.filters, 'genre', g); }) && contains(c.name, s.query); }).sort(function (a, b) { if (s.sort === 'Most Contents') return b.contents - a.contents; if (s.sort === 'Longest') return b.mins - a.mins; return s.sort === 'Name (Z–A)' ? b.name.localeCompare(a.name) : a.name.localeCompare(b.name); });
     return {
       none: null, i40: 40, w1100: 1100,
-      i10: 10, i14: 14, genreOptions: genres.map(function (g) { return g === 'All' ? 'All Genres' : g; }), genreValue: s.genre === 'All' ? '' : s.genre, setGenre: function (v) { var x = val(v); self.setState({ genre: x === 'All Genres' ? 'All' : x }); },
-      sortOptions: ['Name (A–Z)', 'Name (Z–A)', 'Most Contents', 'Longest'], sort: s.sort, setSort: function (v) { self.setState({ sort: val(v) }); },
+      i10: 10, i14: 14, i12: 12,
+      filterGroups: [{ key: 'genre', title: 'Genre', options: genres }], filters: s.filters, setFilters: function (x) { self.setState({ filters: x }); },
+      sortRef: this._sortRef, sortOpen: s.sortOpen, toggleSort: function () { self.setState({ sortOpen: !self.state.sortOpen }); },
+      sortItems: SORTS.map(function (o) { return { label: o, on: s.sort === o, pick: function () { self.setState({ sort: o, sortOpen: false }); } }; }),
       isGrid: s.view === 'grid', isList: s.view === 'list', toGrid: function () { self.setState({ view: 'grid' }); }, toList: function () { self.setState({ view: 'list' }); },
       shown: shown.length, mineCount: mine.length,
-      genres: genres.map(function (g) { return { label: g, on: s.genre === g, pick: function () { self.setState({ genre: g }); } }; }),
       query: s.query, setQuery: function (v) { self.setState({ query: val(v) }); },
       hasMine: mine.length > 0, noMine: mine.length === 0, noMatch: mine.length > 0 && shown.length === 0,
-      mine: shown.map(function (c, i) { return { n: i + 1, mins: c.mins, contents: c.contents, name: c.name, image: c.image, genre: c.genre, meta: c.mins + ' min loop · ' + c.contents + ' contents', open: navFn('DealerChannelDetail.dc.html', { id: c.id }) }; }),
+      mine: shown.map(function (c, i) { var gs = genresOf(c), tint = GENRE_TINT[gs[0]] || GENRE_TINT.Documentary; return { n: i + 1, tag: gs[0] + (gs.length > 1 ? ' +' + (gs.length - 1) : ''), tagBg: tint[0], tagFg: tint[1], genreList: gs.join(', '), mins: c.mins, contents: c.contents, name: c.name, image: c.image, genre: c.genre, meta: c.mins + ' min loop · ' + c.contents + ' contents', open: navFn('DealerChannelDetail.dc.html', { id: c.id }) }; }),
       showcase: s.showcase, openShowcase: function () { self.setState({ showcase: true, scQ: '' }); }, closeShowcase: function () { self.setState({ showcase: false }); },
       scQ: s.scQ, setScQ: function (v) { self.setState({ scQ: val(v) }); },
       scSub: D.channels.length + ' channels available · ' + mine.length + ' in My Channels',
@@ -65,12 +78,20 @@ defineTemplate(Component, (v) => (
             <NTV.Button variant="primary" size="xl" iconRight="arrow-up-right-from-square" onClick={v.openShowcase}>Go to Showcase</NTV.Button>
           </div>
           <div className="dv-between">
-            <div className="dv-row" style={{ gap: "12px" }}>
-              <div style={{ width: "210px", flex: "none" }}>
-                <NTV.Select size="l" placeholder="Filter by genre" options={v.genreOptions} value={v.genreValue} onChange={v.setGenre} />
-              </div>
-              <div style={{ width: "210px", flex: "none" }}>
-                <NTV.Select size="l" placeholder="Sort by" options={v.sortOptions} value={v.sort} onChange={v.setSort} />
+            <div className="dv-row ch-toolbar" style={{ gap: "12px" }}>
+              <FilterBy groups={v.filterGroups} value={v.filters} onChange={v.setFilters} />
+              <div className="ch-sort" ref={v.sortRef}>
+                <NTV.Button variant="secondary" size="xl" iconLeft="sort-down" className={v.sortOpen ? "is-open" : ""} aria-haspopup="menu" aria-expanded={v.sortOpen} onClick={v.toggleSort}>Sort by</NTV.Button>
+                {v.sortOpen ? (
+                  <div className="dv-menu" role="menu" aria-label="Sort by" style={{ top: "48px", left: "0", minWidth: "210px" }}>
+                    {(v.sortItems || []).map((_o, $index) => (
+                      <button key={$index} type="button" role="menuitemradio" aria-checked={_o?.on} className="dv-mi" onClick={_o?.pick} style={{ justifyContent: "space-between", fontWeight: _o?.on ? "700" : "400", color: _o?.on ? "var(--accent-action)" : "var(--fg-primary)" }}>
+                        <span>{_o?.label}</span>
+                        {_o?.on ? <NTV.Icon name="check" size={v.i12} /> : null}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </div>
             <div className="dv-row" style={{ gap: "12px" }}>
@@ -88,14 +109,14 @@ defineTemplate(Component, (v) => (
                 <div className="dv-grid" style={{ gridTemplateColumns: "repeat(8, minmax(0, 1fr))", gap: "14px" }}>
                 {(v.mine || []).map((_c, $index) => (
                   <React.Fragment key={$index}>
-                    <a className="ch-card" href="DealerChannelDetail.dc.html" onClick={_c?.open} style={{ border: "0", background: "transparent" }} data-nav={_c?.openNav}>
-                      <div className="dv-thumb" style={{ aspectRatio: "4 / 3", borderRadius: "var(--radius-md)" }}><img src={_c?.image} alt="" /></div>
-                      <div style={{ padding: "8px 2px 0", display: "flex", flexDirection: "column", gap: "2px" }}>
-                        <div className="dv-between" style={{ flexWrap: "nowrap", gap: "6px" }}>
-                          <strong style={{ fontSize: "13px", lineHeight: "20px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{_c?.name}</strong>
-                          <span className="dv-pill" style={{ background: "var(--info-050)", color: "var(--info-600)", height: "18px", fontSize: "9px", padding: "0 6px" }}>{_c?.genre}</span>
+                    <a className="ch-card" href="DealerChannelDetail.dc.html" onClick={_c?.open} data-nav={_c?.openNav}>
+                      <div className="dv-thumb ch-card__cover"><img src={_c?.image} alt="" /></div>
+                      <div className="ch-card__info">
+                        <div className="ch-card__top">
+                          <span className="ch-card__name" title={_c?.name}>{_c?.name}</span>
+                          <span className="ch-tag" title={_c?.genreList} style={{ background: `${s(_c?.tagBg)}`, color: `${s(_c?.tagFg)}` }}>{_c?.tag}</span>
                         </div>
-                        <div className="dv-between" style={{ fontSize: "10px", lineHeight: "16px", color: "var(--fg-secondary)" }}>
+                        <div className="ch-card__meta">
                           <span className="dv-row" style={{ gap: "4px" }}>
                             <NTV.Icon name="clock" size={v.i10} />
                             {_c?.mins}{" mins"}
@@ -132,7 +153,7 @@ defineTemplate(Component, (v) => (
                           <div>
                             <a className="dv-a" href="DealerChannelDetail.dc.html" onClick={_c?.open} data-nav={_c?.openNav}>{_c?.name}</a>
                           </div>
-                          <div>{_c?.genre}</div>
+                          <div>{_c?.genreList}</div>
                           <div>{_c?.mins}{" mins"}</div>
                           <div>{_c?.contents}</div>
                         </div>
