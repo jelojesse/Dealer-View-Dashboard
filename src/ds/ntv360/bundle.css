@@ -17,7 +17,11 @@ button { font-family: inherit; }
 .ntv-btn--s  { height: 28px; padding: 4px 8px; font-size: 12px; line-height: 16px; }
 .ntv-btn--m  { height: 32px; padding: 6px 10px; gap: var(--rem-2-half); font-size: 14px; line-height: 20px; }
 .ntv-btn--l  { height: 36px; padding: 8px 12px; gap: var(--rem-2-half); font-size: 14px; line-height: 20px; }
-.ntv-btn--xl { height: 40px; padding: 10px 14px; gap: var(--rem-2-half); font-size: 16px; line-height: 24px; }
+.ntv-btn--xl { height: 40px; padding: 10px 14px; gap: var(--rem-2-half); font-size: 14px; line-height: 20px; }
+/* Figma DS (Primary Button, node 6612:22038): label -> trailing icon gap is 8px on M, 20px on L/XL */
+.ntv-btn--m > :not(.ntv-icon) + .ntv-icon { margin-left: -2px; }
+.ntv-btn--l > :not(.ntv-icon) + .ntv-icon,
+.ntv-btn--xl > :not(.ntv-icon) + .ntv-icon { margin-left: 10px; }
 .ntv-btn--primary.ntv-btn--default { background: var(--gradient-button); color: var(--white); }
 .ntv-btn--primary.ntv-btn--default:hover { background: var(--gradient-button-hover); }
 .ntv-btn--primary.ntv-btn--active, .ntv-btn--primary.ntv-btn--default:active { background: var(--bg-active); color: var(--white); }
@@ -127,7 +131,41 @@ button { font-family: inherit; }
 .ntv-option--row:hover { background: var(--bg-app); }
 .ntv-option__left { display: inline-flex; align-items: center; gap: var(--rem-2-half); }
 .ntv-filterdd { position: relative; display: inline-block; }
-.ntv-filterdd__menu { width: 200px; }
+.ntv-filterdd__menu { width: 228px; z-index: 40; padding: 8px 0; background: var(--bg-surface); box-shadow: var(--shadow-card); }
+.ntv-filterdd__backdrop { position: fixed; inset: 0; z-index: 30; }
+.ntv-filterdd__group + .ntv-filterdd__group { border-top: 1px solid var(--container-border); margin-top: 4px; padding-top: 4px; }
+.ntv-filterdd__head .ntv-icon { color: var(--fg-primary); }
+.ntv-filterdd__item { display: flex; min-height: 40px; padding: 0 12px; font-size: 14px; line-height: 20px; color: var(--fg-secondary); }
+.ntv-filterdd__item:hover { background: var(--bg-app); }
+/* Column Visibility overlay (Figma DS node 7946:16738) */
+.ntv-colvis { position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; width: 289px; display: flex; flex-direction: column; overflow: hidden;
+  background: var(--bg-surface); border: 1px solid var(--container-border); border-radius: var(--radius-lg, 10px); box-shadow: var(--shadow-card); text-align: left; }
+.ntv-colvis__body { display: flex; flex-direction: column; gap: 16px; padding: 0 20px 20px; }
+.ntv-colvis__head { display: flex; align-items: center; justify-content: space-between; padding-top: 20px; margin-bottom: -16px; padding-bottom: 16px; }
+.ntv-colvis__title { font: 700 14px/24px var(--font-sans); color: var(--fg-primary); }
+.ntv-colvis__close { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; padding: 0; border: 0; background: none; color: var(--fg-primary); cursor: pointer; }
+.ntv-colvis__close:hover { color: var(--accent-action); }
+.ntv-colvis__reset { width: 100%; }
+.ntv-colvis__list { display: flex; flex-direction: column; gap: 10px; height: 155px; overflow-y: auto; overflow-x: hidden; }
+.ntv-colvis__row { display: flex; gap: 15px; font-size: 12px; line-height: 20px; color: var(--fg-primary); flex: none; }
+.ntv-colvis__foot { display: flex; align-items: center; justify-content: center; height: 57px; padding: 10px; box-sizing: border-box;
+  background: var(--bg-app); border-top: 1px solid var(--container-border); font: 600 12px/20px var(--font-sans); color: var(--fg-secondary); }
+.ntv-colvis__backdrop { position: fixed; inset: 0; z-index: 30; }
+/* Active filter chips (Figma DS node 18843:18133) */
+.ntv-activefilters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font: 400 12px/18px var(--font-sans); color: var(--fg-secondary); }
+.ntv-activefilters__clear { border: 0; background: none; padding: 0; font: inherit; color: var(--accent-action); cursor: pointer; }
+.ntv-activefilters__clear:hover { text-decoration: underline; }
+.ntv-fchip { --t: var(--red-orange-main); display: inline-flex; align-items: center; gap: 10px; height: 24px; padding: 0 12px; box-sizing: border-box;
+  border: 1px solid var(--t); border-radius: var(--radius-sm); background: color-mix(in srgb, var(--t) 10%, var(--bg-surface));
+  font: 400 12px/18px var(--font-sans); color: var(--t); white-space: nowrap; }
+.ntv-fchip__text { display: inline-flex; gap: 5px; }
+.ntv-fchip__text strong { font-weight: 700; }
+.ntv-fchip__x { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; padding: 0; border: 0; border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--t) 18%, transparent); color: var(--t); cursor: pointer; }
+.ntv-fchip__x:hover { background: var(--t); color: var(--white); }
+.ntv-fchip--red-orange { --t: var(--red-orange-main); } .ntv-fchip--info { --t: var(--info-main); } .ntv-fchip--teal { --t: var(--teal-main); }
+.ntv-fchip--purple { --t: var(--purple-main); } .ntv-fchip--hot-pink { --t: var(--hot-pink-main); } .ntv-fchip--warning { --t: var(--warning-600); }
+.ntv-fchip--success { --t: var(--success-600, var(--success-main)); } .ntv-fchip--danger { --t: var(--danger-main); }
 .ntv-filterdd--right .ntv-menu { left: auto; right: 0; }
 .ntv-autocomplete { display: flex; flex-direction: column; gap: var(--rem-2); }
 .ntv-autocomplete__field { border-color: var(--primary-100); }
@@ -306,10 +344,6 @@ td.ntv-table__statuscell.is-offline { background: var(--status-offline); } td.nt
 .ntv-tabletools { display: flex; justify-content: space-between; align-items: center; gap: var(--rem-5); }
 .ntv-tabletools__right { display: flex; align-items: center; gap: var(--rem-4); flex: 1; justify-content: flex-end; }
 .ntv-tabletools__search { flex: 1; max-width: 700px; }
-.ntv-colvis { width: 280px; background: var(--bg-surface); border: 1px solid var(--container-border); border-radius: var(--radius-lg); overflow: hidden; }
-.ntv-colvis__head { display: flex; justify-content: space-between; align-items: center; padding: var(--rem-5) var(--rem-5) 0; font: 700 14px/24px var(--font-sans); color: var(--fg-primary); }
-.ntv-colvis__body { display: flex; flex-direction: column; gap: var(--rem-3); padding: var(--rem-5); }
-.ntv-colvis__foot { padding: var(--rem-5); background: var(--bg-app); text-align: center; font: 400 12px/20px var(--font-sans); color: var(--fg-secondary); border-top: 1px solid var(--container-border); }
 
 /* ---- Overlays ---- */
 .ntv-modal { display: flex; flex-direction: column; gap: var(--modal-gap); padding: var(--modal-padding); background: var(--bg-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); max-width: 100%; }
