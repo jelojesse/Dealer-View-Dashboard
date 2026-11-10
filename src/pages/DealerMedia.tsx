@@ -203,10 +203,7 @@ defineTemplate(Component, (v) => (
           <div className="dv-between">
             <h1 className="dv-h1" style={{ fontSize: "20px", lineHeight: "32px" }}>Media Library</h1>
             <div className="dv-row">
-              <button type="button" className="ntv-btn ntv-btn--primary ntv-btn--default ntv-btn--xl" onClick={v.newFolder} style={{ background: "var(--red-orange-main)" }}>
-                <span>New Folder</span>
-                <NTV.Icon name="folder-plus" size={v.i14} />
-              </button>
+              <NTV.Button variant="secondary" size="xl" iconRight="folder-plus" onClick={v.newFolder}>New Folder</NTV.Button>
               <NTV.Button variant="primary" size="xl" iconRight="arrow-up-from-bracket" onClick={v.openUpload}>Upload Media</NTV.Button>
             </div>
           </div>
@@ -243,8 +240,8 @@ defineTemplate(Component, (v) => (
               <div style={{ width: "210px", flex: "none" }}>
                 <NTV.Select size="l" placeholder="Media Type" options={v.typeOptions} value={v.typeValue} onChange={v.setType} />
               </div>
-              <NTV.Button variant="primary" size="xl" iconRight="arrow-down-a-z" onClick={v.toggleSort}>{v.sortLabel}</NTV.Button>
-              <NTV.Button variant="primary" size="xl" iconRight="user" onClick={v.openFilter}>Filter By User</NTV.Button>
+              <NTV.Button variant="secondary" size="xl" iconRight="arrow-down-a-z" onClick={v.toggleSort}>{v.sortLabel}</NTV.Button>
+              <NTV.Button variant="secondary" size="xl" iconRight="user" onClick={v.openFilter}>Filter By User</NTV.Button>
               {(v.chipsOn || []).map((_c, $index) => (
                 <React.Fragment key={$index}>
                   <button type="button" className="dv-chip" aria-pressed="true" onClick={_c?.clear}>
