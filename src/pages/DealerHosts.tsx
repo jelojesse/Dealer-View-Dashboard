@@ -17,6 +17,11 @@ import './DealerHosts.css';
 /* ============================== Logic ============================== */
 
 var HCOL = { Active: 'var(--success-main)', Inactive: 'var(--danger-main)' };
+var LIC_RANGES = [
+  { key: '0-5', label: '0-5 Licenses', min: 0, max: 5 },
+  { key: '6-10', label: '6-10 Licenses', min: 6, max: 10 },
+  { key: '11+', label: '11 and Above Licenses', min: 11, max: Infinity }
+];
 var PAGE = 10; // rows shown at first and added by "Show More..."
 var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 var TZ_BY_STATE = { AK: 'US/Alaska', HI: 'US/Hawaii', AZ: 'US/Arizona',
@@ -26,12 +31,13 @@ var TZ_BY_STATE = { AK: 'US/Alaska', HI: 'US/Hawaii', AZ: 'US/Arizona',
 var tzFor = function (st) { return TZ_BY_STATE[st] || 'US/Eastern'; };
 var SERIES = { '2026': [12, 15, 18, 21, 25, 27, 30, 32, 35, 38, 41, 43], '2025': [2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] };
 class Component extends DCLogic {
-  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', status: f.status || '', analytics: !!props.analytics, limit: PAGE, blocked: null, month: '', year: '2026', graph: 'Line Graph', hover: -1, filterOpen: false, toast: null }; }
+  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', statuses: f.status ? [f.status] : [], licRanges: [], fOpen: { status: true, lic: true }, analytics: !!props.analytics, limit: PAGE, blocked: null, month: '', year: '2026', graph: 'Line Graph', hover: -1, filterOpen: false, toast: null }; }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
     var self = this, s = this.state;
     var count = function (k) { return D.hosts.filter(function (h) { return h.status === k; }).length; };
-    var matches = D.hosts.filter(function (h) { return (!s.status || h.status === s.status) && contains(h.name + ' ' + h.address + ' ' + h.city + ' ' + h.state + ' ' + h.zip + ' ' + h.dma + ' ' + h.category, s.query.replace(/^#/, '')); });
+    var inLic = function (h) { var n = h.lic.length; return !s.licRanges.length || LIC_RANGES.some(function (r) { return s.licRanges.indexOf(r.key) !== -1 && n >= r.min && n <= r.max; }); };
+    var matches = D.hosts.filter(function (h) { return (!s.statuses.length || s.statuses.indexOf(h.status) !== -1) && inLic(h) && contains(h.name + ' ' + h.address + ' ' + h.city + ' ' + h.state + ' ' + h.zip + ' ' + h.dma + ' ' + h.category, s.query.replace(/^#/, '')); });
     var vis = matches.slice(0, s.limit);
     var tot = SERIES[s.year] || SERIES['2026'], fresh = tot.map(function (v, i) { return i ? v - tot[i - 1] : (s.year === '2026' ? 1 : 2); });
     var step = 820 / 11, X = function (i) { return 50 + i * step; };
@@ -61,15 +67,24 @@ class Component extends DCLogic {
       clearHover: function () { self.setState({ hover: -1 }); },
       top: top.map(function (h, i) { return { n: i + 1, name: h.name, lic: h.lic.length, open: navFn('DealerHostDetail.dc.html', { id: h.id }) }; }),
       legend: [{ label: 'Active', color: HCOL.Active }, { label: 'Inactive', color: HCOL.Inactive }],
-      statusOptions: ['All Status', 'Active', 'Inactive'], statusValue: s.status || 'All Status',
-      setStatus: function (v) { var x = val(v); self.setState({ status: x === 'All Status' ? '' : x, limit: PAGE }); },
-      filterOpen: s.filterOpen, filterLabel: s.status ? 'Filter by: ' + s.status : 'Filter by',
+      filterOpen: s.filterOpen, filterBtnClass: s.filterOpen ? 'is-open' : '',
+      filterLabel: (s.statuses.length + s.licRanges.length) ? 'Filter by (' + (s.statuses.length + s.licRanges.length) + ')' : 'Filter by',
       toggleFilter: function () { self.setState({ filterOpen: !self.state.filterOpen }); },
       closeFilter: function () { self.setState({ filterOpen: false }); },
-      filterItems: ['All Status', 'Active', 'Inactive'].map(function (o) {
-        var on = (o === 'All Status' ? '' : o) === s.status;
-        return { label: o, on: on, dot: o === 'All Status' ? null : HCOL[o],
-          pick: function () { self.setState({ status: o === 'All Status' ? '' : o, limit: PAGE, filterOpen: false }); } };
+      // Filter panel: collapsible sections of checkboxes (multi-select, applied immediately)
+      filterGroups: [
+        { key: 'status', title: 'Status', field: 'statuses', options: [{ key: 'Active', label: 'Active' }, { key: 'Inactive', label: 'Inactive' }] },
+        { key: 'lic', title: 'Licenses', field: 'licRanges', options: LIC_RANGES }
+      ].map(function (g) {
+        var open = s.fOpen[g.key] !== false;
+        return { title: g.title, open: open, icon: open ? 'minus' : 'plus',
+          toggle: function () { var o = Object.assign({}, self.state.fOpen); o[g.key] = !open; self.setState({ fOpen: o }); },
+          items: g.options.map(function (o) {
+            var sel = self.state[g.field], on = sel.indexOf(o.key) !== -1;
+            return { label: o.label, checked: on, change: function () {
+              var cur = self.state[g.field], nx = on ? cur.filter(function (k) { return k !== o.key; }) : cur.concat([o.key]);
+              var u = { limit: PAGE }; u[g.field] = nx; self.setState(u); } };
+          }) };
       }),
       query: s.query, setQuery: function (v) { self.setState({ query: val(v), limit: PAGE }); },
       rows: vis.map(function (h, i) {
@@ -269,17 +284,25 @@ defineTemplate(Component, (v) => (
           ) : null}
           <div className="dv-between">
             <div style={{ position: "relative", flex: "none" }}>
-              <NTV.Button variant="secondary" size="xl" iconLeft="filter" iconRight={v.none} onClick={v.toggleFilter} aria-haspopup="menu" aria-expanded={v.filterOpen}>{v.filterLabel}</NTV.Button>
+              <NTV.Button variant="secondary" size="xl" iconLeft="filter" iconRight={v.none} className={v.filterBtnClass} onClick={v.toggleFilter}>{v.filterLabel}</NTV.Button>
               {v.filterOpen ? (
                 <>
                   <div style={{ position: "fixed", inset: "0", zIndex: "30" }} onClick={v.closeFilter} />
-                  <div className="dv-menu" role="menu" aria-label="Filter hosts by status" style={{ top: "46px", left: "0", minWidth: "200px" }}>
-                    {(v.filterItems || []).map((_f, $index) => (
-                      <button key={$index} type="button" role="menuitemradio" aria-checked={_f?.on} className="dv-mi" onClick={_f?.pick} style={_f?.on ? { color: "var(--accent-action)", fontWeight: "700" } : undefined}>
-                        {_f?.dot ? <span className="dv-dot" style={{ background: _f.dot }} /> : null}
-                        <span style={{ flex: "1" }}>{_f?.label}</span>
-                        {_f?.on ? <NTV.Icon name="check" size={v.i14} /> : null}
-                      </button>
+                  <div className="hf-panel" role="dialog" aria-label="Filter hosts">
+                    {(v.filterGroups || []).map((_g, $gi) => (
+                      <div key={$gi} className="hf-group">
+                        <button type="button" className="hf-head" onClick={_g?.toggle} aria-expanded={_g?.open}>
+                          <span>{_g?.title}</span>
+                          <NTV.Icon name={_g?.icon} size={v.i14} />
+                        </button>
+                        {_g?.open ? (
+                          <div className="hf-items">
+                            {(_g?.items || []).map((_i, $ii) => (
+                              <NTV.Checkbox key={$ii} className="hf-item" label={_i?.label} checked={_i?.checked} onChange={_i?.change} />
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
                     ))}
                   </div>
                 </>
