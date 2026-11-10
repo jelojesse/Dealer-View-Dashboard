@@ -286,7 +286,7 @@ defineTemplate(Component, (v) => (
                 <NTV.IconButton icon="gear" label="Table settings" variant="secondary" size="m" />
               </div>
             </div>
-            <div className="dv-table">
+            <div className="dv-table hosts-table">
               <div role="table" aria-label="Hosts" style={{ minWidth: "1100px" }}>
                 <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: `${s(v.cols)}` }}>
                   <div style={{ textAlign: "center" }}>#</div>

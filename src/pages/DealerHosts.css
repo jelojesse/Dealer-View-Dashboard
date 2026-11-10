@@ -77,3 +77,5 @@
 .pg-hosts .dv-kv2>span:last-child{font-weight:600;color:var(--fg-primary)}
 .pg-hosts .ax-y{position:absolute;text-align:right;transform:translateY(-50%);font-size:10px;line-height:12px;color:var(--fg-secondary)}
 .pg-hosts .ax-x{position:absolute;transform:translateX(-50%);font-size:12px;line-height:14px;color:var(--fg-secondary);white-space:nowrap}
+/* Hosts table: fixed at header + 10 rows (44px each); "Show More..." rows scroll inside */
+.pg-hosts .dv-table.hosts-table{max-height:calc(44px * 11 + 2px)} /* +2px = top/bottom border */
