@@ -36,7 +36,7 @@ var BLOCK_COLS = [
 ];
 
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { pls: D.playlists.map(function (p) { return Object.assign({}, p); }), tab: 'Playlists', statuses: [], limit: PAGE, hiddenCols: [], hiddenBlockCols: [], blockLimit: PAGE, colsOpen: false, menu: '', query: '', modal: '', fm: null, target: '', toast: null }; }
+  constructor(props) { super(props); this.state = { pls: D.playlists.map(function (p) { return Object.assign({}, p); }), tab: 'Playlists', statuses: [], limit: PAGE, hiddenCols: [], hiddenBlockCols: [], blockLimit: PAGE, menu: '', query: '', modal: '', fm: null, target: '', toast: null }; }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
     var self = this, s = this.state;
@@ -55,7 +55,7 @@ class Component extends DCLogic {
       none: null, i14: 14, w460: 460, w500: 500,
       crumbs: ['Content', 'Playlists'],
       total: s.pls.length, blockTotal: blocks.length, screenTotal: Object.keys(allScreens).length,
-      tabItems: ['Playlists', 'Blocks'], tab: s.tab, setTab: function (x) { self.setState({ tab: x, colsOpen: false }); },
+      tabItems: ['Playlists', 'Blocks'], tab: s.tab, setTab: function (x) { self.setState({ tab: x }); },
       assignedCount: s.pls.filter(function (p) { return p.screens.length; }).length, unassignedCount: s.pls.filter(function (p) { return !p.screens.length; }).length,
       tableTitle: s.tab === 'Playlists' ? 'Playlist Data' : 'Block Data', shown: rows.length, matched: matched.length, hasMore: matched.length > rows.length,
       more: function () { self.setState({ limit: self.state.limit + PAGE }); },
@@ -72,7 +72,8 @@ class Component extends DCLogic {
       bshow: BLOCK_COLS.reduce(function (o, c) { o[c.key] = s.hiddenBlockCols.indexOf(c.key) === -1; return o; }, {}),
       bcols: ['44px'].concat(BLOCK_COLS.filter(function (c) { return s.hiddenBlockCols.indexOf(c.key) === -1; }).map(function (c) { return c.w; })).join(' '),
       btableMin: BLOCK_COLS.reduce(function (n, c) { return n + (s.hiddenBlockCols.indexOf(c.key) === -1 ? c.min : 0); }, 44) + 'px',
-      colsOpen: s.colsOpen, toggleCols: function () { self.setState({ colsOpen: !self.state.colsOpen }); }, closeCols: function () { self.setState({ colsOpen: false }); },
+      // gear only shows when the table has 5+ columns (rule lives in NTV.ColumnVisibilityButton); +1 for '#'
+      tableColCount: (s.tab === 'Blocks' ? BLOCK_COLS : PL_COLS).length + 1,
       colColumns: (s.tab === 'Blocks' ? BLOCK_COLS : PL_COLS).map(function (c) { var hid = s.tab === 'Blocks' ? s.hiddenBlockCols : s.hiddenCols; return { key: c.key, label: c.label, visible: hid.indexOf(c.key) === -1 }; }),
       toggleCol: function (key, on) { var f = self.state.tab === 'Blocks' ? 'hiddenBlockCols' : 'hiddenCols'; var h = self.state[f].filter(function (k) { return k !== key; }); var u = {}; u[f] = on ? h : h.concat([key]); self.setState(u); },
       resetCols: function () { var u = {}; u[self.state.tab === 'Blocks' ? 'hiddenBlockCols' : 'hiddenCols'] = []; self.setState(u); },
@@ -166,15 +167,7 @@ defineTemplate(Component, (v) => (
           <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div className="dv-between">
               <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>{v.tableTitle}</h2>
-              <div style={{ position: "relative" }}>
-                <NTV.IconButton icon="gear" label="Table settings" variant="secondary" size="m" onClick={v.toggleCols} />
-                {v.colsOpen ? (
-                  <>
-                    <div className="ntv-colvis__backdrop" onClick={v.closeCols} />
-                    <NTV.ColumnVisibility columns={v.colColumns} onToggle={v.toggleCol} onReset={v.resetCols} onClose={v.closeCols} />
-                  </>
-                ) : null}
-              </div>
+              <NTV.ColumnVisibilityButton key={v.tab} columns={v.colColumns} tableColumns={v.tableColCount} onToggle={v.toggleCol} onReset={v.resetCols} />
             </div>
             {v.isPl ? (
               <>
