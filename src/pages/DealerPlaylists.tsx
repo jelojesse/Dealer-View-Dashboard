@@ -171,7 +171,7 @@ defineTemplate(Component, (v) => (
             </div>
             {v.isPl ? (
               <>
-                <div className="dv-table pl-table">
+                <div className="dv-table ntv-tablescroll">
                 <div role="table" aria-label="Playlists" style={{ minWidth: v.tableMin }}>
                   <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: `${s(v.cols)}` }}>
                     <div style={{ textAlign: "center" }}>#</div>
@@ -225,7 +225,7 @@ defineTemplate(Component, (v) => (
             ) : null}
             {v.isBlocks ? (
               <>
-                <div className="dv-table pl-table">
+                <div className="dv-table ntv-tablescroll">
                 <div role="table" aria-label="Blocks" style={{ minWidth: v.btableMin }}>
                   <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: `${s(v.bcols)}` }}>
                     <div style={{ textAlign: "center" }}>#</div>

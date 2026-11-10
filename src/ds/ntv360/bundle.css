@@ -152,6 +152,10 @@ button { font-family: inherit; }
   background: var(--bg-app); border-top: 1px solid var(--container-border); font: 600 12px/20px var(--font-sans); color: var(--fg-secondary); }
 .ntv-colvis__backdrop { position: fixed; inset: 0; z-index: 30; }
 .ntv-colvis-anchor { position: relative; display: inline-flex; }
+/* Scrollable table box — shows the header + 10 rows (44px each), extra rows ("Show More...") scroll
+   inside and are clipped; the sticky header stays on top. Set --ntv-table-rows to show a different count. */
+.ntv-tablescroll { overflow: auto; max-height: calc(44px * (var(--ntv-table-rows, 10) + 1) + 2px); box-sizing: border-box;
+  border: 1px solid var(--container-border); border-radius: var(--radius-md); background: var(--bg-surface); }
 /* Active filter chips (Figma DS node 18843:18133) */
 .ntv-activefilters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font: 400 12px/18px var(--font-sans); color: var(--fg-secondary); }
 .ntv-activefilters__clear { border: 0; background: none; padding: 0; font: inherit; color: var(--accent-action); cursor: pointer; }
