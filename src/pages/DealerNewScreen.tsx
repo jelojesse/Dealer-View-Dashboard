@@ -12,6 +12,7 @@ import { NTV } from '../ds/ntv360';
 import { addNav, draft, peekNav, val } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import TemplateCard from '../components/TemplateCard';
+import './DealerNewScreen.css';
 
 /* ============================== Logic ============================== */
 
