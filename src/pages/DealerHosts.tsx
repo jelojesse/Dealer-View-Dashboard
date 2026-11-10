@@ -31,7 +31,7 @@ var TZ_BY_STATE = { AK: 'US/Alaska', HI: 'US/Hawaii', AZ: 'US/Arizona',
 var tzFor = function (st) { return TZ_BY_STATE[st] || 'US/Eastern'; };
 var SERIES = { '2026': [12, 15, 18, 21, 25, 27, 30, 32, 35, 38, 41, 43], '2025': [2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] };
 class Component extends DCLogic {
-  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', statuses: f.status ? [f.status] : [], licRanges: [], fOpen: { status: true, lic: true }, analytics: !!props.analytics, limit: PAGE, blocked: null, month: '', year: '2026', graph: 'Line Graph', hover: -1, filterOpen: false, toast: null }; }
+  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', statuses: f.status ? [f.status] : [], licRanges: [], analytics: !!props.analytics, limit: PAGE, blocked: null, month: '', year: '2026', graph: 'Line Graph', hover: -1, toast: null }; }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
     var self = this, s = this.state;
@@ -67,24 +67,17 @@ class Component extends DCLogic {
       clearHover: function () { self.setState({ hover: -1 }); },
       top: top.map(function (h, i) { return { n: i + 1, name: h.name, lic: h.lic.length, open: navFn('DealerHostDetail.dc.html', { id: h.id }) }; }),
       legend: [{ label: 'Active', color: HCOL.Active }, { label: 'Inactive', color: HCOL.Inactive }],
-      filterOpen: s.filterOpen, filterBtnClass: s.filterOpen ? 'is-open' : '',
       filterLabel: (s.statuses.length + s.licRanges.length) ? 'Filter by (' + (s.statuses.length + s.licRanges.length) + ')' : 'Filter by',
-      toggleFilter: function () { self.setState({ filterOpen: !self.state.filterOpen }); },
-      closeFilter: function () { self.setState({ filterOpen: false }); },
-      // Filter panel: collapsible sections of checkboxes (multi-select, applied immediately)
+      // Groups for NTV.FilterDropdown: collapsible sections of checkboxes (collapsed by default, applied immediately)
       filterGroups: [
-        { key: 'status', title: 'Status', field: 'statuses', options: [{ key: 'Active', label: 'Active' }, { key: 'Inactive', label: 'Inactive' }] },
-        { key: 'lic', title: 'Licenses', field: 'licRanges', options: LIC_RANGES }
+        { title: 'Status', field: 'statuses', options: [{ key: 'Active', label: 'Active' }, { key: 'Inactive', label: 'Inactive' }] },
+        { title: 'Licenses', field: 'licRanges', options: LIC_RANGES }
       ].map(function (g) {
-        var open = s.fOpen[g.key] !== false;
-        return { title: g.title, open: open, icon: open ? 'minus' : 'plus',
-          toggle: function () { var o = Object.assign({}, self.state.fOpen); o[g.key] = !open; self.setState({ fOpen: o }); },
-          items: g.options.map(function (o) {
-            var sel = self.state[g.field], on = sel.indexOf(o.key) !== -1;
-            return { label: o.label, checked: on, change: function () {
-              var cur = self.state[g.field], nx = on ? cur.filter(function (k) { return k !== o.key; }) : cur.concat([o.key]);
-              var u = { limit: PAGE }; u[g.field] = nx; self.setState(u); } };
-          }) };
+        return { title: g.title, options: g.options.map(function (o) {
+          return { label: o.label, checked: s[g.field].indexOf(o.key) !== -1, onChange: function (on) {
+            var cur = self.state[g.field], nx = on ? cur.concat([o.key]) : cur.filter(function (k) { return k !== o.key; });
+            var u = { limit: PAGE }; u[g.field] = nx; self.setState(u); } };
+        }) };
       }),
       query: s.query, setQuery: function (v) { self.setState({ query: val(v), limit: PAGE }); },
       rows: vis.map(function (h, i) {
@@ -283,30 +276,8 @@ defineTemplate(Component, (v) => (
             </>
           ) : null}
           <div className="dv-between">
-            <div style={{ position: "relative", flex: "none" }}>
-              <NTV.Button variant="secondary" size="xl" iconLeft="filter" iconRight={v.none} className={v.filterBtnClass} onClick={v.toggleFilter}>{v.filterLabel}</NTV.Button>
-              {v.filterOpen ? (
-                <>
-                  <div style={{ position: "fixed", inset: "0", zIndex: "30" }} onClick={v.closeFilter} />
-                  <div className="hf-panel" role="dialog" aria-label="Filter hosts">
-                    {(v.filterGroups || []).map((_g, $gi) => (
-                      <div key={$gi} className="hf-group">
-                        <button type="button" className="hf-head" onClick={_g?.toggle} aria-expanded={_g?.open}>
-                          <span>{_g?.title}</span>
-                          <NTV.Icon name={_g?.icon} size={v.i14} />
-                        </button>
-                        {_g?.open ? (
-                          <div className="hf-items">
-                            {(_g?.items || []).map((_i, $ii) => (
-                              <NTV.Checkbox key={$ii} className="hf-item" label={_i?.label} checked={_i?.checked} onChange={_i?.change} />
-                            ))}
-                          </div>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              ) : null}
+            <div style={{ flex: "none" }}>
+              <NTV.FilterDropdown label={v.filterLabel} groups={v.filterGroups} />
             </div>
             <div className="dv-row" style={{ flexWrap: "wrap", gap: "16px" }}>
               <NTV.Input size="l" placeholder="Search Host Name, Address, City, Postal Code, DMA Name or #Tag" iconLeft="magnifying-glass" iconRight="sparkles" label="Search hosts" value={v.query} onChange={v.setQuery} style={{ width: "500px", maxWidth: "100%" }} />

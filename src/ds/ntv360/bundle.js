@@ -137,11 +137,31 @@ function Option(p) {
       h('span', null, p.label)),
     trailing ? h(Icon, { name: trailing, size: 14 }) : null);
 }
+/* FilterDropdown — "Filter by" button + menu.
+ * groups: [{ title, defaultOpen?, options: [{ label, checked, onChange(checked) }] }]
+ *   Each group is a collapsible section (title row with -/+), COLLAPSED by default
+ *   unless defaultOpen is true. Options are checkboxes. Matches Figma "Filter by" dropdown.
+ * children: free-form menu content (used when no groups are given).
+ * Clicking outside the menu closes it. */
 function FilterDropdown(p) {
   var st = useState(!!p.open), open = st[0], setOpen = st[1];
+  var gs = useState({}), exp = gs[0], setExp = gs[1];
+  var groups = p.groups || null;
+  var isOpen = function (g, i) { return exp[i] !== undefined ? exp[i] : !!g.defaultOpen; };
+  var body = groups ? groups.map(function (g, i) {
+    var x = isOpen(g, i);
+    return h('div', { key: i, className: 'ntv-filterdd__group' },
+      h(Option, { label: g.title, expandable: true, expanded: x, className: 'ntv-filterdd__head',
+        onClick: function () { var n = Object.assign({}, exp); n[i] = !x; setExp(n); } }),
+      x ? (g.options || []).map(function (o, j) {
+        return h(Checkbox, { key: j, className: 'ntv-filterdd__item', label: o.label, checked: !!o.checked,
+          onChange: function (c) { o.onChange && o.onChange(c); } });
+      }) : null);
+  }) : p.children;
   return h('div', { className: cx('ntv-filterdd', p.align === 'right' && 'ntv-filterdd--right', p.className) },
     h(Button, { variant: 'secondary', size: 'xl', iconLeft: 'filter', className: open ? 'is-open' : '', onClick: function () { setOpen(!open); } }, p.label || 'Filter by'),
-    open ? h('div', { className: 'ntv-menu ntv-filterdd__menu' }, p.children) : null);
+    open ? h('div', { className: 'ntv-filterdd__backdrop', onClick: function () { setOpen(false); } }) : null,
+    open ? h('div', { className: 'ntv-menu ntv-filterdd__menu', role: 'dialog', 'aria-label': p.label || 'Filter by' }, body) : null);
 }
 function SearchAutocomplete(p) {
   var chips = p.chips || [], sugg = p.suggestions || [];
@@ -379,7 +399,7 @@ function DataTable(p) {
 }
 function TableToolbar(p) {
   return h('div', { className: cx('ntv-tabletools', p.className) },
-    h(FilterDropdown, { label: 'Filter by' }, p.filterContent || null),
+    h(FilterDropdown, { label: p.filterLabel || 'Filter by', groups: p.filterGroups }, p.filterContent || null),
     h('div', { className: 'ntv-tabletools__right' },
       h(Input, { size: 'l', placeholder: p.searchPlaceholder || 'Search', iconLeft: 'magnifying-glass', className: 'ntv-tabletools__search' }),
       h(Button, { size: 'xl', disabled: !p.selectedCount, iconRight: 'trash' }, 'Bulk Delete'),

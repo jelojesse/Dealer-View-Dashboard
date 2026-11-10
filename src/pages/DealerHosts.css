@@ -85,11 +85,3 @@
 .pg-hosts .ha-legend{display:flex;align-items:center;gap:16px;font-size:14px;line-height:20px;font-weight:600;color:var(--fg-secondary);white-space:nowrap}
 .pg-hosts .ha-legend>span{display:inline-flex;align-items:center;gap:4px}
 .pg-hosts .ha-dot{display:inline-block;width:8px;height:8px;border-radius:999px;flex:none}
-/* "Filter by" panel: collapsible sections with checkbox options */
-.pg-hosts .hf-panel{position:absolute;top:48px;left:0;z-index:40;width:228px;padding:8px 0;background:var(--bg-surface);border:1px solid var(--container-border);border-radius:var(--radius-sm);box-shadow:var(--shadow-card)}
-.pg-hosts .hf-group+.hf-group{border-top:1px solid var(--container-border);margin-top:4px;padding-top:4px}
-.pg-hosts .hf-head{display:flex;align-items:center;justify-content:space-between;width:100%;padding:8px 12px;border:0;background:transparent;font:400 14px/20px var(--font-sans);color:var(--fg-secondary);cursor:pointer;text-align:left}
-.pg-hosts .hf-head .ntv-icon{color:var(--fg-primary)}
-.pg-hosts .hf-items{display:flex;flex-direction:column}
-.pg-hosts .hf-item{display:flex;height:40px;padding:0 12px;font-size:14px;line-height:20px;color:var(--fg-secondary)}
-.pg-hosts .hf-item:hover{background:var(--primary-050)}

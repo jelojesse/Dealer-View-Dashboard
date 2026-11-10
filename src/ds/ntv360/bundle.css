@@ -131,7 +131,12 @@ button { font-family: inherit; }
 .ntv-option--row:hover { background: var(--bg-app); }
 .ntv-option__left { display: inline-flex; align-items: center; gap: var(--rem-2-half); }
 .ntv-filterdd { position: relative; display: inline-block; }
-.ntv-filterdd__menu { width: 200px; }
+.ntv-filterdd__menu { width: 228px; z-index: 40; padding: 8px 0; background: var(--bg-surface); box-shadow: var(--shadow-card); }
+.ntv-filterdd__backdrop { position: fixed; inset: 0; z-index: 30; }
+.ntv-filterdd__group + .ntv-filterdd__group { border-top: 1px solid var(--container-border); margin-top: 4px; padding-top: 4px; }
+.ntv-filterdd__head .ntv-icon { color: var(--fg-primary); }
+.ntv-filterdd__item { display: flex; min-height: 40px; padding: 0 12px; font-size: 14px; line-height: 20px; color: var(--fg-secondary); }
+.ntv-filterdd__item:hover { background: var(--bg-app); }
 .ntv-filterdd--right .ntv-menu { left: auto; right: 0; }
 .ntv-autocomplete { display: flex; flex-direction: column; gap: var(--rem-2); }
 .ntv-autocomplete__field { border-color: var(--primary-100); }
