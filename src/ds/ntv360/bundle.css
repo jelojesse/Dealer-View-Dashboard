@@ -243,11 +243,14 @@ button { font-family: inherit; }
 .ntv-crumbs { display: flex; align-items: center; gap: var(--rem-2-half); font: 500 12px/20px var(--font-sans); color: var(--fg-secondary); }
 .ntv-crumbs__item { color: var(--fg-secondary); text-decoration: none; }
 .ntv-crumbs__item.is-current { color: var(--accent-action); font-weight: 700; }
+/* Tabs — Figma "Tab Container" (Dealer Account Overview, node 41:45604):
+   inactive = accent red text; active = primary navy text + 1.5px navy underline */
 .ntv-tabs { display: flex; gap: var(--rem-2); border-bottom: 1px solid var(--container-border); }
-.ntv-tab { min-width: 140px; height: 40px; padding: 12px 8px; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; background: transparent;
-  font: 700 14px/16px var(--font-sans); color: var(--fg-secondary); cursor: pointer; }
-.ntv-tab:hover { background: color-mix(in srgb, var(--accent-400) 12%, transparent); border-bottom-color: var(--accent-400); color: var(--accent-400); }
-.ntv-tab.is-active { border-bottom-color: var(--accent-action); color: var(--accent-action); }
+.ntv-tab { display: inline-flex; align-items: center; justify-content: center; min-width: 140px; height: 40px; padding: 12px 8px; box-sizing: border-box;
+  border: 0; border-bottom: 1.5px solid transparent; margin-bottom: -1px; background: transparent;
+  font: 700 14px/24px var(--font-sans); color: var(--accent-action); cursor: pointer; white-space: nowrap; }
+.ntv-tab:hover { color: var(--accent-main); background: color-mix(in srgb, var(--accent-400) 8%, transparent); }
+.ntv-tab.is-active, .ntv-tab.is-active:hover { border-bottom-color: var(--fg-primary); color: var(--fg-primary); background: transparent; }
 .ntv-navtab { display: inline-flex; align-items: center; justify-content: space-between; gap: var(--rem-5); height: 40px; padding: 10px 14px; border: 0; border-radius: var(--radius-md);
   background: transparent; font: 700 14px/20px var(--font-sans); color: var(--fg-primary); cursor: pointer; white-space: nowrap; }
 .ntv-navtab__lead { display: inline-flex; align-items: center; gap: var(--rem-2-half); }

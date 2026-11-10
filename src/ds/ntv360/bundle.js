@@ -284,12 +284,14 @@ function Breadcrumbs(p) {
         last ? null : h(Icon, { name: 'angle-right', size: 14 }));
     }));
 }
+/* Tabs — items: ['A','B'] or [{ value, label }]; value = selected item's value; onChange(value). */
 function Tabs(p) {
   var items = p.items || [];
-  return h('div', { className: cx('ntv-tabs', p.className), role: 'tablist' },
+  return h('div', { className: cx('ntv-tabs', p.className), role: 'tablist', style: p.style },
     items.map(function (t) {
-      var on = t === p.value;
-      return h('button', { key: t, type: 'button', role: 'tab', 'aria-selected': on, className: cx('ntv-tab', on && 'is-active'), onClick: function () { p.onChange && p.onChange(t); } }, t);
+      var val = typeof t === 'string' ? t : t.value, label = typeof t === 'string' ? t : (t.label || t.value);
+      var on = val === p.value;
+      return h('button', { key: val, type: 'button', role: 'tab', 'aria-selected': on, className: cx('ntv-tab', on && 'is-active'), onClick: function () { p.onChange && p.onChange(val); } }, label);
     }));
 }
 function NavTab(p) {
