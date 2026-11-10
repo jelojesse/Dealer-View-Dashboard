@@ -78,13 +78,45 @@
 .pg-playlist-detail .pd-wrap{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
 .pg-playlist-detail .pd-item{display:grid;grid-template-columns:28px 24px 96px minmax(0,1fr) 120px 150px 110px;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--container-border);border-radius:var(--radius-sm);background:var(--bg-surface)}
 .pg-playlist-detail .pd-item.sel{border-color:var(--accent-action);background:var(--accent-30)}
-.pg-playlist-detail .pd-tile{position:relative;border:2px solid transparent;border-radius:var(--radius-md);overflow:hidden;background:var(--bg-surface);box-shadow:0 0 0 1px var(--container-border);cursor:pointer}
-.pg-playlist-detail .pd-tile.sel{border-color:var(--accent-action)}
-.pg-playlist-detail .pd-tile.blk{border-color:var(--warning-main)}
-.pg-playlist-detail .ml-row{display:flex;align-items:center;gap:10px;width:100%;padding:8px 6px;border:0;border-radius:var(--radius-sm);background:transparent;text-align:left;font-family:inherit;font-size:13px;line-height:20px;color:var(--fg-primary);cursor:pointer}
-.pg-playlist-detail .ml-row:hover{background:var(--primary-050)}
 .pg-playlist-detail .pd-lib{display:grid;grid-template-columns:64px minmax(0,1fr) 28px;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--container-border)}
 .pg-playlist-detail .pd-pick{position:relative;border:2px solid var(--container-border);border-radius:var(--radius-sm);overflow:hidden;cursor:pointer;background:var(--bg-surface);padding:0;font-family:inherit;text-align:left}
 .pg-playlist-detail .pd-pick[aria-pressed="true"]{border-color:var(--accent-action);box-shadow:var(--shadow-focus)}
 .pg-playlist-detail .pd-type{display:flex;flex-direction:column;gap:8px;padding:20px;border:2px solid var(--container-border);border-radius:var(--radius-md);background:var(--bg-surface);cursor:pointer;font-family:inherit;text-align:left}
 .pg-playlist-detail .pd-type[aria-pressed="true"]{border-color:var(--accent-action);background:var(--accent-30)}
+/* Single Playlist page — Figma "Single Page - All Use Cases" (Playlist Page V2, node 5596:34236) */
+.pg-playlist-detail .pd-title{margin:0;font-size:20px;line-height:28px;font-weight:700;color:var(--fg-primary)}
+.pg-playlist-detail .pd-edit{display:inline-flex;padding:0;border:0;background:none;color:var(--fg-primary);cursor:pointer}
+.pg-playlist-detail .pd-edit:hover{color:var(--accent-action)}
+.pg-playlist-detail .pd-desc{margin:0;font-size:12px;line-height:16px;color:var(--fg-secondary)}
+.pg-playlist-detail .pd-layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:20px;align-items:start}
+.pg-playlist-detail .pd-main{display:flex;flex-direction:column;gap:20px;min-width:0}
+.pg-playlist-detail .pd-filter{display:flex;flex-direction:column;gap:10px}
+.pg-playlist-detail .pd-h2{margin:0;font-size:20px;line-height:28px;font-weight:700;color:var(--fg-primary)}
+.pg-playlist-detail .pd-count{font-size:14px;line-height:20px;color:var(--fg-secondary)}
+.pg-playlist-detail .pd-content{display:flex;flex-direction:column;gap:14px;min-height:420px}
+.pg-playlist-detail .pd-foot{margin-top:-10px;font-size:10px;line-height:15px;color:var(--fg-secondary)}
+/* content tiles: 8 columns, 10px gap; image ~173x96 + 40px caption */
+.pg-playlist-detail .pd-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px}
+.pg-playlist-detail .pd-tile{display:flex;min-width:0;cursor:pointer;border-radius:var(--radius-md)}
+.pg-playlist-detail .pd-tile__card{display:flex;flex-direction:column;width:100%;min-width:0;overflow:hidden;border-radius:var(--radius-sm);background:var(--bg-surface);box-shadow:0 0 0 1px var(--container-border)}
+.pg-playlist-detail .pd-tile__img{position:relative;aspect-ratio:173.75/95.68;background:#000;overflow:hidden}
+.pg-playlist-detail .pd-tile__img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.pg-playlist-detail .pd-tag{position:absolute;left:8px;top:8px;padding:0 6px;border:1px solid;border-radius:var(--radius-sm);background:var(--bg-surface);font-size:9px;line-height:14px;font-weight:700;letter-spacing:.02em}
+.pg-playlist-detail .pd-tile__cap{display:flex;align-items:center;gap:6px;height:40px;padding:0 10px;box-sizing:border-box;flex:none}
+.pg-playlist-detail .pd-tile__name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;line-height:20px}
+.pg-playlist-detail .pd-num{margin-right:5px}
+.pg-playlist-detail .pd-dur{flex:none;font-size:10px;line-height:12px}
+.pg-playlist-detail .pd-tile.sel .pd-tile__card{box-shadow:0 0 0 2px var(--accent-action)}
+/* block/channel: framed group spanning 2 columns, image fills the frame */
+.pg-playlist-detail .pd-tile.blk{padding:6px;border:2px solid var(--warning-main);box-sizing:border-box}
+.pg-playlist-detail .pd-tile.blk .pd-tile__img{aspect-ratio:auto;flex:1;min-height:60px}
+/* sidebar */
+.pg-playlist-detail .pd-side{display:flex;flex-direction:column;gap:20px;padding:20px}
+.pg-playlist-detail .pd-upload{width:100%;justify-content:center;text-decoration:none}
+.pg-playlist-detail .ml-row{display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:0 6px;border:0;border-radius:var(--radius-sm);background:transparent;text-align:left;font-family:inherit;font-size:14px;line-height:20px;color:var(--fg-primary);cursor:pointer}
+.pg-playlist-detail .ml-row .ntv-icon{color:var(--fg-secondary);flex:none}
+.pg-playlist-detail .ml-row:hover{background:var(--primary-050)}
+.pg-playlist-detail .pd-folders{display:flex;align-items:center;gap:4px;font-size:14px;line-height:20px;color:var(--fg-primary)}
+.pg-playlist-detail .pd-n{font-size:12px;line-height:16px;color:var(--fg-secondary)}
+.pg-playlist-detail .pd-sidefoot{display:flex;justify-content:space-between;margin-top:auto;padding-top:10px;font-size:10px;line-height:15px;color:var(--fg-secondary)}
+.pg-playlist-detail .pd-sidefoot strong{color:var(--fg-primary)}
