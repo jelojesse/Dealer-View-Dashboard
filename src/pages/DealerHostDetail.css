@@ -1,6 +1,6 @@
 /* Styles for DealerHostDetail (from the design). Scoped under .pg-host-detail. */
-.pg-host-detail a{color:var(--accent-action)}
-.pg-host-detail a:hover{color:var(--accent-main)}
+.pg-host-detail a:not(.ntv-btn){color:var(--accent-action)}
+.pg-host-detail a:not(.ntv-btn):hover{color:var(--accent-main)}
 .pg-host-detail .dv-scroll{flex:1 1 0;min-height:0;overflow-y:auto}
 .pg-host-detail .dv-main{display:flex;flex-direction:column;gap:20px;padding:20px;box-sizing:border-box;width:100%}
 .pg-host-detail .dv-h1{margin:0;font-size:20px;line-height:32px;font-weight:700;color:var(--accent-action)}

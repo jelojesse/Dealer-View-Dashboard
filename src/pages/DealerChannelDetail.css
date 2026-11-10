@@ -1,6 +1,6 @@
 /* Styles for DealerChannelDetail (from the design). Scoped under .pg-channel-detail. */
-.pg-channel-detail a{color:var(--accent-action)}
-.pg-channel-detail a:hover{color:var(--accent-main)}
+.pg-channel-detail a:not(.ntv-btn){color:var(--accent-action)}
+.pg-channel-detail a:not(.ntv-btn):hover{color:var(--accent-main)}
 .pg-channel-detail .dv-scroll{flex:1 1 0;min-height:0;overflow-y:auto}
 .pg-channel-detail .dv-main{display:flex;flex-direction:column;gap:20px;padding:20px;box-sizing:border-box;width:100%}
 .pg-channel-detail .dv-h1{margin:0;font-size:20px;line-height:32px;font-weight:700;color:var(--accent-action)}

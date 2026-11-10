@@ -311,7 +311,7 @@ defineTemplate(Component, (v) => (
                       <div>{_r?.zip}</div>
                       <div>{_r?.tz}</div>
                       <div>
-                        <a className="dv-a" style={{ fontWeight: "500" }} href="DealerLicenses.dc.html" onClick={_r?.openLic} data-nav={_r?.openLicNav}>{_r?.lic}</a>
+                        <a className="dv-a" style={{ fontWeight: "500", color: "var(--fg-primary)" }} href="DealerLicenses.dc.html" onClick={_r?.openLic} data-nav={_r?.openLicNav}>{_r?.lic}</a>
                       </div>
                       <div className="dv-row" style={{ gap: "2px" }}>
                         <a className="dv-ib dv-edit" aria-label="Edit host" href="DealerHostDetail.dc.html" onClick={_r?.edit} data-nav={_r?.editNav}><NTV.Icon name="pen-to-square" size={v.i14} /></a>

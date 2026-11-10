@@ -1,6 +1,6 @@
 /* Styles for DealerTags (from the design). Scoped under .pg-tags. */
-.pg-tags a{color:var(--accent-action)}
-.pg-tags a:hover{color:var(--accent-main)}
+.pg-tags a:not(.ntv-btn){color:var(--accent-action)}
+.pg-tags a:not(.ntv-btn):hover{color:var(--accent-main)}
 .pg-tags .dv-scroll{flex:1 1 0;min-height:0;overflow-y:auto}
 .pg-tags .dv-main{display:flex;flex-direction:column;gap:20px;padding:20px;box-sizing:border-box;width:100%}
 .pg-tags .dv-h1{margin:0;font-size:20px;line-height:32px;font-weight:700;color:var(--accent-action)}

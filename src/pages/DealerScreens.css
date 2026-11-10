@@ -1,6 +1,6 @@
 /* Styles for DealerScreens (from the design). Scoped under .pg-screens. */
-.pg-screens a{color:var(--accent-action)}
-.pg-screens a:hover{color:var(--accent-main)}
+.pg-screens a:not(.ntv-btn){color:var(--accent-action)}
+.pg-screens a:not(.ntv-btn):hover{color:var(--accent-main)}
 .pg-screens .dv-scroll{flex:1 1 0;min-height:0;overflow-y:auto}
 .pg-screens .dv-main{display:flex;flex-direction:column;gap:20px;padding:20px;box-sizing:border-box;width:100%}
 .pg-screens .dv-h1{margin:0;font-size:20px;line-height:32px;font-weight:700;color:var(--accent-action)}

@@ -1,6 +1,6 @@
 /* Styles for DealerNewHost (from the design). Scoped under .pg-new-host. */
-.pg-new-host a{color:var(--accent-action)}
-.pg-new-host a:hover{color:var(--accent-main)}
+.pg-new-host a:not(.ntv-btn){color:var(--accent-action)}
+.pg-new-host a:not(.ntv-btn):hover{color:var(--accent-main)}
 .pg-new-host .dv-scroll{flex:1 1 0;min-height:0;overflow-y:auto}
 .pg-new-host .dv-main{display:flex;flex-direction:column;gap:20px;padding:20px;box-sizing:border-box;width:100%}
 .pg-new-host .dv-h1{margin:0;font-size:20px;line-height:32px;font-weight:700;color:var(--accent-action)}
