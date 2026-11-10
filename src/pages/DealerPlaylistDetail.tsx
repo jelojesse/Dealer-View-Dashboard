@@ -32,6 +32,9 @@ var SCHED = { active: ['var(--success-main)', 'Playing now'], upcoming: ['var(--
 // Block group frame colors, in order of appearance
 var GROUP_COLORS = ['var(--warning-main)', 'var(--danger-main)', 'var(--success-main)', 'var(--primary-400)'];
 var GRID_COLS = 8;
+// Filter by → Content Schedule Status (pick one). Active = playing now or "Always play"; In Queue = upcoming; Inactive = ended
+var SCHED_OPTS = [{ key: '', label: 'All' }, { key: 'active', label: 'Active' }, { key: 'upcoming', label: 'In Queue' }, { key: 'expired', label: 'Inactive' }];
+var schedBucket = function (it) { return schedState(it) || 'active'; };
 // Standalone thumbnail tag pills: [background, text]
 var PILL = { image: ['var(--info-050)', 'var(--info-main)'], video: ['var(--danger-050)', 'var(--danger-main)'], widget: ['var(--teal-050)', 'var(--teal-600)'], block: ['var(--purple-050)', 'var(--purple-main)'] };
 
@@ -43,7 +46,7 @@ class Component extends DCLogic {
     var items = p.items.map(function (id, i) { var m = byId(D.media, id); var blk = !!(p.block && i === 0); var sc = (p.schedules || {})[id];
       return m ? { key: 'k' + i, blk: blk, m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: !sc, start: sc ? sc[0] : '', end: sc ? sc[1] : '',
         members: blk ? (p.blockMembers || []).map(function (mid) { return byId(D.media, mid); }).filter(Boolean) : null } : null; }).filter(Boolean);
-    this.state = { view: 'grid', kinds: [], q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', target: '', mvPos: '1', swQ: '', libQ: '', libLimit: 10, push: false, ad: null, md: null, info: null, toast: null };
+    this.state = { view: 'grid', kinds: [], sched: '', q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', target: '', mvPos: '1', swQ: '', libQ: '', libLimit: 10, push: false, ad: null, md: null, info: null, toast: null };
   }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
@@ -72,14 +75,17 @@ class Component extends DCLogic {
       name: p.name, desc: p.desc, count: s.items.length, loop: loop >= 60 ? Math.floor(loop / 60) + 'm ' + (loop % 60) + 's' : loop + 's',
       tabItems: [{ value: 'Content', label: 'Content Management' }, { value: 'Screens', label: 'Screens' }], tab: s.tab, setTab: function (x) { self.setState({ tab: x }); },
       i24: 24, i10: 10,
-      filterLabel: s.kinds.length ? 'Filter by (' + s.kinds.length + ')' : 'Filter by',
+      filterLabel: (s.kinds.length + (s.sched ? 1 : 0)) ? 'Filter by (' + (s.kinds.length + (s.sched ? 1 : 0)) + ')' : 'Filter by',
       filterGroups: [{ title: 'Content Type', options: KINDS.map(function (k) {
         return { label: k.label, checked: s.kinds.indexOf(k.key) !== -1, onChange: function (on) {
           var cur = self.state.kinds; self.setState({ kinds: on ? cur.concat([k.key]) : cur.filter(function (x) { return x !== k.key; }) }); } };
+      }) }, { title: 'Content Schedule Status', single: true, options: SCHED_OPTS.map(function (o) {
+        return { label: o.label, checked: s.sched === o.key, onChange: function () { self.setState({ sched: o.key }); } };
       }) }],
       activeChips: KINDS.filter(function (k) { return s.kinds.indexOf(k.key) !== -1; }).map(function (k) { return { key: k.key, label: 'Type', value: k.label, tone: 'info',
-        onRemove: function () { self.setState({ kinds: self.state.kinds.filter(function (x) { return x !== k.key; }) }); } }; }),
-      clearKinds: function () { self.setState({ kinds: [] }); },
+        onRemove: function () { self.setState({ kinds: self.state.kinds.filter(function (x) { return x !== k.key; }) }); } }; }).concat(s.sched ? [{ key: 'sched', label: 'Schedule', value: SCHED_OPTS.filter(function (o) { return o.key === s.sched; })[0].label, tone: 'teal',
+        onRemove: function () { self.setState({ sched: '' }); } }] : []),
+      clearKinds: function () { self.setState({ kinds: [], sched: '' }); },
       view: s.view, setView: function (x) { self.setState({ view: x }); },
       q: s.q, setQ: function (v) { self.setState({ q: val(v) }); },
       markLabel: s.items.length > 0 && selKeys.length === s.items.length ? 'Unmark All' : 'Mark All',
@@ -107,7 +113,7 @@ class Component extends DCLogic {
       toggleReorder: function () { if (self.state.reorder) toast(self, 'Play order saved'); self.setState({ reorder: !self.state.reorder }); },
       askBulk: function () { self.setState({ modal: 'bulk' }); },
       doBulk: function () { var sel = self.state.sel; self.setState({ items: self.state.items.filter(function (it) { return !sel[it.key]; }), sel: {}, modal: '' }); toast(self, selKeys.length + ' item(s) removed'); },
-      items: itemVMs = s.items.filter(function (it) { return (!s.kinds.length || s.kinds.indexOf(it.m.kind) !== -1) && contains(it.m.title, s.q); }).map(function (it, i) {
+      items: itemVMs = s.items.filter(function (it) { return (!s.kinds.length || s.kinds.indexOf(it.m.kind) !== -1) && (!s.sched || schedBucket(it) === s.sched) && contains(it.m.title, s.q); }).map(function (it, i) {
         var B = it.blk ? ['CHANNEL', 'var(--warning-main)'] : ({ image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'], block: ['BLOCK', 'var(--purple-main)'] }[it.m.kind] || ['IMAGE', 'var(--info-main)']);
         var sel = !!s.sel[it.key], idx = s.items.indexOf(it);
         return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : (SCHED[schedState(it)] ? SCHED[schedState(it)][0] : 'var(--primary-050)'), capColor: (it.blk || schedState(it)) ? '#fff' : 'var(--fg-primary)', blk: it.blk, members: it.members || [], schedTip: schedState(it) ? SCHED[schedState(it)][1] + ' · ' + fmtDate(it.start) + ' – ' + fmtDate(it.end) : '', n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)', sched: schedState(it) ? fmtDate(it.start) + ' – ' + fmtDate(it.end) + ' (' + SCHED[schedState(it)][1] + ')' : 'Always',

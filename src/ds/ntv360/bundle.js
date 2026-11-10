@@ -138,9 +138,11 @@ function Option(p) {
     trailing ? h(Icon, { name: trailing, size: 14 }) : null);
 }
 /* FilterDropdown — "Filter by" button + menu.
- * groups: [{ title, defaultOpen?, options: [{ label, checked, onChange(checked) }] }]
+ * groups: [{ title, defaultOpen?, single?, options: [{ label, checked, onChange(checked) }] }]
  *   Each group is a collapsible section (title row with -/+), COLLAPSED by default
- *   unless defaultOpen is true. Options are checkboxes. Matches Figma "Filter by" dropdown.
+ *   unless defaultOpen is true. Options are checkboxes; with single: true they are plain
+ *   pick-one rows (e.g. All / Active / In Queue / Inactive) and the picked one is highlighted.
+ *   Matches Figma "Filter by" dropdown.
  * children: free-form menu content (used when no groups are given).
  * Clicking outside the menu closes it. */
 function FilterDropdown(p) {
@@ -154,6 +156,8 @@ function FilterDropdown(p) {
       h(Option, { label: g.title, expandable: true, expanded: x, className: 'ntv-filterdd__head',
         onClick: function () { var n = Object.assign({}, exp); n[i] = !x; setExp(n); } }),
       x ? (g.options || []).map(function (o, j) {
+        if (g.single) return h('button', { key: j, type: 'button', role: 'menuitemradio', 'aria-checked': !!o.checked,
+          className: cx('ntv-filterdd__opt', o.checked && 'is-selected'), onClick: function () { o.onChange && o.onChange(true); } }, o.label);
         return h(Checkbox, { key: j, className: 'ntv-filterdd__item', label: o.label, checked: !!o.checked,
           onChange: function (c) { o.onChange && o.onChange(c); } });
       }) : null);

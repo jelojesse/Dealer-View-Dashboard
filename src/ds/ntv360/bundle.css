@@ -137,6 +137,10 @@ button { font-family: inherit; }
 .ntv-filterdd__head .ntv-icon { color: var(--fg-primary); }
 .ntv-filterdd__item { display: flex; min-height: 40px; padding: 0 12px; font-size: 14px; line-height: 20px; color: var(--fg-secondary); }
 .ntv-filterdd__item:hover { background: var(--bg-app); }
+.ntv-filterdd__opt { display: flex; align-items: center; width: 100%; min-height: 40px; padding: 0 16px; box-sizing: border-box; border: 0; background: transparent;
+  font: 400 14px/20px var(--font-sans); color: var(--fg-secondary); text-align: left; cursor: pointer; }
+.ntv-filterdd__opt:hover { background: var(--bg-app); }
+.ntv-filterdd__opt.is-selected { color: var(--accent-action); font-weight: 600; }
 /* Column Visibility overlay (Figma DS node 7946:16738) */
 .ntv-colvis { position: absolute; top: calc(100% + 8px); right: 0; z-index: 40; width: 289px; display: flex; flex-direction: column; overflow: hidden;
   background: var(--bg-surface); border: 1px solid var(--container-border); border-radius: var(--radius-lg, 10px); box-shadow: var(--shadow-card); text-align: left; }
