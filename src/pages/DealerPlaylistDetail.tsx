@@ -55,7 +55,7 @@ class Component extends DCLogic {
     var move = function (i, d) { var a = self.state.items.slice(), j = i + d; if (j < 0 || j >= a.length) return; var t = a[i]; a[i] = a[j]; a[j] = t; self.setState({ items: a }); };
     var inPl = {}; s.items.forEach(function (it) { inPl[it.m.id] = 1; });
     var close = function () { self.setState({ modal: '' }); };
-    var addItems = function (ms) { var base = self.state.items.length; self.setState({ items: self.state.items.concat(ms.map(function (m, i) { return { key: 'n' + Date.now() + i, blk: m.kind === 'block', m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: true, start: '', end: '', members: m.members || null }; })) }); };
+    var addItems = function (ms) { var base = self.state.items.length; self.setState({ items: ms.map(function (m, i) { return { key: 'n' + Date.now() + i, blk: m.kind === 'block', m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: true, start: '', end: '', members: m.members || null }; }).concat(self.state.items) }); };
     // add content wizard
     var ad = s.ad || { step: 0, kind: 'single', sel: {}, q: '', blockName: '', layout: '2 + 2 grid', dur: '15 sec' };
     var setAd = function (o) { self.setState({ ad: Object.assign({}, self.state.ad, o) }); };
