@@ -12,6 +12,26 @@ import { NTV } from '../ds/ntv360';
 import { STATUS, addNav, arrived, byId, contains, hostName, navFn, peekNav, plByName, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import HostAdvFilter from '../components/HostAdvFilter';
+import FilterBy from '../components/FilterBy';
+
+/* Mock player versions per license (the data has none yet). */
+var SERVERS = ['2.9.35', '2.9.4', '2.9.41', '2.9.43'], UIS = ['3.0.44', '3.0.47', '3.0.48'];
+var lnum = function (l) { return parseInt(String(l.id).slice(1), 10) || 0; };
+var RECENT = new Date('Oct 10, 2026').getTime();
+/* Each Filter by group is OR inside the group, AND across groups. */
+var LIC_TESTS = {
+  lic: { 'Assigned': function (l) { return !!l.host; }, 'Unassigned': function (l) { return !l.host; }, 'Inactive': function (l) { return l.status === 'disabled'; }, 'Recent Installs': function (l) { return !!l.host && new Date(l.install).getTime() >= RECENT; } },
+  conn: { 'Online': function (l) { return l.status === 'online'; }, 'Offline': function (l) { return l.status === 'offline'; }, 'Display On': function (l) { return l.status === 'online'; }, 'Display Off': function (l) { return !!l.host && l.status !== 'online'; } },
+  server: null, ui: null
+};
+var licPasses = function (f, l) {
+  return Object.keys(f || {}).every(function (g) {
+    var sel = f[g] || []; if (!sel.length) return true;
+    if (g === 'server') return sel.indexOf(SERVERS[lnum(l) % SERVERS.length]) !== -1;
+    if (g === 'ui') return sel.indexOf(UIS[lnum(l) % UIS.length]) !== -1;
+    return sel.some(function (o) { return LIC_TESTS[g] && LIC_TESTS[g][o] ? LIC_TESTS[g][o](l) : true; });
+  });
+};
 import './DealerLicenses.css';
 
 /* ============================== Logic ============================== */
@@ -20,30 +40,39 @@ class Component extends DCLogic {
   constructor(props) {
     super(props);
     var f = arrived('DealerLicenses.dc.html') || {};
-    this.state = { tz: '', range: 'Oct 10, 2026 – Nov 9, 2026', query: '', status: f.status || '', net: f.net || '', host: f.host || '', hostName: f.hostName || '', adv: '', filterOpen: false, limit: 25, req: false, reqCount: '', toast: null };
+    this.state = { tz: '', filters: {}, range: 'Oct 10, 2026 – Nov 9, 2026', query: '', status: f.status || '', net: f.net || '', host: f.host || '', hostName: f.hostName || '', adv: '', filterOpen: false, limit: 25, req: false, reqCount: '', toast: null };
   }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
     var self = this, s = this.state;
     var L = D.licenses;
     var by = function (st) { return L.filter(function (l) { return l.status === st; }).length; };
-    var base = L.filter(function (l) { return (!s.host || l.host === s.host) && (!s.net || l.net === s.net) && contains(l.alias + ' ' + l.key + ' ' + (l.host ? hostName(l.host) : '') + ' ' + l.anydesk, s.query); });
+    var tzOf = function (l) { return l.host ? 'US/Central' : '—'; };
+    var base = L.filter(function (l) { return (!s.host || l.host === s.host) && (!s.net || l.net === s.net) && (!s.tz || s.tz === 'All Timezones' || tzOf(l) === s.tz) && licPasses(s.filters, l) && contains(l.alias + ' ' + l.key + ' ' + (l.host ? hostName(l.host) : '') + ' ' + l.anydesk, s.query); });
     var matches = base.filter(function (l) { return !s.status || l.status === s.status; });
     var vis = matches.slice(0, s.limit);
     var chipsOn = [];
     if (s.host) chipsOn.push({ label: 'Host: ' + s.hostName, clear: function () { self.setState({ host: '', hostName: '', adv: '' }); } });
     if (s.adv) chipsOn.push({ label: 'Advertiser: ' + s.adv, clear: function () { self.setState({ adv: '' }); } });
+    if (s.status) chipsOn.push({ label: 'Status: ' + STATUS[s.status].label, clear: function () { self.setState({ status: '' }); } });
     if (s.net) chipsOn.push({ label: 'Internet: ' + (s.net === 'WiFi' ? 'Wi-Fi' : s.net), clear: function () { self.setState({ net: '' }); } });
     var copy = function (txt, what) { return function () { try { navigator.clipboard.writeText(txt); } catch (e) {} toast(self, what + ' copied', 'info'); }; };
     var n = parseInt(s.reqCount, 10);
     return {
       none: null, i10: 10, i12: 12, w500: 500,
-      cols: '50px 80px minmax(200px, 1.4fr) minmax(170px, 1.2fr) 120px 150px 150px 110px 120px 70px 140px 170px 110px',
+      cols: '50px 80px minmax(200px, 1.4fr) minmax(170px, 1.2fr) 110px 120px 150px 150px 110px 120px 70px 140px 170px 110px',
       total: L.length,
       byType: { Ad: L.filter(function (l) { return l.type === 'Ad'; }).length, Menu: L.filter(function (l) { return l.type === 'Menu'; }).length, Closed: L.filter(function (l) { return l.type === 'Closed'; }).length },
       tzOptions: ['All Timezones', 'US/Central', 'US/Eastern'], tz: s.tz, setTz: function (v) { self.setState({ tz: val(v) }); },
       rangeOptions: ['Oct 10, 2026 – Nov 9, 2026', 'Last 7 days', 'Last 90 days', 'All time'], range: s.range, setRange: function (v) { self.setState({ range: val(v) }); },
       legend: ['offline', 'online', 'unassigned', 'ready', 'pending', 'disabled'].map(function (k) { return { label: STATUS[k].label, color: STATUS[k].color }; }),
+      filterGroups: [
+        { key: 'lic', title: 'Licenses Status', options: ['Assigned', 'Unassigned', 'Inactive', 'Recent Installs'] },
+        { key: 'conn', title: 'Order by Licenses Status', options: ['Online', 'Offline', 'Display On', 'Display Off'] },
+        { key: 'server', title: 'Player Server', options: SERVERS },
+        { key: 'ui', title: 'Player UI', options: UIS }
+      ],
+      filters: s.filters, setFilters: function (x) { self.setState({ filters: x, limit: 25 }); },
       statusOptions: ['All Status'].concat(['online', 'offline', 'pending', 'ready', 'disabled', 'unassigned'].map(function (k) { return STATUS[k].label + ' (' + base.filter(function (l) { return l.status === k; }).length + ')'; })),
       statusValue: s.status ? STATUS[s.status].label + ' (' + base.filter(function (l) { return l.status === s.status; }).length + ')' : 'All Status',
       setStatus: function (v) { var x = val(v) || ''; var k = Object.keys(STATUS).filter(function (key) { return x.indexOf(STATUS[key].label) === 0; })[0] || ''; self.setState({ status: k, limit: 25 }); },
@@ -52,7 +81,7 @@ class Component extends DCLogic {
       rows: vis.map(function (l, i) {
         var st = STATUS[l.status], on = l.status === 'online', sc = l.screen ? byId(D.screens, l.screen) : null, pl = sc ? plByName(sc.zones.Main) : null, m = pl ? byId(D.media, pl.items[0]) : null;
         var k = parseInt(l.id.slice(1), 10), hx = function (n) { return ('0' + ((k * n) % 256).toString(16)).slice(-2); };
-        return { n: i + 1, alias: l.alias, keyShort: l.key.slice(0, 18) + '…', host: l.host ? hostName(l.host) : '—', color: st.color,
+        return { n: i + 1, alias: l.alias, keyShort: l.key.slice(0, 18) + '…', host: l.host ? hostName(l.host) : '—', tz: tzOf(l), color: st.color,
           hasShot: on && !!m, shot: m ? m.image : '', lastUpdate: l.host ? '11/0' + (1 + k % 9) + '/26 12:0' + (k % 10) + ' AM' : '—', lastStartup: l.host ? '11/0' + (1 + k % 9) + '/26 12:1' + (k % 10) + ' AM' : '—',
           up: on ? l.speed : '---', down: on ? (parseInt(l.speed, 10) + 4) + ' MB/s' : '---', speedTint: on ? 'var(--success-050)' : 'transparent', speedColor: on ? 'var(--success-600)' : 'var(--fg-secondary)',
           display: on ? 'ON' : 'OFF', mac: 'd8:3a:dd:' + hx(7) + ':' + hx(13) + ':' + hx(29), anydesk: l.anydesk.replace(/ /g, ''), pw: l.anypw, install: l.host ? l.install : '—',
@@ -162,13 +191,11 @@ defineTemplate(Component, (v) => (
           </section>
           <div className="dv-between">
             <div className="dv-row" style={{ flexWrap: "wrap", gap: "12px" }}>
-              <div style={{ width: "210px", flex: "none" }}>
-                <NTV.Select size="l" placeholder="Filter by status" options={v.statusOptions} value={v.statusValue} onChange={v.setStatus} />
-              </div>
+              <FilterBy groups={v.filterGroups} value={v.filters} onChange={v.setFilters} />
               <div style={{ width: "210px", flex: "none" }}>
                 <NTV.Select size="l" placeholder="Timezone" options={v.tzOptions} value={v.tz} onChange={v.setTz} />
               </div>
-              <NTV.Button variant="primary" size="xl" iconRight="user" onClick={v.openFilter}>Filter By User</NTV.Button>
+              <NTV.Button variant="secondary" size="xl" iconRight="user" onClick={v.openFilter}>Filter By User</NTV.Button>
               <div style={{ width: "220px", flex: "none" }}>
                 <NTV.Select size="l" options={v.rangeOptions} value={v.range} onChange={v.setRange} />
               </div>
@@ -207,12 +234,13 @@ defineTemplate(Component, (v) => (
               </div>
             </div>
             <div className="dv-table">
-              <div role="table" aria-label="Licenses" style={{ minWidth: "1900px" }}>
+              <div role="table" aria-label="Licenses" style={{ minWidth: "2010px" }}>
                 <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: `${s(v.cols)}` }}>
                   <div style={{ textAlign: "center" }}>#</div>
                   <div>Screenshot</div>
                   <div>License Key</div>
                   <div>Host</div>
+                  <div>Timezone</div>
                   <div>Alias</div>
                   <div>Last Update</div>
                   <div>Last Startup</div>
@@ -244,6 +272,7 @@ defineTemplate(Component, (v) => (
                       <div>
                         <a className="dv-a" style={{ fontWeight: "500", color: "var(--fg-primary)" }} href="DealerHostDetail.dc.html" onClick={_r?.openHost} data-nav={_r?.openHostNav}>{_r?.host}</a>
                       </div>
+                      <div>{_r?.tz}</div>
                       <div>{_r?.alias}</div>
                       <div>{_r?.lastUpdate}</div>
                       <div>{_r?.lastStartup}</div>
