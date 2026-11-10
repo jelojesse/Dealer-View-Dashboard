@@ -17,7 +17,11 @@ button { font-family: inherit; }
 .ntv-btn--s  { height: 28px; padding: 4px 8px; font-size: 12px; line-height: 16px; }
 .ntv-btn--m  { height: 32px; padding: 6px 10px; gap: var(--rem-2-half); font-size: 14px; line-height: 20px; }
 .ntv-btn--l  { height: 36px; padding: 8px 12px; gap: var(--rem-2-half); font-size: 14px; line-height: 20px; }
-.ntv-btn--xl { height: 40px; padding: 10px 14px; gap: var(--rem-2-half); font-size: 16px; line-height: 24px; }
+.ntv-btn--xl { height: 40px; padding: 10px 14px; gap: var(--rem-2-half); font-size: 14px; line-height: 20px; }
+/* Figma DS (Primary Button, node 6612:22038): label -> trailing icon gap is 8px on M, 20px on L/XL */
+.ntv-btn--m > :not(.ntv-icon) + .ntv-icon { margin-left: -2px; }
+.ntv-btn--l > :not(.ntv-icon) + .ntv-icon,
+.ntv-btn--xl > :not(.ntv-icon) + .ntv-icon { margin-left: 10px; }
 .ntv-btn--primary.ntv-btn--default { background: var(--gradient-button); color: var(--white); }
 .ntv-btn--primary.ntv-btn--default:hover { background: var(--gradient-button-hover); }
 .ntv-btn--primary.ntv-btn--active, .ntv-btn--primary.ntv-btn--default:active { background: var(--bg-active); color: var(--white); }

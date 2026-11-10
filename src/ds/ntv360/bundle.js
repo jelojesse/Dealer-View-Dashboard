@@ -31,9 +31,9 @@ function Button(p) {
     type: p.type || 'button', className: cx('ntv-btn', 'ntv-btn--' + variant, 'ntv-btn--' + tone, 'ntv-btn--' + size, p.className),
     disabled: p.disabled, onClick: p.onClick, style: p.style
   },
-    p.iconLeft ? h(Icon, { name: p.iconLeft, size: size === 'xs' || size === 's' ? 12 : 14 }) : null,
+    p.iconLeft ? h(Icon, { name: p.iconLeft, size: size === 'xs' || size === 's' || size === 'm' ? 12 : 14 }) : null,
     h('span', { className: 'ntv-btn__label' }, p.children),
-    p.iconRight ? h(Icon, { name: p.iconRight, size: size === 'xs' || size === 's' ? 12 : 14 }) : null);
+    p.iconRight ? h(Icon, { name: p.iconRight, size: size === 'xs' || size === 's' || size === 'm' ? 12 : 14 }) : null);
 }
 var FAB_ICON = { xs: 10, s: 12, m: 12, l: 14, xl: 14 };
 function IconButton(p) {
