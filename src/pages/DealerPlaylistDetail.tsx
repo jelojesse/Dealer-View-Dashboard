@@ -22,17 +22,30 @@ import './DealerPlaylistDetail.css';
 // Filter by → Content Type options (Figma "Single Page - All Use Cases", node 5596:34236)
 var KINDS = [{ key: 'image', label: 'Image' }, { key: 'video', label: 'Video' }, { key: 'widget', label: 'Widget' }, { key: 'block', label: 'Block' }];
 
+// "Today" for schedule status (the mock data's current date)
+var TODAY = '2026-11-10';
+var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+var fmtDate = function (iso) { var x = (iso || '').split('-'); return x.length === 3 ? MON[+x[1] - 1] + ' ' + (+x[2]) : iso; };
+// Schedule status → caption color (Figma: green playing, orange upcoming, red ended)
+var schedState = function (it) { if (it.always || !it.start || !it.end) return ''; return TODAY < it.start ? 'upcoming' : (TODAY > it.end ? 'expired' : 'active'); };
+var SCHED = { active: ['var(--success-main)', 'Playing now'], upcoming: ['var(--warning-main)', 'Upcoming'], expired: ['var(--danger-main)', 'Ended'] };
+// Block group frame colors, in order of appearance
+var GROUP_COLORS = ['var(--warning-main)', 'var(--danger-main)', 'var(--success-main)', 'var(--primary-400)'];
+var GRID_COLS = 8;
+
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     var f = arrived('DealerPlaylistDetail.dc.html') || {};
     var p = byId(D.playlists, f.id) || D.playlists[0];
-    var items = p.items.map(function (id, i) { var m = byId(D.media, id); return m ? { key: 'k' + i, blk: !!(p.block && i === 0), m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: true } : null; }).filter(Boolean);
+    var items = p.items.map(function (id, i) { var m = byId(D.media, id); var blk = !!(p.block && i === 0); var sc = (p.schedules || {})[id];
+      return m ? { key: 'k' + i, blk: blk, m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: !sc, start: sc ? sc[0] : '', end: sc ? sc[1] : '',
+        members: blk ? (p.blockMembers || []).map(function (mid) { return byId(D.media, mid); }).filter(Boolean) : null } : null; }).filter(Boolean);
     this.state = { view: 'grid', kinds: [], q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', libQ: '', push: false, ad: null, md: null, info: null, toast: null };
   }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
-    var self = this, s = this.state, p = s.p;
+    var self = this, s = this.state, p = s.p, itemVMs = [];
     var secs = function (d) { return parseInt(d, 10) || 15; };
     var loop = s.items.reduce(function (a, it) { return a + secs(it.dur); }, 0);
     var selKeys = Object.keys(s.sel).filter(function (k) { return s.sel[k]; });
@@ -40,7 +53,7 @@ class Component extends DCLogic {
     var move = function (i, d) { var a = self.state.items.slice(), j = i + d; if (j < 0 || j >= a.length) return; var t = a[i]; a[i] = a[j]; a[j] = t; self.setState({ items: a }); };
     var inPl = {}; s.items.forEach(function (it) { inPl[it.m.id] = 1; });
     var close = function () { self.setState({ modal: '' }); };
-    var addItems = function (ms) { var base = self.state.items.length; self.setState({ items: self.state.items.concat(ms.map(function (m, i) { return { key: 'n' + Date.now() + i, blk: m.kind === 'block', m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: true }; })) }); };
+    var addItems = function (ms) { var base = self.state.items.length; self.setState({ items: self.state.items.concat(ms.map(function (m, i) { return { key: 'n' + Date.now() + i, blk: m.kind === 'block', m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: true, start: '', end: '', members: m.members || null }; })) }); };
     // add content wizard
     var ad = s.ad || { step: 0, kind: 'single', sel: {}, q: '', blockName: '', layout: '2 + 2 grid', dur: '15 sec' };
     var setAd = function (o) { self.setState({ ad: Object.assign({}, self.state.ad, o) }); };
@@ -68,7 +81,7 @@ class Component extends DCLogic {
       view: s.view, setView: function (x) { self.setState({ view: x }); },
       q: s.q, setQ: function (v) { self.setState({ q: val(v) }); },
       markLabel: s.items.length > 0 && selKeys.length === s.items.length ? 'Unmark All' : 'Mark All',
-      bulkModify: function () { var k = selKeys[0], it = self.state.items.filter(function (x) { return x.key === k; })[0]; if (it) self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, bulk: selKeys } }); },
+      bulkModify: function () { var k = selKeys[0], it = self.state.items.filter(function (x) { return x.key === k; })[0]; if (it) self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, start: it.start || '2026-11-15', end: it.end || '2026-12-31', bulk: selKeys } }); },
       isGrid: s.view === 'grid', isList: s.view === 'list', toGrid: function () { self.setState({ view: 'grid' }); }, toList: function () { self.setState({ view: 'list' }); },
       libQ: s.libQ, setLibQ: function (v) { self.setState({ libQ: val(v), folder: val(v) ? '__search' : '' }); },
       inFolder: !!s.folder, notInFolder: !s.folder,
@@ -90,15 +103,39 @@ class Component extends DCLogic {
       toggleReorder: function () { if (self.state.reorder) toast(self, 'Play order saved'); self.setState({ reorder: !self.state.reorder }); },
       askBulk: function () { self.setState({ modal: 'bulk' }); },
       doBulk: function () { var sel = self.state.sel; self.setState({ items: self.state.items.filter(function (it) { return !sel[it.key]; }), sel: {}, modal: '' }); toast(self, selKeys.length + ' item(s) removed'); },
-      items: s.items.filter(function (it) { return (!s.kinds.length || s.kinds.indexOf(it.m.kind) !== -1) && contains(it.m.title, s.q); }).map(function (it, i) {
+      items: itemVMs = s.items.filter(function (it) { return (!s.kinds.length || s.kinds.indexOf(it.m.kind) !== -1) && contains(it.m.title, s.q); }).map(function (it, i) {
         var B = it.blk ? ['CHANNEL', 'var(--warning-main)'] : ({ image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'], block: ['BLOCK', 'var(--purple-main)'] }[it.m.kind] || ['IMAGE', 'var(--info-main)']);
         var sel = !!s.sel[it.key], idx = s.items.indexOf(it);
-        return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : 'var(--primary-050)', capColor: it.blk ? '#fff' : 'var(--fg-primary)', blk: it.blk, n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)', sched: it.always ? 'Always' : 'Nov 15 – Dec 31',
+        return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : (SCHED[schedState(it)] ? SCHED[schedState(it)][0] : 'var(--primary-050)'), capColor: (it.blk || schedState(it)) ? '#fff' : 'var(--fg-primary)', blk: it.blk, members: it.members || [], schedTip: schedState(it) ? SCHED[schedState(it)][1] + ' · ' + fmtDate(it.start) + ' – ' + fmtDate(it.end) : '', n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)', sched: schedState(it) ? fmtDate(it.start) + ' – ' + fmtDate(it.end) + ' (' + SCHED[schedState(it)][1] + ')' : 'Always',
           checked: sel, cls: sel ? 'sel' : (it.blk ? 'blk' : ''),
           toggle: function () { var o = Object.assign({}, self.state.sel); o[it.key] = !o[it.key]; self.setState({ sel: o }); },
           up: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); move(idx, -1); }, down: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); move(idx, 1); },
-          modify: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always } }); } };
+          modify: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, start: it.start || '2026-11-15', end: it.end || '2026-12-31' } }); } };
       }),
+      cells: (function (list) {
+        var BADGE = { image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'], block: ['BLOCK', 'var(--purple-main)'] };
+        var cells = [], g = 0;
+        list.forEach(function (it) {
+          if (!it.blk) { cells.push({ it: it, span: 1, head: false, grp: '' }); return; }
+          var color = GROUP_COLORS[g++ % GROUP_COLORS.length], gid = 'g' + g;
+          cells.push({ it: it, span: 2, head: true, grp: gid, color: color });
+          it.members.forEach(function (m) { cells.push({ it: it, span: 1, head: false, grp: gid, color: color, m: m, badge: (BADGE[m.kind] || BADGE.image) }); });
+        });
+        var col = 0;
+        cells.forEach(function (c) { if (col + c.span > GRID_COLS) col = 0; c.col = col; col += c.span; if (col >= GRID_COLS) col = 0; });
+        return cells.map(function (c, k) {
+          var prev = cells[k - 1], next = cells[k + 1], it = c.it;
+          var first = !!c.grp && !(prev && prev.grp === c.grp), last = !!c.grp && !(next && next.grp === c.grp);
+          var segStart = !!c.grp && (first || c.col === 0), segEnd = !!c.grp && (last || !next || next.col === 0);
+          var cls = c.grp ? ['grp', segStart ? 'seg-start' : '', segEnd ? 'seg-end' : '', segStart && !first ? 'dash-l' : '', segEnd && !last ? 'dash-r' : ''].join(' ') : '';
+          var member = !!c.m;
+          return { key: (c.grp || '') + k, span: c.span, cls: cls + (it.checked ? ' sel' : ''), color: c.color || 'transparent', toggle: it.toggle,
+            image: member ? c.m.image : it.image, title: member ? c.m.title : it.title, badge: member ? c.badge[0] : it.badge, badgeColor: member ? c.badge[1] : it.badgeColor,
+            n: c.grp ? null : it.n, dur: c.head ? it.dur : null, tip: c.grp ? '' : it.schedTip,
+            capBg: c.head ? c.color : (member ? 'var(--primary-050)' : it.capBg), capColor: c.head ? '#fff' : (member ? 'var(--fg-primary)' : it.capColor),
+            actions: !member, up: it.up, down: it.down, modify: it.modify };
+        });
+      })(itemVMs),
       empty: s.items.length === 0,
       screens: scs.map(function (sc, i) { var z = Object.keys(sc.zones).filter(function (k) { return sc.zones[k] === p.name; }); return { n: i + 1, name: sc.name, host: hostName(sc.host), zone: z.join(', ') || '—', template: sc.template, lic: sc.lic.length, open: navFn('DealerScreenDetail.dc.html', { id: sc.id }) }; }),
       noScreens: scs.length === 0,
@@ -128,7 +165,7 @@ class Component extends DCLogic {
         back: function () { if (self.state.ad.step === 0) close(); else setAd({ step: self.state.ad.step - 1 }); },
         next: function () {
           if (stepName !== 'Preview') { setAd({ step: self.state.ad.step + 1 }); return; }
-          if (ad.kind === 'block') { var b = picked[0]; addItems([Object.assign({}, b, { id: 'blk' + Date.now(), title: ad.blockName + ' (' + picked.length + ' assets)', kind: 'block', duration: (picked.length * secs(ad.dur)) + ' sec' })]); }
+          if (ad.kind === 'block') { var b = picked[0]; addItems([Object.assign({}, b, { id: 'blk' + Date.now(), title: ad.blockName || b.title, kind: 'block', members: picked.slice(1), duration: (picked.length * secs(ad.dur)) + ' sec' })]); }
           else addItems(picked);
           self.setState({ modal: '' }); toast(self, (ad.kind === 'block' ? 'Block' : picked.length + ' item(s)') + ' added · push updates to apply');
         }
@@ -142,7 +179,8 @@ class Component extends DCLogic {
         everywhere: md.everywhere, selected: !md.everywhere, setEverywhere: function () { setMd({ everywhere: true }); }, setSelected: function () { setMd({ everywhere: false }); },
         hosts: scs.map(function (sc) { return { name: hostName(sc.host), on: !!md.hosts[sc.host], toggle: function () { var o = Object.assign({}, self.state.md.hosts); o[sc.host] = !o[sc.host]; setMd({ hosts: o }); } }; }),
         always: md.always, ranged: !md.always, setAlways: function () { setMd({ always: true }); }, setRanged: function () { setMd({ always: false }); },
-        save: function () { var x = self.state.md; self.setState({ items: self.state.items.map(function (it) { return (it.key === x.key || (x.bulk && x.bulk.indexOf(it.key) !== -1)) ? Object.assign({}, it, { dur: x.dur, trans: x.trans, mute: x.mute, everywhere: x.everywhere, hosts: x.hosts, always: x.always }) : it; }), modal: '', md: null }); toast(self, 'Content settings saved'); }
+        start: md.start, end: md.end, setStart: function (e) { setMd({ start: val(e) }); }, setEnd: function (e) { setMd({ end: val(e) }); },
+        save: function () { var x = self.state.md; self.setState({ items: self.state.items.map(function (it) { return (it.key === x.key || (x.bulk && x.bulk.indexOf(it.key) !== -1)) ? Object.assign({}, it, { dur: x.dur, trans: x.trans, mute: x.mute, everywhere: x.everywhere, hosts: x.hosts, always: x.always, start: x.start, end: x.end }) : it; }), modal: '', md: null }); toast(self, 'Content settings saved'); }
       } : {},
       openInfo: function () { self.setState({ modal: 'info', info: { name: p.name, desc: p.desc } }); },
       info: { name: info.name, desc: info.desc, bad: !info.name.trim(),
@@ -209,32 +247,28 @@ defineTemplate(Component, (v) => (
                 {v.isGrid ? (
                   <>
                     <div className="pd-grid">
-                    {(v.items || []).map((_it, $index) => (
-                      <React.Fragment key={$index}>
-                        <div className={`pd-tile ${s(_it?.cls)}`} onClick={_it?.toggle} style={{ gridColumn: `span ${s(_it?.span)}` }}>
-                          <div className="pd-tile__card">
+                    {(v.cells || []).map((_c) => (
+                      <div key={_c.key} className={`pd-cell ${s(_c.cls)}`} onClick={_c.toggle} style={{ gridColumn: `span ${s(_c.span)}`, "--g": _c.color }} title={_c.tip || undefined}>
+                        <div className="pd-tile__card">
                           <div className="pd-tile__img">
-                            <img src={_it?.image} alt="" />
-                            <span className="pd-tag" style={{ color: `${s(_it?.badgeColor)}`, borderColor: `${s(_it?.badgeColor)}` }}>{_it?.badge}</span>
+                            <img src={_c.image} alt="" />
+                            <span className="pd-tag" style={{ color: `${s(_c.badgeColor)}`, borderColor: `${s(_c.badgeColor)}` }}>{_c.badge}</span>
                           </div>
-                          <div className="pd-tile__cap" style={{ background: `${s(_it?.capBg)}`, color: `${s(_it?.capColor)}` }}>
-                            <span className="pd-tile__name">{_it?.blk ? null : <span className="pd-num">{_it?.n}</span>}{_it?.title}</span>
-                            {_it?.blk ? <span className="pd-dur">{_it?.dur}</span> : null}
-                            {v.reorder ? (
+                          <div className="pd-tile__cap" style={{ background: `${s(_c.capBg)}`, color: `${s(_c.capColor)}` }}>
+                            <span className="pd-tile__name">{_c.n ? <span className="pd-num">{_c.n}</span> : null}{_c.title}</span>
+                            {_c.dur ? <span className="pd-dur">{_c.dur}</span> : null}
+                            {_c.actions && v.reorder ? (
                               <>
-                                <button type="button" className="dv-ib" style={{ width: "18px", height: "18px" }} aria-label="Move earlier" onClick={_it?.up}><NTV.Icon name="angle-up" size={v.i10} /></button>
-                                <button type="button" className="dv-ib" style={{ width: "18px", height: "18px" }} aria-label="Move later" onClick={_it?.down}><NTV.Icon name="angle-down" size={v.i10} /></button>
+                                <button type="button" className="dv-ib pd-capbtn" aria-label="Move earlier" onClick={_c.up}><NTV.Icon name="angle-up" size={v.i10} /></button>
+                                <button type="button" className="dv-ib pd-capbtn" aria-label="Move later" onClick={_c.down}><NTV.Icon name="angle-down" size={v.i10} /></button>
                               </>
                             ) : null}
-                            {v.notReorder ? (
-                              <>
-                                <button type="button" className="dv-ib" style={{ width: "18px", height: "18px" }} aria-label="Modify" onClick={_it?.modify}><NTV.Icon name="gear" size={v.i10} /></button>
-                              </>
+                            {_c.actions && v.notReorder ? (
+                              <button type="button" className="dv-ib pd-capbtn" aria-label="Modify" onClick={_c.modify}><NTV.Icon name="gear" size={v.i10} /></button>
                             ) : null}
-                          </div>
                           </div>
                         </div>
-                      </React.Fragment>
+                      </div>
                     ))}
                   </div>
                   </>
@@ -577,11 +611,11 @@ defineTemplate(Component, (v) => (
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                     <div>
                       <label className="dv-label" htmlFor="sd1">Start</label>
-                      <input id="sd1" className="dv-field" type="date" value="2026-11-15" />
+                      <input id="sd1" className="dv-field" type="date" value={v.md?.start} onChange={v.md?.setStart} />
                     </div>
                     <div>
                       <label className="dv-label" htmlFor="sd2">End</label>
-                      <input id="sd2" className="dv-field" type="date" value="2026-12-31" />
+                      <input id="sd2" className="dv-field" type="date" value={v.md?.end} onChange={v.md?.setEnd} />
                     </div>
                   </div>
                   </>
