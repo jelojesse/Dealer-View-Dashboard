@@ -190,7 +190,7 @@ defineTemplate(Component, (v) => (
             </div>
           </section>
           <div className="dv-between">
-            <div className="dv-row" style={{ flexWrap: "wrap", gap: "12px" }}>
+            <div className="dv-row lic-filters" style={{ flexWrap: "wrap", gap: "12px" }}>
               <FilterBy groups={v.filterGroups} value={v.filters} onChange={v.setFilters} />
               <div style={{ width: "210px", flex: "none" }}>
                 <NTV.Select size="l" placeholder="Timezone" options={v.tzOptions} value={v.tz} onChange={v.setTz} />
