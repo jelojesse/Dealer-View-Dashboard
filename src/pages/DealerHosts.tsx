@@ -27,6 +27,17 @@ var FILTER_GROUPS = [
   { title: 'Status', field: 'statuses', tone: 'info', options: [{ key: 'Active', label: 'Active' }, { key: 'Inactive', label: 'Inactive' }] },
   { title: 'Licenses', field: 'licRanges', tone: 'red-orange', options: LIC_RANGES }
 ];
+// Hosts table columns ('#' is always shown). Toggled from the gear → NTV.ColumnVisibility.
+var HOST_COLS = [
+  { key: 'name', label: 'Host Name', w: 'minmax(200px, 1.6fr)', min: 200 },
+  { key: 'address', label: 'Address', w: 'minmax(160px, 2.3fr)', min: 160 },
+  { key: 'city', label: 'City', w: 'minmax(140px, 2.3fr)', min: 140 },
+  { key: 'state', label: 'State', w: 'minmax(60px, 0.7fr)', min: 60 },
+  { key: 'zip', label: 'Postal Code', w: 'minmax(90px, 0.7fr)', min: 90 },
+  { key: 'tz', label: 'Timezone', w: 'minmax(100px, 0.8fr)', min: 100 },
+  { key: 'lic', label: 'Total Licenses', w: 'minmax(100px, 0.65fr)', min: 100 },
+  { key: 'actions', label: 'Actions', w: '94px', min: 94 }
+];
 var PAGE = 10; // rows shown at first and added by "Show More..."
 var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 var TZ_BY_STATE = { AK: 'US/Alaska', HI: 'US/Hawaii', AZ: 'US/Arizona',
@@ -36,7 +47,7 @@ var TZ_BY_STATE = { AK: 'US/Alaska', HI: 'US/Hawaii', AZ: 'US/Arizona',
 var tzFor = function (st) { return TZ_BY_STATE[st] || 'US/Eastern'; };
 var SERIES = { '2026': [12, 15, 18, 21, 25, 27, 30, 32, 35, 38, 41, 43], '2025': [2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] };
 class Component extends DCLogic {
-  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', statuses: f.status ? [f.status] : [], licRanges: [], analytics: !!props.analytics, limit: PAGE, blocked: null, month: '', year: '2026', graph: 'Line Graph', hover: -1, toast: null }; }
+  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', statuses: f.status ? [f.status] : [], licRanges: [], analytics: !!props.analytics, limit: PAGE, blocked: null, month: '', year: '2026', graph: 'Line Graph', hover: -1, hiddenCols: [], colsOpen: false, toast: null }; }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
     var self = this, s = this.state;
@@ -54,7 +65,15 @@ class Component extends DCLogic {
     var top = D.hosts.slice().sort(function (a, b) { return b.lic.length - a.lic.length || a.name.localeCompare(b.name); }).slice(0, 10);
     return {
       none: null, i14: 14, w460: 460,
-      cols: '44px minmax(200px, 1.6fr) minmax(160px, 2.3fr) minmax(140px, 2.3fr) 0.7fr 0.7fr 0.8fr 0.65fr 94px',
+      show: HOST_COLS.reduce(function (o, c) { o[c.key] = s.hiddenCols.indexOf(c.key) === -1; return o; }, {}),
+      cols: ['44px'].concat(HOST_COLS.filter(function (c) { return s.hiddenCols.indexOf(c.key) === -1; }).map(function (c) { return c.w; })).join(' '),
+      tableMin: HOST_COLS.reduce(function (n, c) { return n + (s.hiddenCols.indexOf(c.key) === -1 ? c.min : 0); }, 44) + 'px',
+      colsOpen: s.colsOpen,
+      toggleCols: function () { self.setState({ colsOpen: !self.state.colsOpen }); },
+      closeCols: function () { self.setState({ colsOpen: false }); },
+      colColumns: HOST_COLS.map(function (c) { return { key: c.key, label: c.label, visible: s.hiddenCols.indexOf(c.key) === -1 }; }),
+      toggleCol: function (key, on) { var h = self.state.hiddenCols.filter(function (k) { return k !== key; }); self.setState({ hiddenCols: on ? h : h.concat([key]) }); },
+      resetCols: function () { self.setState({ hiddenCols: [] }); },
       total: D.hosts.length, activeCount: count('Active'), inactiveCount: count('Inactive'),
       analytics: s.analytics, analyticsLabel: s.analytics ? 'Hide Analytics' : 'Show Analytics', analyticsIcon: s.analytics ? 'angle-up' : 'angle-down',
       toggleAnalytics: function () { self.setState({ analytics: !self.state.analytics }); },
@@ -300,41 +319,49 @@ defineTemplate(Component, (v) => (
               <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>Hosts Data</h2>
               <div className="dv-row" style={{ gap: "20px" }}>
                 <NTV.IconButton icon="arrows-rotate" label="Refresh table" variant="secondary" size="m" onClick={v.refresh} />
-                <NTV.IconButton icon="gear" label="Table settings" variant="secondary" size="m" />
+                <div style={{ position: "relative" }}>
+                  <NTV.IconButton icon="gear" label="Table settings" variant="secondary" size="m" onClick={v.toggleCols} />
+                  {v.colsOpen ? (
+                    <>
+                      <div className="ntv-colvis__backdrop" onClick={v.closeCols} />
+                      <NTV.ColumnVisibility columns={v.colColumns} onToggle={v.toggleCol} onReset={v.resetCols} onClose={v.closeCols} />
+                    </>
+                  ) : null}
+                </div>
               </div>
             </div>
             <div className="dv-table hosts-table">
-              <div role="table" aria-label="Hosts" style={{ minWidth: "1100px" }}>
+              <div role="table" aria-label="Hosts" style={{ minWidth: v.tableMin }}>
                 <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: `${s(v.cols)}` }}>
                   <div style={{ textAlign: "center" }}>#</div>
-                  <div>Host Name</div>
-                  <div>Address</div>
-                  <div>City</div>
-                  <div>State</div>
-                  <div>Postal Code</div>
-                  <div>Timezone</div>
-                  <div>Total Licenses</div>
-                  <div>Actions</div>
+                  {v.show.name ? <div>Host Name</div> : null}
+                  {v.show.address ? <div>Address</div> : null}
+                  {v.show.city ? <div>City</div> : null}
+                  {v.show.state ? <div>State</div> : null}
+                  {v.show.zip ? <div>Postal Code</div> : null}
+                  {v.show.tz ? <div>Timezone</div> : null}
+                  {v.show.lic ? <div>Total Licenses</div> : null}
+                  {v.show.actions ? <div>Actions</div> : null}
                 </div>
                 {(v.rows || []).map((_r, $index) => (
                   <React.Fragment key={$index}>
                     <div role="row" className="dv-tr" style={{ gridTemplateColumns: `${s(v.cols)}`, boxShadow: `inset 4px 0 0 ${s(_r?.color)}` }}>
                       <div style={{ textAlign: "center" }}>{_r?.n}</div>
-                      <div>
+                      {v.show.name ? <div>
                         <a className="dv-a" style={{ fontWeight: "500", color: "var(--fg-primary)" }} href="DealerHostDetail.dc.html" onClick={_r?.open} data-nav={_r?.openNav}>{_r?.name}</a>
-                      </div>
-                      <div>{_r?.address}</div>
-                      <div>{_r?.city}</div>
-                      <div>{_r?.state}</div>
-                      <div>{_r?.zip}</div>
-                      <div>{_r?.tz}</div>
-                      <div>
+                      </div> : null}
+                      {v.show.address ? <div>{_r?.address}</div> : null}
+                      {v.show.city ? <div>{_r?.city}</div> : null}
+                      {v.show.state ? <div>{_r?.state}</div> : null}
+                      {v.show.zip ? <div>{_r?.zip}</div> : null}
+                      {v.show.tz ? <div>{_r?.tz}</div> : null}
+                      {v.show.lic ? <div>
                         <a className="dv-a" style={{ fontWeight: "500", color: "var(--fg-primary)" }} href="DealerLicenses.dc.html" onClick={_r?.openLic} data-nav={_r?.openLicNav}>{_r?.lic}</a>
-                      </div>
-                      <div className="dv-row" style={{ gap: "2px" }}>
+                      </div> : null}
+                      {v.show.actions ? <div className="dv-row" style={{ gap: "2px" }}>
                         <a className="dv-ib dv-edit" aria-label="Edit host" href="DealerHostDetail.dc.html" onClick={_r?.edit} data-nav={_r?.editNav}><NTV.Icon name="pen-to-square" size={v.i14} /></a>
                         <button type="button" className="dv-ib dv-danger" aria-label="Delete host" onClick={_r?.remove}><NTV.Icon name="trash" size={v.i14} /></button>
-                      </div>
+                      </div> : null}
                     </div>
                   </React.Fragment>
                 ))}

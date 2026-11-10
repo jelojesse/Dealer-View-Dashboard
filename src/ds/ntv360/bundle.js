@@ -184,6 +184,26 @@ function ActiveFilters(p) {
     chips.map(function (c, i) { return h(FilterChip, Object.assign({ key: c.key || i }, c)); }),
     p.onClear ? h('button', { type: 'button', className: 'ntv-activefilters__clear', onClick: p.onClear }, p.clearLabel || 'Clear All') : null);
 }
+/* ColumnVisibility — table settings overlay (Figma DS "Column Visibility", node 7946:16738).
+ * columns: [{ key, label, visible }]; onToggle(key, visible); onReset(); onClose().
+ * Checked = column shown. Footer shows "Showing X of Y columns". Place it inside a
+ * position:relative wrapper next to the gear button; it opens below, right-aligned. */
+function ColumnVisibility(p) {
+  var cols = p.columns || [];
+  var shown = cols.filter(function (c) { return c.visible; }).length;
+  return h('div', { className: cx('ntv-colvis', p.className), role: 'dialog', 'aria-label': p.title || 'Column Visibility', style: p.style },
+    h('div', { className: 'ntv-colvis__body' },
+      h('div', { className: 'ntv-colvis__head' },
+        h('span', { className: 'ntv-colvis__title' }, p.title || 'Column Visibility'),
+        h('button', { type: 'button', className: 'ntv-colvis__close', 'aria-label': 'Close', onClick: p.onClose }, h(Icon, { name: 'x', size: 14 }))),
+      h(Button, { variant: 'danger', size: 'm', className: 'ntv-colvis__reset', onClick: p.onReset }, p.resetLabel || 'Reset'),
+      h('div', { className: 'ntv-colvis__list' },
+        cols.map(function (c) {
+          return h(Checkbox, { key: c.key, className: 'ntv-colvis__row', label: c.label, checked: !!c.visible,
+            onChange: function (v) { p.onToggle && p.onToggle(c.key, v); } });
+        }))),
+    h('div', { className: 'ntv-colvis__foot' }, 'Showing ' + shown + ' of ' + cols.length + ' columns'));
+}
 function SearchAutocomplete(p) {
   var chips = p.chips || [], sugg = p.suggestions || [];
   var state = p.selected && p.selected.length ? 'filled' : p.value ? 'filled' : p.typing ? 'typing' : '';
@@ -425,16 +445,6 @@ function TableToolbar(p) {
       h(Input, { size: 'l', placeholder: p.searchPlaceholder || 'Search', iconLeft: 'magnifying-glass', className: 'ntv-tabletools__search' }),
       h(Button, { size: 'xl', disabled: !p.selectedCount, iconRight: 'trash' }, 'Bulk Delete'),
       h(Button, { size: 'xl', variant: 'secondary', iconRight: 'file-pdf' }, 'Export')));
-}
-function ColumnVisibility(p) {
-  var cols = p.columns || [];
-  var shown = cols.filter(function (c) { return c.visible; }).length;
-  return h('div', { className: cx('ntv-colvis', p.className) },
-    h('div', { className: 'ntv-colvis__head' }, h('strong', null, 'Column Visibility'), h('button', { type: 'button', className: 'ntv-iconlink', 'aria-label': 'Close', onClick: p.onClose }, h(Icon, { name: 'x', size: 14 }))),
-    h('div', { className: 'ntv-colvis__body' },
-      h(Button, { tone: 'danger', size: 'xl', iconRight: 'angle-right-solid', style: { width: '100%' }, onClick: p.onReset }, 'Reset'),
-      cols.map(function (c) { return h(Checkbox, { key: c.label, label: c.label, checked: c.visible }); })),
-    h('div', { className: 'ntv-colvis__foot' }, 'Showing ' + shown + ' of ' + cols.length + ' columns'));
 }
 
 /* ---------- Overlays ---------- */
