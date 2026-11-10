@@ -37,6 +37,8 @@ class Component extends DCLogic {
     var step = 820 / 11, X = function (i) { return 50 + i * step; };
     var YL = function (v) { return 260 - v / 50 * 240; }, YR = function (v) { return 260 - v / 5 * 240; };
     var path = function (vals, Y) { return vals.map(function (v, i) { return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(v).toFixed(1); }).join(' '); };
+    // closed shape under a line, for the gradient area fill (Figma "Network Growth" chart)
+    var area = function (vals, Y) { return path(vals, Y) + ' L' + X(vals.length - 1).toFixed(1) + ' 260 L' + X(0).toFixed(1) + ' 260 Z'; };
     var hi = s.hover >= 0 ? s.hover : (s.month ? MONTHS.indexOf(s.month) : -1);
     var top = D.hosts.slice().sort(function (a, b) { return b.lic.length - a.lic.length || a.name.localeCompare(b.name); }).slice(0, 10);
     return {
@@ -49,8 +51,9 @@ class Component extends DCLogic {
       yearOptions: ['2026', '2025'], year: s.year, setYear: function (v) { self.setState({ year: val(v), hover: -1 }); },
       graphOptions: ['Line Graph', 'Bar Graph'], graph: s.graph, setGraph: function (v) { self.setState({ graph: val(v) }); },
       ch: { isLine: s.graph === 'Line Graph', isBar: s.graph === 'Bar Graph', step: step.toFixed(1),
-        total: path(tot, YL), fresh: path(fresh, YR),
-        grid: [0, 1, 2, 3, 4, 5].map(function (k) { var y = 260 - k * 48; return { y: y, ty: y + 3, tp: (y / 300 * 100).toFixed(2) + '%', l: k * 10, r: k }; }),
+        total: path(tot, YL), fresh: path(fresh, YR), totalArea: area(tot, YL), freshArea: area(fresh, YR),
+        // 10 intervals like the design: left axis 0–50 (total), right axis 0–5 (new, whole numbers only)
+        grid: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(function (k) { var y = 260 - k * 24; return { y: y, ty: y + 3, tp: (y / 300 * 100).toFixed(2) + '%', l: k * 5, r: k % 2 ? '' : k / 2 }; }),
         months: MONTHS.map(function (m, i) { return { label: m, xp: (X(i) / 900 * 100).toFixed(2) + '%', x: X(i).toFixed(1), hx: (X(i) - step / 2).toFixed(1), bx1: (X(i) - 15).toFixed(1), bx2: (X(i) + 1).toFixed(1),
           ty: YL(tot[i]).toFixed(1), th: (260 - YL(tot[i])).toFixed(1), ny: YR(fresh[i]).toFixed(1), nh: Math.max(2, 260 - YR(fresh[i])).toFixed(1),
           hover: function () { self.setState({ hover: i }); } }; }) },
@@ -129,21 +132,16 @@ defineTemplate(Component, (v) => (
           {v.analytics ? (
             <>
               <section aria-label="Host analytics" style={{ display: "grid", gridTemplateColumns: "minmax(0, 2fr) minmax(320px, 1fr)", gap: "20px" }}>
-              <div className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                <div className="dv-between">
+              <div className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+                <div className="dv-between" style={{ gap: "16px" }}>
                   <div>
-                    <h2 className="dv-h3" style={{ fontSize: "14px" }}>Host Analytics</h2>
-                    <p className="dv-sub">Performance overview</p>
+                    <h2 className="ha-title">Host Analytics</h2>
+                    <p className="ha-sub">Total Hosts and new Hosts registered, by month</p>
                   </div>
-                  <div className="dv-row" style={{ gap: "16px", fontSize: "14px", fontWeight: "700" }}>
-                    <span className="dv-row" style={{ gap: "6px" }}>
-                      <span className="dv-dot" style={{ background: "var(--success-main)" }} />
-                      Total Host
-                    </span>
-                    <span className="dv-row" style={{ gap: "6px" }}>
-                      <span className="dv-dot" style={{ background: "var(--info-main)" }} />
-                      New Host
-                    </span>
+                  <div className="dv-row" style={{ gap: "16px", flexWrap: "wrap", justifyContent: "flex-end", flex: "1 1 auto" }}>
+                  <div className="ha-legend">
+                    <span><span className="ha-dot" style={{ background: "var(--success-main)" }} />Total Host</span>
+                    <span><span className="ha-dot" style={{ background: "var(--info-main)" }} />New Host</span>
                   </div>
                   <div className="dv-row" style={{ gap: "10px" }}>
                     <div style={{ width: "210px", flex: "none" }}>
@@ -156,39 +154,53 @@ defineTemplate(Component, (v) => (
                       <NTV.Select size="l" options={v.graphOptions} value={v.graph} onChange={v.setGraph} />
                     </div>
                   </div>
+                  </div>
                 </div>
                 <div style={{ position: "relative" }} onMouseLeave={v.clearHover}>
                   <svg viewBox="0 0 900 300" width="100%" role="img" aria-label="Total and new hosts per month" style={{ display: "block", overflow: "visible" }}>
+                    <defs>
+                      <linearGradient id="ha-fill-total" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--success-main)" stopOpacity="0.5" />
+                        <stop offset="100%" stopColor="var(--success-main)" stopOpacity="0" />
+                      </linearGradient>
+                      <linearGradient id="ha-fill-new" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--info-main)" stopOpacity="0.35" />
+                        <stop offset="100%" stopColor="var(--info-main)" stopOpacity="0" />
+                      </linearGradient>
+                    </defs>
                     {(v.ch?.grid || []).map((_g, $index) => (
                       <React.Fragment key={$index}>
-                        <line x1="50" x2="870" y1={_g?.y} y2={_g?.y} stroke="#e5e7eb" strokeDasharray="3 4" />
+                        <line x1="36" x2="884" y1={_g?.y} y2={_g?.y} stroke="var(--container-border)" strokeDasharray="4 4" />
                       </React.Fragment>
                     ))}
                     {(v.ch?.months || []).map((_m, $index) => (
                       <React.Fragment key={$index}>
-                        <line x1={_m?.x} x2={_m?.x} y1="20" y2="260" stroke="#e5e7eb" strokeDasharray="3 4" />
+                        <line x1={_m?.x} x2={_m?.x} y1="20" y2="260" stroke="var(--container-border)" strokeDasharray="4 4" />
                       </React.Fragment>
                     ))}
                     {v.ch?.isBar ? (
                       <>
                         {(v.ch?.months || []).map((_m, $index) => (
                         <React.Fragment key={$index}>
-                          <rect x={_m?.bx1} y={_m?.ty} width="14" height={_m?.th} rx="3" fill="var(--success-main)" />
-                          <rect x={_m?.bx2} y={_m?.ny} width="14" height={_m?.nh} rx="3" fill="var(--info-main)" />
+                          <rect x={_m?.bx1} y={_m?.ty} width="14" height={_m?.th} rx="3" fill="url(#ha-fill-total)" stroke="var(--success-main)" strokeWidth="1.5" />
+                          <rect x={_m?.bx2} y={_m?.ny} width="14" height={_m?.nh} rx="3" fill="url(#ha-fill-new)" stroke="var(--info-main)" strokeWidth="1.5" />
                         </React.Fragment>
                       ))}
                       </>
                     ) : null}
                     {v.ch?.isLine ? (
                       <>
-                        <path d={v.ch?.total} fill="none" stroke="var(--success-main)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d={v.ch?.fresh} fill="none" stroke="var(--info-main)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d={v.ch?.totalArea} fill="url(#ha-fill-total)" stroke="none" />
+                        <path d={v.ch?.freshArea} fill="url(#ha-fill-new)" stroke="none" />
+                        <path d={v.ch?.total} fill="none" stroke="var(--success-main)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d={v.ch?.fresh} fill="none" stroke="var(--info-main)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                       </>
                     ) : null}
                     {v.tip?.show ? (
                       <>
-                        <circle cx={v.tip?.x} cy={v.tip?.ty} r="5" fill="var(--bg-surface)" stroke="var(--success-main)" strokeWidth="2" />
-                        <circle cx={v.tip?.x} cy={v.tip?.ny} r="5" fill="var(--bg-surface)" stroke="var(--info-main)" strokeWidth="2" />
+                        <line x1={v.tip?.x} x2={v.tip?.x} y1="20" y2="260" stroke="var(--fg-secondary)" strokeWidth="1" strokeDasharray="4 4" />
+                        <circle cx={v.tip?.x} cy={v.tip?.ty} r="6.5" fill="var(--bg-surface)" stroke="var(--success-main)" strokeWidth="3" />
+                        <circle cx={v.tip?.x} cy={v.tip?.ny} r="6.5" fill="var(--bg-surface)" stroke="var(--info-main)" strokeWidth="3" />
                       </>
                     ) : null}
                     {(v.ch?.months || []).map((_m, $index) => (

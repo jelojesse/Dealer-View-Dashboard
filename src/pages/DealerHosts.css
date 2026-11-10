@@ -75,7 +75,13 @@
 .pg-hosts .dv-kv2{display:flex;flex-direction:column;font-size:12px;line-height:18px}
 .pg-hosts .dv-kv2>span:first-child{color:var(--fg-secondary)}
 .pg-hosts .dv-kv2>span:last-child{font-weight:600;color:var(--fg-primary)}
-.pg-hosts .ax-y{position:absolute;text-align:right;transform:translateY(-50%);font-size:10px;line-height:12px;color:var(--fg-secondary)}
-.pg-hosts .ax-x{position:absolute;transform:translateX(-50%);font-size:12px;line-height:14px;color:var(--fg-secondary);white-space:nowrap}
+.pg-hosts .ax-y{position:absolute;text-align:right;transform:translateY(-50%);font-size:8px;line-height:12px;font-weight:600;color:var(--fg-secondary)}
+.pg-hosts .ax-x{position:absolute;transform:translateX(-50%);font-size:14px;line-height:12px;font-weight:500;color:var(--fg-secondary);white-space:nowrap}
 /* Hosts table: fixed at header + 10 rows (44px each); "Show More..." rows scroll inside */
 .pg-hosts .dv-table.hosts-table{max-height:calc(44px * 11 + 2px)} /* +2px = top/bottom border */
+/* Host Analytics chart header — matches Figma "Network Growth" chart (Dealer Account Overview, node 2:1791) */
+.pg-hosts .ha-title{margin:0;font-size:16px;line-height:24px;font-weight:700;color:var(--fg-primary)}
+.pg-hosts .ha-sub{margin:0;font-size:12px;line-height:18px;color:var(--fg-secondary)}
+.pg-hosts .ha-legend{display:flex;align-items:center;gap:16px;font-size:14px;line-height:20px;font-weight:600;color:var(--fg-secondary);white-space:nowrap}
+.pg-hosts .ha-legend>span{display:inline-flex;align-items:center;gap:4px}
+.pg-hosts .ha-dot{display:inline-block;width:8px;height:8px;border-radius:999px;flex:none}
