@@ -93,7 +93,7 @@
 .pg-playlist-detail .pd-filter{display:flex;flex-direction:column;gap:10px}
 .pg-playlist-detail .pd-h2{margin:0;font-size:20px;line-height:28px;font-weight:700;color:var(--fg-primary)}
 .pg-playlist-detail .pd-count{font-size:14px;line-height:20px;color:var(--fg-secondary)}
-.pg-playlist-detail .pd-content{display:flex;flex-direction:column;gap:14px;min-height:420px}
+.pg-playlist-detail .pd-content{container-type:inline-size;display:flex;flex-direction:column;gap:14px;min-height:420px}
 .pg-playlist-detail .pd-foot{margin-top:-10px;font-size:10px;line-height:15px;color:var(--fg-secondary)}
 /* content tiles: 8 columns, 10px gap; image ~173x96 + 40px caption */
 .pg-playlist-detail .pd-tile__card{display:flex;flex-direction:column;width:100%;min-width:0;overflow:hidden;border-radius:var(--radius-sm);background:var(--bg-surface);box-shadow:0 0 0 1px var(--container-border)}
@@ -113,17 +113,18 @@
 .pg-playlist-detail .pd-n{font-size:12px;line-height:16px;color:var(--fg-secondary)}
 .pg-playlist-detail .pd-sidefoot{display:flex;justify-content:space-between;margin-top:auto;padding-top:10px;font-size:10px;line-height:15px;color:var(--fg-secondary)}
 .pg-playlist-detail .pd-sidefoot strong{color:var(--fg-primary)}
-/* content grid: 8 equal columns, 10px gaps; every row is one tile tall (image 173.75x95.68 ratio + 40px caption) */
-.pg-playlist-detail .pd-grid{container-type:inline-size;display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-auto-rows:calc((100cqw - 70px) / 8 * 95.68 / 173.75 + 40px);gap:10px}
+/* content grid: 8 equal columns, 10px gaps between contents; every row is one tile tall (image 173.75x95.68 ratio + 40px caption).
+   cqw = inner width of the content card; (100cqw - 7 gaps of 10px) / 8 columns = one tile width */
+.pg-playlist-detail .pd-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-auto-rows:calc((100cqw - 70px) / 8 * 95.68 / 173.75 + 40px);gap:10px}
 .pg-playlist-detail .pd-cell{position:relative;display:flex;min-width:0;cursor:pointer}
 .pg-playlist-detail .pd-tile__img{position:relative;flex:1;min-height:0;background:#000;overflow:hidden}
 .pg-playlist-detail .pd-cell.sel .pd-tile__card{box-shadow:0 0 0 2px var(--accent-action)}
 .pg-playlist-detail .pd-capbtn{width:18px;height:18px;color:inherit;flex:none}
 /* block group frame — drawn per cell so it can wrap across rows (Figma "Space Block").
    Frame color comes from --g; dashed edge = the block continues on the next/previous row. */
-.pg-playlist-detail .pd-cell.grp{padding:6px 0}
-.pg-playlist-detail .pd-cell.grp.seg-start{padding-left:6px}
-.pg-playlist-detail .pd-cell.grp.seg-end{padding-right:6px}
+.pg-playlist-detail .pd-cell.grp{padding:10px 0}
+.pg-playlist-detail .pd-cell.grp.seg-start{padding-left:10px}
+.pg-playlist-detail .pd-cell.grp.seg-end{padding-right:10px}
 .pg-playlist-detail .pd-cell.grp::before{content:"";position:absolute;top:0;bottom:0;left:-5px;right:-5px;box-sizing:border-box;border-top:2px solid var(--g);border-bottom:2px solid var(--g);pointer-events:none}
 .pg-playlist-detail .pd-cell.grp.seg-start::before{left:0;border-left:2px solid var(--g);border-radius:6px 0 0 6px}
 .pg-playlist-detail .pd-cell.grp.seg-end::before{right:0;border-right:2px solid var(--g);border-top-right-radius:6px;border-bottom-right-radius:6px}
