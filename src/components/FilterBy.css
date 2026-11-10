@@ -1,0 +1,10 @@
+/* FilterBy: secondary "Filter by" button + panel of collapsible checkbox groups. */
+.fb{position:relative;display:inline-block}
+.fb__panel{position:absolute;z-index:30;top:calc(100% + 8px);left:0;width:270px;max-height:420px;overflow-y:auto;box-sizing:border-box;padding:6px 0;background:var(--bg-surface);border:1px solid var(--container-border);border-radius:var(--radius-sm);box-shadow:var(--shadow-card)}
+.fb--right .fb__panel{left:auto;right:0}
+.fb__group+.fb__group{border-top:1px solid var(--container-border)}
+.fb__head{display:flex;align-items:center;justify-content:space-between;width:100%;padding:10px 16px;border:0;background:transparent;font:400 14px/20px var(--font-sans);color:var(--fg-secondary);cursor:pointer;text-align:left}
+.fb__head:hover{color:var(--accent-action)}
+.fb__opts{display:flex;flex-direction:column;gap:4px;padding:0 16px 10px}
+.fb__clear{display:block;width:100%;padding:10px 16px;border:0;border-top:1px solid var(--container-border);background:transparent;font:600 12px/20px var(--font-sans);color:var(--accent-action);cursor:pointer;text-align:left}
+.fb__clear:hover{text-decoration:underline}

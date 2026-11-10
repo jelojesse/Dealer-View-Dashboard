@@ -16,12 +16,13 @@ import './DealerDashboard.css';
 /* ============================== Logic ============================== */
 
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { range: 'Last 12 months' }; }
+  constructor(props) { super(props); this.state = { range: 'Last 12 months', hover: -1 }; }
   renderVals() {
     var pct = function (v, of) { return (v / of * 100).toFixed(2) + '%'; };
     var R = this.vals0();
     R.growth.grid = R.growth.grid.map(function (g) { return Object.assign({}, g, { tp: pct(g.y, 300) }); });
     R.growth.ticks = R.growth.ticks.map(function (t) { return Object.assign({}, t, { xp: pct(t.x, 1200) }); });
+    if (R.tip.show) R.tip.left = pct(R.tip.x, 1200);
     return R;
   }
   vals0() {
@@ -29,8 +30,8 @@ class Component extends DCLogic {
     // Network Growth: running totals per month. The last month (Nov) is the current, in-progress month.
     var months = ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'];
     var seriesDef = [
-      { key: 'screens', label: 'Screens', color: 'var(--success-400)', vals: [18, 27, 40, 45, 54, 59, 65, 70, 72, 72, 75, 82] },
-      { key: 'hosts', label: 'Hosts', color: 'var(--chart-1)', vals: [9, 11, 12, 14, 15, 16, 19, 24, 28, 34, 39, 43] },
+      { key: 'screens', label: 'Screens', color: 'var(--success-main)', vals: [18, 27, 40, 45, 54, 59, 65, 70, 72, 72, 75, 82] },
+      { key: 'hosts', label: 'Hosts', color: 'var(--info-main)', vals: [9, 11, 12, 14, 15, 16, 19, 24, 28, 34, 39, 43] },
       { key: 'advertisers', label: 'Advertisers', color: 'var(--teal-main)', vals: [1, 1, 2, 2, 3, 4, 6, 9, 14, 17, 21, 24] }
     ];
     var n = this.state.range === 'Last 3 months' ? 3 : (this.state.range === 'Last 6 months' ? 6 : 12);
@@ -49,7 +50,11 @@ class Component extends DCLogic {
       };
     });
     var grid = [0, 20, 40, 60, 80, 100].map(function (v) { return { y: Y(v), label: v }; });
-    var ticks = ms.map(function (m, i) { return { x: X(i), m: i === n - 1 ? m + ' (to date)' : m, live: i === n - 1 }; });
+    var step = n > 1 ? 1120 / (n - 1) : 1120;
+    var ticks = ms.map(function (m, i) { return { x: X(i), hx: X(i) - step / 2, m: i === n - 1 ? m + ' (to date)' : m, live: i === n - 1, hover: function () { self.setState({ hover: i }); } }; });
+    var hi = this.state.hover >= 0 && this.state.hover < n ? this.state.hover : -1;
+    var tip = hi < 0 ? { show: false } : { show: true, x: X(hi), flip: hi > n / 2, month: ms[hi] + (hi === n - 1 ? ' (to date)' : ''),
+      rows: series.map(function (sr) { return { key: sr.key, label: sr.label, color: sr.color, v: sr.pts[hi].v, y: sr.pts[hi].y }; }) };
     var to = function (page, filter) { return navFn(page, filter); };
     return {
       i10: 10, i12: 12, i14: 14,
@@ -60,8 +65,9 @@ class Component extends DCLogic {
       ],
       rangeOptions: ['Last 3 months', 'Last 6 months', 'Last 12 months'],
       range: this.state.range,
-      setRange: function (v) { self.setState({ range: val(v) }); },
-      growth: { series: series, grid: grid, ticks: ticks },
+      setRange: function (v) { self.setState({ range: val(v), hover: -1 }); },
+      growth: { series: series, grid: grid, ticks: ticks, step: step },
+      tip: tip, clearHover: function () { self.setState({ hover: -1 }); },
       statusRows: [
         { label: 'Online', n: 74, color: 'var(--status-online)', go: to('DealerLicenses.dc.html', { status: 'online' }) },
         { label: 'Offline', n: 6, color: 'var(--status-offline)', go: to('DealerLicenses.dc.html', { status: 'offline' }) },
@@ -155,38 +161,50 @@ defineTemplate(Component, (v) => (
               </React.Fragment>
             ))}
           </section>
-          <section aria-label="Charts" className="db-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <section aria-label="Charts" className="db-card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
               <div>
-                <h2 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>Network Growth</h2>
+                <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "24px", fontWeight: "700" }}>Network Growth</h2>
                 <p style={{ margin: "0", fontSize: "12px", lineHeight: "20px", color: "var(--fg-secondary)" }}>{"Screens, Hosts and Advertisers on your network · this month updates live"}</p>
               </div>
-              <div className="db-range">
-                <NTV.Select size="l" options={v.rangeOptions} value={v.range} onChange={v.setRange} />
+              <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+                <div className="db-legend">
+                  {(v.growth?.series || []).map((_s) => (
+                    <span key={_s.key} className="db-legend__item">
+                      <span className="db-dot" style={{ background: _s.color }} />
+                      {_s.label}
+                    </span>
+                  ))}
+                </div>
+                <div className="db-range">
+                  <NTV.Select size="l" options={v.rangeOptions} value={v.range} onChange={v.setRange} />
+                </div>
               </div>
             </div>
-            <div className="db-legend">
-              {(v.growth?.series || []).map((_s) => (
-                <span key={_s.key} className="db-legend__item">
-                  <span className="db-dot" style={{ background: _s.color }} />
-                  <strong>{_s.label}</strong>
-                  <span className="db-legend__meta">+{_s.added} in range</span>
-                </span>
-              ))}
-            </div>
-            <div style={{ position: "relative" }}>
+            <div style={{ position: "relative" }} onMouseLeave={v.clearHover}>
               <svg viewBox="0 0 1200 300" role="img" aria-label="Network growth line chart: screens, hosts and advertisers by month" style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }}>
                 {(v.growth?.grid || []).map((_g, $index) => (
-                  <line key={$index} x1="40" x2="1190" y1={_g?.y} y2={_g?.y} stroke="var(--container-border)" strokeDasharray="3 3" />
+                  <line key={'h' + $index} x1="40" x2="1190" y1={_g?.y} y2={_g?.y} stroke="var(--container-border)" strokeDasharray="3 4" />
+                ))}
+                {(v.growth?.ticks || []).map((_t, $index) => (
+                  <line key={'v' + $index} x1={_t?.x} x2={_t?.x} y1="20" y2="260" stroke="var(--container-border)" strokeDasharray="3 4" />
                 ))}
                 {(v.growth?.series || []).map((_s) => (
-                  <g key={_s.key} className="db-series">
-                    <path d={_s.line} fill="none" stroke={_s.color} strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
-                    <path d={_s.live} fill="none" stroke={_s.color} strokeWidth="2.5" strokeDasharray="4 4" strokeLinecap="round" />
-                    {_s.pts.map((_p, $index) => (
-                      <circle key={$index} className="db-pt" cx={_p.x} cy={_p.y} r="3.5" fill="var(--bg-surface)" stroke={_s.color} strokeWidth="2" />
-                    ))}
+                  <g key={_s.key}>
+                    <path d={_s.line} fill="none" stroke={_s.color} strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" />
+                    <path d={_s.live} fill="none" stroke={_s.color} strokeWidth="4" strokeDasharray="2 8" strokeLinecap="round" />
                   </g>
+                ))}
+                {v.tip?.show ? (
+                  <>
+                    <line x1={v.tip.x} x2={v.tip.x} y1="20" y2="260" stroke="var(--fg-faint)" strokeWidth="1" />
+                    {v.tip.rows.map((_r) => (
+                      <circle key={_r.key} cx={v.tip.x} cy={_r.y} r="5" fill="var(--bg-surface)" stroke={_r.color} strokeWidth="2" />
+                    ))}
+                  </>
+                ) : null}
+                {(v.growth?.ticks || []).map((_t, $index) => (
+                  <rect key={'r' + $index} x={_t?.hx} y="20" width={v.growth?.step} height="250" fill="transparent" onMouseEnter={_t?.hover} style={{ cursor: "pointer" }} />
                 ))}
               </svg>
               {(v.growth?.grid || []).map((_g, $index) => (
@@ -195,6 +213,17 @@ defineTemplate(Component, (v) => (
               {(v.growth?.ticks || []).map((_t, $index) => (
                 <span key={$index} className="ax-x" style={{ left: `${s(_t?.xp)}`, fontWeight: _t?.live ? "700" : undefined }}>{_t?.m}</span>
               ))}
+              {v.tip?.show ? (
+                <div className="db-tip" style={{ left: v.tip.left, transform: v.tip.flip ? "translateX(calc(-100% - 12px))" : "translateX(12px)" }}>
+                  <p style={{ margin: "0 0 6px", fontWeight: "600" }}>{v.tip.month}</p>
+                  {v.tip.rows.map((_r) => (
+                    <div key={_r.key} className="db-tip__row">
+                      <span><span className="db-dot" style={{ background: _r.color }} />{_r.label}</span>
+                      <strong>{_r.v}</strong>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
             </div>
           </section>
           <section aria-label="Status" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>

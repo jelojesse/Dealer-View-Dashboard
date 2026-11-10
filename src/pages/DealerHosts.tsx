@@ -12,6 +12,7 @@ import { NTV } from '../ds/ntv360';
 import { addNav, arrived, contains, go, hostName, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import SummaryCard from '../components/SummaryCard';
+import FilterBy, { passes } from '../components/FilterBy';
 import './DealerHosts.css';
 
 /* ============================== Logic ============================== */
@@ -20,12 +21,13 @@ var HCOL = { Active: 'var(--success-main)', Inactive: 'var(--danger-main)' };
 var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 var SERIES = { '2026': [12, 15, 18, 21, 25, 27, 30, 32, 35, 38, 41, 43], '2025': [2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] };
 class Component extends DCLogic {
-  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', status: f.status || '', analytics: !!props.analytics, limit: 20, blocked: null, month: '', year: '2026', graph: 'Line Graph', hover: -1, toast: null }; }
+  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', filters: f.status ? { status: [f.status] } : {}, analytics: !!props.analytics, limit: 20, blocked: null, month: '', year: '2026', graph: 'Line Graph', hover: -1, toast: null }; }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
     var self = this, s = this.state;
     var count = function (k) { return D.hosts.filter(function (h) { return h.status === k; }).length; };
-    var matches = D.hosts.filter(function (h) { return (!s.status || h.status === s.status) && contains(h.name + ' ' + h.address + ' ' + h.city + ' ' + h.state + ' ' + h.zip + ' ' + h.dma + ' ' + h.category, s.query.replace(/^#/, '')); });
+    var licBand = function (n) { return n <= 5 ? '0-5 Licenses' : n <= 10 ? '6-10 Licenses' : '11 and Above Licenses'; };
+    var matches = D.hosts.filter(function (h) { return passes(s.filters, 'status', h.status) && passes(s.filters, 'licenses', licBand(h.lic.length)) && contains(h.name + ' ' + h.address + ' ' + h.city + ' ' + h.state + ' ' + h.zip + ' ' + h.dma + ' ' + h.category, s.query.replace(/^#/, '')); });
     var vis = matches.slice(0, s.limit);
     var tot = SERIES[s.year] || SERIES['2026'], fresh = tot.map(function (v, i) { return i ? v - tot[i - 1] : (s.year === '2026' ? 1 : 2); });
     var step = 820 / 11, X = function (i) { return 50 + i * step; };
@@ -35,7 +37,7 @@ class Component extends DCLogic {
     var top = D.hosts.slice().sort(function (a, b) { return b.lic.length - a.lic.length || a.name.localeCompare(b.name); }).slice(0, 10);
     return {
       none: null, i14: 14, w460: 460,
-      cols: '50px minmax(220px, 1.8fr) 1.3fr 1fr 60px 90px 100px 1.4fr 100px 80px',
+      cols: '50px minmax(220px, 2fr) minmax(180px, 2.2fr) minmax(140px, 2fr) 80px 100px 110px 110px 80px',
       total: D.hosts.length, activeCount: count('Active'), inactiveCount: count('Inactive'),
       analytics: s.analytics, analyticsLabel: s.analytics ? 'Hide Analytics' : 'Show Analytics', analyticsIcon: s.analytics ? 'angle-up' : 'angle-down',
       toggleAnalytics: function () { self.setState({ analytics: !self.state.analytics }); },
@@ -52,11 +54,14 @@ class Component extends DCLogic {
       clearHover: function () { self.setState({ hover: -1 }); },
       top: top.map(function (h, i) { return { n: i + 1, name: h.name, lic: h.lic.length, open: navFn('DealerHostDetail.dc.html', { id: h.id }) }; }),
       legend: [{ label: 'Active', color: HCOL.Active }, { label: 'Inactive', color: HCOL.Inactive }],
-      statusOptions: ['All Status', 'Active', 'Inactive'], statusValue: s.status || 'All Status',
-      setStatus: function (v) { var x = val(v); self.setState({ status: x === 'All Status' ? '' : x, limit: 20 }); },
+      filterGroups: [
+        { key: 'status', title: 'Status', options: ['Active', 'Inactive'] },
+        { key: 'licenses', title: 'Licenses', options: ['0-5 Licenses', '6-10 Licenses', '11 and Above Licenses'] }
+      ],
+      filters: s.filters, setFilters: function (x) { self.setState({ filters: x, limit: 20 }); },
       query: s.query, setQuery: function (v) { self.setState({ query: val(v), limit: 20 }); },
       rows: vis.map(function (h, i) {
-        return { n: i + 1, name: h.name, photo: h.photo, category: h.category, address: h.address, city: h.city, state: h.state, zip: h.zip, prog: '0123' + String(4567891 + i * 7919).slice(-7) + String(161661 + i * 37), lic: h.lic.length, status: h.status, color: HCOL[h.status] || HCOL.Active, created: h.created,
+        return { n: i + 1, name: h.name, photo: h.photo, category: h.category, address: h.address, city: h.city, state: h.state, zip: h.zip, tz: 'US/Central', lic: h.lic.length, status: h.status, color: HCOL[h.status] || HCOL.Active, created: h.created,
           open: navFn('DealerHostDetail.dc.html', { id: h.id }),
           edit: navFn('DealerHostDetail.dc.html', { id: h.id, edit: true }),
           openLic: navFn('DealerLicenses.dc.html', { host: h.id, hostName: h.name }),
@@ -88,11 +93,11 @@ defineTemplate(Component, (v) => (
           <div className="dv-between" style={{ paddingTop: "5px" }}>
             <h1 className="dv-h1">Hosts</h1>
             <div className="dv-row">
+              <NTV.Button variant="secondary" size="xl" iconLeft="chart-simple" iconRight={v.analyticsIcon} onClick={v.toggleAnalytics}>{v.analyticsLabel}</NTV.Button>
               <a href="DealerNewHost.dc.html" className="ntv-btn ntv-btn--primary ntv-btn--default ntv-btn--xl" style={{ textDecoration: "none" }}>
                 <span>Add Host Place</span>
                 <NTV.Icon name="map" size={v.i14} />
               </a>
-              <NTV.Button variant="secondary" size="xl" iconLeft="chart-simple" iconRight={v.analyticsIcon} onClick={v.toggleAnalytics}>{v.analyticsLabel}</NTV.Button>
             </div>
           </div>
           <section aria-label="Host totals" style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
@@ -121,17 +126,17 @@ defineTemplate(Component, (v) => (
                     <h2 className="dv-h3" style={{ fontSize: "14px" }}>Host Analytics</h2>
                     <p className="dv-sub">Performance overview</p>
                   </div>
-                  <div className="dv-row" style={{ gap: "16px", fontSize: "14px", fontWeight: "700" }}>
-                    <span className="dv-row" style={{ gap: "6px" }}>
-                      <span className="dv-dot" style={{ background: "var(--success-main)" }} />
-                      Total Host
-                    </span>
-                    <span className="dv-row" style={{ gap: "6px" }}>
-                      <span className="dv-dot" style={{ background: "var(--info-main)" }} />
-                      New Host
-                    </span>
-                  </div>
                   <div className="dv-row" style={{ gap: "10px" }}>
+                    <div className="dv-row" style={{ gap: "16px", fontSize: "14px", fontWeight: "700", marginRight: "14px" }}>
+                      <span className="dv-row" style={{ gap: "6px" }}>
+                        <span className="dv-dot" style={{ background: "var(--success-main)" }} />
+                        Total Host
+                      </span>
+                      <span className="dv-row" style={{ gap: "6px" }}>
+                        <span className="dv-dot" style={{ background: "var(--info-main)" }} />
+                        New Host
+                      </span>
+                    </div>
                     <div style={{ width: "210px", flex: "none" }}>
                       <NTV.Select size="l" placeholder="Month" options={v.monthOptions} value={v.month} onChange={v.setMonth} />
                     </div>
@@ -230,8 +235,7 @@ defineTemplate(Component, (v) => (
                     <a href="DealerHostDetail.dc.html" onClick={_t?.open} className="dv-between" style={{ flexWrap: "nowrap", textDecoration: "none", color: "var(--fg-primary)", fontSize: "14px", lineHeight: "24px" }} data-nav={_t?.openNav}>
                       <span>{_t?.n}{". "}{_t?.name}</span>
                       <span>
-                        <strong>{_t?.lic}</strong>
- 
+                        <strong>{_t?.lic}</strong>{" "}
                         <span className="dv-sub" style={{ display: "inline" }}>License(s)</span>
                       </span>
                     </a>
@@ -242,9 +246,7 @@ defineTemplate(Component, (v) => (
             </>
           ) : null}
           <div className="dv-between">
-            <div style={{ width: "220px", flex: "none" }}>
-              <NTV.Select size="l" placeholder="Filter by status" options={v.statusOptions} value={v.statusValue} onChange={v.setStatus} />
-            </div>
+            <FilterBy groups={v.filterGroups} value={v.filters} onChange={v.setFilters} />
             <div className="dv-row" style={{ flexWrap: "wrap", gap: "16px" }}>
               <NTV.Input size="l" placeholder="Search Host Name, Address, City, Postal Code, DMA Name or #Tag" iconLeft="magnifying-glass" iconRight="sparkles" label="Search hosts" value={v.query} onChange={v.setQuery} style={{ width: "500px", maxWidth: "100%" }} />
               <NTV.Button variant="secondary" size="xl" iconRight="file-excel" onClick={v.exportIt}>Export</NTV.Button>
@@ -271,7 +273,7 @@ defineTemplate(Component, (v) => (
               </div>
             </div>
             <div className="dv-table">
-              <div role="table" aria-label="Hosts" style={{ minWidth: "1400px" }}>
+              <div role="table" aria-label="Hosts" style={{ minWidth: "1100px" }}>
                 <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: `${s(v.cols)}` }}>
                   <div style={{ textAlign: "center" }}>#</div>
                   <div>Host Name</div>
@@ -280,7 +282,6 @@ defineTemplate(Component, (v) => (
                   <div>State</div>
                   <div>Postal Code</div>
                   <div>Timezone</div>
-                  <div>Programmatic ID</div>
                   <div>Total Licenses</div>
                   <div>Actions</div>
                 </div>
@@ -295,8 +296,7 @@ defineTemplate(Component, (v) => (
                       <div>{_r?.city}</div>
                       <div>{_r?.state}</div>
                       <div>{_r?.zip}</div>
-                      <div>US/Central</div>
-                      <div>{_r?.prog}</div>
+                      <div>{_r?.tz}</div>
                       <div>
                         <a className="dv-a" style={{ fontWeight: "500" }} href="DealerLicenses.dc.html" onClick={_r?.openLic} data-nav={_r?.openLicNav}>{_r?.lic}</a>
                       </div>
