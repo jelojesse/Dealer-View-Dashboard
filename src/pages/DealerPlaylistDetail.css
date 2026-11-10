@@ -20,6 +20,7 @@
 .pg-playlist-detail .dv-kv>span:first-child{font-size:12px;line-height:20px;color:var(--fg-secondary)}
 .pg-playlist-detail .dv-kv>span:last-child{font-size:14px;line-height:24px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pg-playlist-detail .dv-table{overflow:auto;border:1px solid var(--container-border);border-radius:var(--radius-md);background:var(--bg-surface)}
+.pg-playlist-detail .dv-table{max-height:560px}
 .pg-playlist-detail .dv-tr{display:grid;align-items:center;min-height:44px;border-top:1px solid var(--container-border);font-size:12px;line-height:20px}
 .pg-playlist-detail .dv-tr>div{padding:0 14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .pg-playlist-detail .dv-tr.dv-th{position:sticky;top:0;z-index:1;border-top:0;background:var(--bg-app);font-weight:700;color:var(--fg-secondary);align-items:stretch}
