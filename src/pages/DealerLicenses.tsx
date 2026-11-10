@@ -13,22 +13,27 @@ import { STATUS, addNav, arrived, byId, contains, hostName, navFn, peekNav, plBy
 import DealerNav from '../components/DealerNav';
 import HostAdvFilter from '../components/HostAdvFilter';
 import FilterBy from '../components/FilterBy';
+import DateRangePicker from '../components/DateRangePicker';
 
 /* Mock player versions per license (the data has none yet). */
 var SERVERS = ['2.9.35', '2.9.4', '2.9.41', '2.9.43'], UIS = ['3.0.44', '3.0.47', '3.0.48'];
+var TIMEZONES = ['US/Eastern', 'US/Central', 'US/Mountain', 'US/Pacific'];
+/* Every host in the mock data is in Alabama, so assigned licenses run on US/Central. */
+var tzOf = function (l) { return l.host ? 'US/Central' : '—'; };
 var lnum = function (l) { return parseInt(String(l.id).slice(1), 10) || 0; };
 var RECENT = new Date('Oct 10, 2026').getTime();
 /* Each Filter by group is OR inside the group, AND across groups. */
 var LIC_TESTS = {
   lic: { 'Assigned': function (l) { return !!l.host; }, 'Unassigned': function (l) { return !l.host; }, 'Inactive': function (l) { return l.status === 'disabled'; }, 'Recent Installs': function (l) { return !!l.host && new Date(l.install).getTime() >= RECENT; } },
   conn: { 'Online': function (l) { return l.status === 'online'; }, 'Offline': function (l) { return l.status === 'offline'; }, 'Display On': function (l) { return l.status === 'online'; }, 'Display Off': function (l) { return !!l.host && l.status !== 'online'; } },
-  server: null, ui: null
+  server: null, ui: null, tz: null
 };
 var licPasses = function (f, l) {
   return Object.keys(f || {}).every(function (g) {
     var sel = f[g] || []; if (!sel.length) return true;
     if (g === 'server') return sel.indexOf(SERVERS[lnum(l) % SERVERS.length]) !== -1;
     if (g === 'ui') return sel.indexOf(UIS[lnum(l) % UIS.length]) !== -1;
+    if (g === 'tz') return sel.indexOf(tzOf(l)) !== -1;
     return sel.some(function (o) { return LIC_TESTS[g] && LIC_TESTS[g][o] ? LIC_TESTS[g][o](l) : true; });
   });
 };
@@ -40,15 +45,14 @@ class Component extends DCLogic {
   constructor(props) {
     super(props);
     var f = arrived('DealerLicenses.dc.html') || {};
-    this.state = { tz: '', filters: {}, range: 'Oct 10, 2026 – Nov 9, 2026', query: '', status: f.status || '', net: f.net || '', host: f.host || '', hostName: f.hostName || '', adv: '', filterOpen: false, limit: 25, req: false, reqCount: '', toast: null };
+    this.state = { filters: {}, range: { start: new Date(2026, 9, 10), end: new Date(2026, 10, 9) }, query: '', status: f.status || '', net: f.net || '', host: f.host || '', hostName: f.hostName || '', adv: '', filterOpen: false, limit: 25, req: false, reqCount: '', toast: null };
   }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
     var self = this, s = this.state;
     var L = D.licenses;
     var by = function (st) { return L.filter(function (l) { return l.status === st; }).length; };
-    var tzOf = function (l) { return l.host ? 'US/Central' : '—'; };
-    var base = L.filter(function (l) { return (!s.host || l.host === s.host) && (!s.net || l.net === s.net) && (!s.tz || s.tz === 'All Timezones' || tzOf(l) === s.tz) && licPasses(s.filters, l) && contains(l.alias + ' ' + l.key + ' ' + (l.host ? hostName(l.host) : '') + ' ' + l.anydesk, s.query); });
+    var base = L.filter(function (l) { return (!s.host || l.host === s.host) && (!s.net || l.net === s.net) && licPasses(s.filters, l) && contains(l.alias + ' ' + l.key + ' ' + (l.host ? hostName(l.host) : '') + ' ' + l.anydesk, s.query); });
     var matches = base.filter(function (l) { return !s.status || l.status === s.status; });
     var vis = matches.slice(0, s.limit);
     var chipsOn = [];
@@ -60,17 +64,18 @@ class Component extends DCLogic {
     var n = parseInt(s.reqCount, 10);
     return {
       none: null, i10: 10, i12: 12, w500: 500,
-      cols: '50px 80px minmax(200px, 1.4fr) minmax(170px, 1.2fr) 110px 120px 150px 150px 110px 120px 70px 140px 170px 110px',
+      /* #, Screenshot, License Key, Host, Timezone, Alias, Last Update, Last Startup, Upload, Download, Display, MAC, Anydesk, Install */
+      cols: '48px 104px minmax(180px, 1fr) minmax(160px, 1fr) 104px minmax(120px, .8fr) 136px 136px 112px 124px 72px 136px 168px 104px',
       total: L.length,
       byType: { Ad: L.filter(function (l) { return l.type === 'Ad'; }).length, Menu: L.filter(function (l) { return l.type === 'Menu'; }).length, Closed: L.filter(function (l) { return l.type === 'Closed'; }).length },
-      tzOptions: ['All Timezones', 'US/Central', 'US/Eastern'], tz: s.tz, setTz: function (v) { self.setState({ tz: val(v) }); },
-      rangeOptions: ['Oct 10, 2026 – Nov 9, 2026', 'Last 7 days', 'Last 90 days', 'All time'], range: s.range, setRange: function (v) { self.setState({ range: val(v) }); },
+      range: s.range, setRange: function (r) { self.setState({ range: r }); }, today: new Date(2026, 10, 11),
       legend: ['offline', 'online', 'unassigned', 'ready', 'pending', 'disabled'].map(function (k) { return { label: STATUS[k].label, color: STATUS[k].color }; }),
       filterGroups: [
         { key: 'lic', title: 'Licenses Status', options: ['Assigned', 'Unassigned', 'Inactive', 'Recent Installs'] },
         { key: 'conn', title: 'Order by Licenses Status', options: ['Online', 'Offline', 'Display On', 'Display Off'] },
         { key: 'server', title: 'Player Server', options: SERVERS },
-        { key: 'ui', title: 'Player UI', options: UIS }
+        { key: 'ui', title: 'Player UI', options: UIS },
+        { key: 'tz', title: 'Timezone', options: TIMEZONES }
       ],
       filters: s.filters, setFilters: function (x) { self.setState({ filters: x, limit: 25 }); },
       statusOptions: ['All Status'].concat(['online', 'offline', 'pending', 'ready', 'disabled', 'unassigned'].map(function (k) { return STATUS[k].label + ' (' + base.filter(function (l) { return l.status === k; }).length + ')'; })),
@@ -192,13 +197,8 @@ defineTemplate(Component, (v) => (
           <div className="dv-between">
             <div className="dv-row lic-filters" style={{ flexWrap: "wrap", gap: "12px" }}>
               <FilterBy groups={v.filterGroups} value={v.filters} onChange={v.setFilters} />
-              <div style={{ width: "210px", flex: "none" }}>
-                <NTV.Select size="l" placeholder="Timezone" options={v.tzOptions} value={v.tz} onChange={v.setTz} />
-              </div>
               <NTV.Button variant="secondary" size="xl" iconRight="user" onClick={v.openFilter}>Filter By User</NTV.Button>
-              <div style={{ width: "220px", flex: "none" }}>
-                <NTV.Select size="l" options={v.rangeOptions} value={v.range} onChange={v.setRange} />
-              </div>
+              <DateRangePicker value={v.range} onChange={v.setRange} today={v.today} />
               {(v.chipsOn || []).map((_c, $index) => (
                 <React.Fragment key={$index}>
                   <button type="button" className="dv-chip" aria-pressed="true" onClick={_c?.clear}>
@@ -234,10 +234,10 @@ defineTemplate(Component, (v) => (
               </div>
             </div>
             <div className="dv-table">
-              <div role="table" aria-label="Licenses" style={{ minWidth: "2010px" }}>
+              <div role="table" aria-label="Licenses" style={{ minWidth: "1830px" }}>
                 <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: `${s(v.cols)}` }}>
                   <div style={{ textAlign: "center" }}>#</div>
-                  <div>Screenshot</div>
+                  <div style={{ textAlign: "center" }}>Screenshot</div>
                   <div>License Key</div>
                   <div>Host</div>
                   <div>Timezone</div>
@@ -255,8 +255,8 @@ defineTemplate(Component, (v) => (
                   <React.Fragment key={$index}>
                     <div role="row" className="dv-tr" style={{ gridTemplateColumns: `${s(v.cols)}`, boxShadow: `inset 4px 0 0 ${s(_r?.color)}`, minHeight: "52px" }}>
                       <div style={{ textAlign: "center" }}>{_r?.n}</div>
-                      <div>
-                        <span className="dv-thumb" style={{ display: "block", width: "44px", height: "28px", background: "var(--primary-100)" }}>
+                      <div style={{ display: "flex", justifyContent: "center" }}>
+                        <span className="dv-thumb" style={{ display: "block", flex: "none", width: "48px", height: "30px", background: "var(--primary-100)" }}>
                           {_r?.hasShot ? (
                             <>
                               <img src={_r?.shot} alt="" />
