@@ -18,9 +18,14 @@ import './DealerHosts.css';
 
 var HCOL = { Active: 'var(--success-main)', Inactive: 'var(--danger-main)' };
 var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+var TZ_BY_STATE = { AK: 'US/Alaska', HI: 'US/Hawaii', AZ: 'US/Arizona',
+  CA: 'US/Pacific', WA: 'US/Pacific', OR: 'US/Pacific', NV: 'US/Pacific',
+  CO: 'US/Mountain', UT: 'US/Mountain', NM: 'US/Mountain', MT: 'US/Mountain', WY: 'US/Mountain', ID: 'US/Mountain',
+  TX: 'US/Central', IL: 'US/Central', AL: 'US/Central', MS: 'US/Central', LA: 'US/Central', AR: 'US/Central', MO: 'US/Central', IA: 'US/Central', MN: 'US/Central', WI: 'US/Central', OK: 'US/Central', KS: 'US/Central', NE: 'US/Central', SD: 'US/Central', ND: 'US/Central', TN: 'US/Central' };
+var tzFor = function (st) { return TZ_BY_STATE[st] || 'US/Eastern'; };
 var SERIES = { '2026': [12, 15, 18, 21, 25, 27, 30, 32, 35, 38, 41, 43], '2025': [2, 3, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] };
 class Component extends DCLogic {
-  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', status: f.status || '', analytics: !!props.analytics, limit: 20, blocked: null, month: '', year: '2026', graph: 'Line Graph', hover: -1, toast: null }; }
+  constructor(props) { super(props); var f = arrived('DealerHosts.dc.html') || {}; this.state = { query: '', status: f.status || '', analytics: !!props.analytics, limit: 20, blocked: null, month: '', year: '2026', graph: 'Line Graph', hover: -1, filterOpen: false, toast: null }; }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
     var self = this, s = this.state;
@@ -35,7 +40,7 @@ class Component extends DCLogic {
     var top = D.hosts.slice().sort(function (a, b) { return b.lic.length - a.lic.length || a.name.localeCompare(b.name); }).slice(0, 10);
     return {
       none: null, i14: 14, w460: 460,
-      cols: '50px minmax(220px, 1.8fr) 1.3fr 1fr 60px 90px 100px 1.4fr 100px 80px',
+      cols: '44px minmax(200px, 1.6fr) minmax(160px, 2.3fr) minmax(140px, 2.3fr) 0.7fr 0.7fr 0.8fr 0.65fr 94px',
       total: D.hosts.length, activeCount: count('Active'), inactiveCount: count('Inactive'),
       analytics: s.analytics, analyticsLabel: s.analytics ? 'Hide Analytics' : 'Show Analytics', analyticsIcon: s.analytics ? 'angle-up' : 'angle-down',
       toggleAnalytics: function () { self.setState({ analytics: !self.state.analytics }); },
@@ -54,9 +59,17 @@ class Component extends DCLogic {
       legend: [{ label: 'Active', color: HCOL.Active }, { label: 'Inactive', color: HCOL.Inactive }],
       statusOptions: ['All Status', 'Active', 'Inactive'], statusValue: s.status || 'All Status',
       setStatus: function (v) { var x = val(v); self.setState({ status: x === 'All Status' ? '' : x, limit: 20 }); },
+      filterOpen: s.filterOpen, filterLabel: s.status ? 'Filter by: ' + s.status : 'Filter by',
+      toggleFilter: function () { self.setState({ filterOpen: !self.state.filterOpen }); },
+      closeFilter: function () { self.setState({ filterOpen: false }); },
+      filterItems: ['All Status', 'Active', 'Inactive'].map(function (o) {
+        var on = (o === 'All Status' ? '' : o) === s.status;
+        return { label: o, on: on, dot: o === 'All Status' ? null : HCOL[o],
+          pick: function () { self.setState({ status: o === 'All Status' ? '' : o, limit: 20, filterOpen: false }); } };
+      }),
       query: s.query, setQuery: function (v) { self.setState({ query: val(v), limit: 20 }); },
       rows: vis.map(function (h, i) {
-        return { n: i + 1, name: h.name, photo: h.photo, category: h.category, address: h.address, city: h.city, state: h.state, zip: h.zip, prog: '0123' + String(4567891 + i * 7919).slice(-7) + String(161661 + i * 37), lic: h.lic.length, status: h.status, color: HCOL[h.status] || HCOL.Active, created: h.created,
+        return { n: i + 1, name: h.name, photo: h.photo, category: h.category, address: h.address, city: h.city, state: h.state, zip: h.zip, tz: tzFor(h.state), lic: h.lic.length, status: h.status, color: HCOL[h.status] || HCOL.Active, created: h.created,
           open: navFn('DealerHostDetail.dc.html', { id: h.id }),
           edit: navFn('DealerHostDetail.dc.html', { id: h.id, edit: true }),
           openLic: navFn('DealerLicenses.dc.html', { host: h.id, hostName: h.name }),
@@ -92,7 +105,7 @@ defineTemplate(Component, (v) => (
                 <span>Add Host Place</span>
                 <NTV.Icon name="map" size={v.i14} />
               </a>
-              <NTV.Button variant="secondary" size="xl" iconLeft="chart-simple" iconRight={v.analyticsIcon} onClick={v.toggleAnalytics}>{v.analyticsLabel}</NTV.Button>
+              <NTV.Button variant="primary" size="xl" iconLeft="chart-simple" iconRight={v.analyticsIcon} onClick={v.toggleAnalytics}>{v.analyticsLabel}</NTV.Button>
             </div>
           </div>
           <section aria-label="Host totals" style={{ display: "flex", flexWrap: "wrap", gap: "20px" }}>
@@ -242,8 +255,22 @@ defineTemplate(Component, (v) => (
             </>
           ) : null}
           <div className="dv-between">
-            <div style={{ width: "220px", flex: "none" }}>
-              <NTV.Select size="l" placeholder="Filter by status" options={v.statusOptions} value={v.statusValue} onChange={v.setStatus} />
+            <div style={{ position: "relative", flex: "none" }}>
+              <NTV.Button variant="secondary" size="xl" iconLeft="filter" iconRight={v.none} onClick={v.toggleFilter} aria-haspopup="menu" aria-expanded={v.filterOpen}>{v.filterLabel}</NTV.Button>
+              {v.filterOpen ? (
+                <>
+                  <div style={{ position: "fixed", inset: "0", zIndex: "30" }} onClick={v.closeFilter} />
+                  <div className="dv-menu" role="menu" aria-label="Filter hosts by status" style={{ top: "46px", left: "0", minWidth: "200px" }}>
+                    {(v.filterItems || []).map((_f, $index) => (
+                      <button key={$index} type="button" role="menuitemradio" aria-checked={_f?.on} className="dv-mi" onClick={_f?.pick} style={_f?.on ? { color: "var(--accent-action)", fontWeight: "700" } : undefined}>
+                        {_f?.dot ? <span className="dv-dot" style={{ background: _f.dot }} /> : null}
+                        <span style={{ flex: "1" }}>{_f?.label}</span>
+                        {_f?.on ? <NTV.Icon name="check" size={v.i14} /> : null}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : null}
             </div>
             <div className="dv-row" style={{ flexWrap: "wrap", gap: "16px" }}>
               <NTV.Input size="l" placeholder="Search Host Name, Address, City, Postal Code, DMA Name or #Tag" iconLeft="magnifying-glass" iconRight="sparkles" label="Search hosts" value={v.query} onChange={v.setQuery} style={{ width: "500px", maxWidth: "100%" }} />
@@ -252,26 +279,14 @@ defineTemplate(Component, (v) => (
           </div>
           <section className="dv-card" aria-label="Hosts Data" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div className="dv-between">
-              <div className="dv-row" style={{ gap: "20px" }}>
-                <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>Hosts Data</h2>
-                <div className="dv-legend" aria-label="Legend">
-                  {(v.legend || []).map((_g, $index) => (
-                    <React.Fragment key={$index}>
-                      <span>
-                        <span className="dv-dot" style={{ background: `${s(_g?.color)}` }} />
-                        {_g?.label}
-                      </span>
-                    </React.Fragment>
-                  ))}
-                </div>
-              </div>
+              <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>Hosts Data</h2>
               <div className="dv-row" style={{ gap: "20px" }}>
                 <NTV.IconButton icon="arrows-rotate" label="Refresh table" variant="secondary" size="m" onClick={v.refresh} />
                 <NTV.IconButton icon="gear" label="Table settings" variant="secondary" size="m" />
               </div>
             </div>
             <div className="dv-table">
-              <div role="table" aria-label="Hosts" style={{ minWidth: "1400px" }}>
+              <div role="table" aria-label="Hosts" style={{ minWidth: "1100px" }}>
                 <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: `${s(v.cols)}` }}>
                   <div style={{ textAlign: "center" }}>#</div>
                   <div>Host Name</div>
@@ -280,7 +295,6 @@ defineTemplate(Component, (v) => (
                   <div>State</div>
                   <div>Postal Code</div>
                   <div>Timezone</div>
-                  <div>Programmatic ID</div>
                   <div>Total Licenses</div>
                   <div>Actions</div>
                 </div>
@@ -295,8 +309,7 @@ defineTemplate(Component, (v) => (
                       <div>{_r?.city}</div>
                       <div>{_r?.state}</div>
                       <div>{_r?.zip}</div>
-                      <div>US/Central</div>
-                      <div>{_r?.prog}</div>
+                      <div>{_r?.tz}</div>
                       <div>
                         <a className="dv-a" style={{ fontWeight: "500" }} href="DealerLicenses.dc.html" onClick={_r?.openLic} data-nav={_r?.openLicNav}>{_r?.lic}</a>
                       </div>
