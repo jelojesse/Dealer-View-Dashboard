@@ -86,3 +86,19 @@
 .pg-license-detail .ld-code{display:flex;gap:10px;justify-content:center}
 .pg-license-detail .ld-code span{width:52px;height:60px;display:flex;align-items:center;justify-content:center;border:1px solid var(--fg-secondary);border-radius:var(--radius-sm);font-size:26px;font-weight:700}
 .pg-license-detail .zone-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--container-border);font-size:14px;line-height:20px}
+/* Header meta (Dealer Name / Business Hours / RPi Time — Hostname / Timezone / License Key) */
+.pg-license-detail .ld-meta{display:grid;grid-template-columns:auto auto auto;gap:4px 32px;font-size:12px;line-height:20px;color:var(--fg-primary)}
+.pg-license-detail .ld-meta>span{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.pg-license-detail .ld-meta__k{color:var(--fg-secondary)}
+.pg-license-detail .ld-ib{width:20px;height:20px;color:var(--accent-action)}
+.pg-license-detail .ld-hrs{position:relative;display:inline-flex;color:var(--accent-action);cursor:default;outline:none}
+.pg-license-detail .ld-hrs__pop{display:none;position:absolute;z-index:30;top:calc(100% + 6px);left:-12px;min-width:240px;padding:8px 0;background:var(--bg-surface);border:1px solid var(--container-border);border-radius:var(--radius-sm);box-shadow:var(--shadow-card)}
+.pg-license-detail .ld-hrs:hover .ld-hrs__pop,.pg-license-detail .ld-hrs:focus .ld-hrs__pop{display:flex;flex-direction:column}
+.pg-license-detail .ld-hrs__row{display:flex;justify-content:space-between;gap:16px;padding:2px 14px;font-size:12px;line-height:20px;color:var(--fg-primary)}
+.pg-license-detail .ld-hrs__row.is-today{font-weight:700;color:var(--accent-action)}
+/* Screenshot strip */
+.pg-license-detail .ld-shots{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.pg-license-detail .ld-snap{margin:0;display:flex;flex-direction:column;gap:2px}
+.pg-license-detail .ld-snap .dv-thumb{display:block;flex:none;width:120px;height:75px}
+.pg-license-detail .ld-snap figcaption{font-size:10px;line-height:14px;color:var(--fg-secondary);text-align:center}
+.pg-license-detail .ld-noshot{display:inline-flex;align-items:center;height:52px;padding:0 16px;border-radius:var(--radius-sm);background:var(--bg-app);font-size:14px;color:var(--fg-secondary)}
