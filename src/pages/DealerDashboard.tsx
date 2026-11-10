@@ -16,46 +16,45 @@ import './DealerDashboard.css';
 /* ============================== Logic ============================== */
 
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { range: 'Last 12 months' }; }
+  constructor(props) { super(props); this.state = { range: 'Last 12 months', hover: -1 }; }
   renderVals() {
-    var self = this;
-    var months = ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'];
-    var vals = [18, 27, 40, 45, 54, 59, 65, 70, 72, 72, 75, 82];
-    var n = this.state.range === 'Last 3 months' ? 3 : (this.state.range === 'Last 6 months' ? 6 : 12);
-    var ms = months.slice(12 - n), vs = vals.slice(12 - n);
-    var X = function (i) { return n === 1 ? 445 : 60 + i * (780 / (n - 1)); };
-    var Y = function (v) { return 260 - v * 2.4; };
-    var pts = vs.map(function (v, i) { return { x: X(i), y: Y(v), m: ms[i], v: v }; });
-    var line = pts.map(function (p, i) { return (i ? 'L' : 'M') + p.x + ' ' + p.y; }).join(' ');
-    var grid = [0, 20, 40, 60, 80, 100].map(function (v) { return { y: Y(v), ty: Y(v) + 3, label: v }; });
-    var bm = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'], bh = [3, 5, 4, 6, 5, 4], ba = [2, 3, 5, 3, 4, 3];
-    var BY = function (v) { return 260 - v * 30; };
-    var tv = [{ m: 'Ad', v: 55 }, { m: 'Menu', v: 26 }, { m: 'Closed', v: 12 }, { m: 'Unassigned', v: 4 }];
-    var TY = function (v) { return 260 - v * 3.6; };
-    var to = function (page, filter) { return navFn(page, filter); };
     var pct = function (v, of) { return (v / of * 100).toFixed(2) + '%'; };
-    var axY = function (list, H) { return list.map(function (g) { return Object.assign({}, g, { tp: pct(g.y, H) }); }); };
     var R = this.vals0();
-    R.growth.grid = axY(R.growth.grid, 300); R.growth.pts = R.growth.pts.map(function (p) { return Object.assign({}, p, { xp: pct(p.x, 860) }); });
-    R.bars.grid = axY(R.bars.grid, 300); R.bars.items = R.bars.items.map(function (b) { return Object.assign({}, b, { xp: pct(b.tx, 420) }); });
-    R.types.grid = axY(R.types.grid, 300); R.types.items = R.types.items.map(function (b) { return Object.assign({}, b, { xp: pct(b.tx, 420), vp: pct(b.vy - 14, 300) }); });
+    R.growth.grid = R.growth.grid.map(function (g) { return Object.assign({}, g, { tp: pct(g.y, 300) }); });
+    R.growth.ticks = R.growth.ticks.map(function (t) { return Object.assign({}, t, { xp: pct(t.x, 1200) }); });
+    if (R.tip.show) R.tip.left = pct(R.tip.x, 1200);
     return R;
   }
   vals0() {
     var self = this;
+    // Network Growth: running totals per month. The last month (Nov) is the current, in-progress month.
     var months = ['Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'];
-    var vals = [18, 27, 40, 45, 54, 59, 65, 70, 72, 72, 75, 82];
+    var seriesDef = [
+      { key: 'screens', label: 'Screens', color: 'var(--success-main)', vals: [18, 27, 40, 45, 54, 59, 65, 70, 72, 72, 75, 82] },
+      { key: 'hosts', label: 'Hosts', color: 'var(--info-main)', vals: [9, 11, 12, 14, 15, 16, 19, 24, 28, 34, 39, 43] },
+      { key: 'advertisers', label: 'Advertisers', color: 'var(--teal-main)', vals: [1, 1, 2, 2, 3, 4, 6, 9, 14, 17, 21, 24] }
+    ];
     var n = this.state.range === 'Last 3 months' ? 3 : (this.state.range === 'Last 6 months' ? 6 : 12);
-    var ms = months.slice(12 - n), vs = vals.slice(12 - n);
-    var X = function (i) { return n === 1 ? 445 : 60 + i * (780 / (n - 1)); };
+    var ms = months.slice(12 - n);
+    var X = function (i) { return n === 1 ? 620 : 60 + i * (1120 / (n - 1)); };
     var Y = function (v) { return 260 - v * 2.4; };
-    var pts = vs.map(function (v, i) { return { x: X(i), y: Y(v), m: ms[i], v: v }; });
-    var line = pts.map(function (p, i) { return (i ? 'L' : 'M') + p.x + ' ' + p.y; }).join(' ');
-    var grid = [0, 20, 40, 60, 80, 100].map(function (v) { return { y: Y(v), ty: Y(v) + 3, label: v }; });
-    var bm = ['Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'], bh = [3, 5, 4, 6, 5, 4], ba = [2, 3, 5, 3, 4, 3];
-    var BY = function (v) { return 260 - v * 30; };
-    var tv = [{ m: 'Ad', v: 55 }, { m: 'Menu', v: 26 }, { m: 'Closed', v: 12 }, { m: 'Unassigned', v: 4 }];
-    var TY = function (v) { return 260 - v * 3.6; };
+    var series = seriesDef.map(function (s) {
+      var vs = s.vals.slice(12 - n);
+      var pts = vs.map(function (v, i) { return { x: X(i), y: Y(v), m: ms[i], v: v }; });
+      var done = pts.slice(0, -1), last = pts[pts.length - 1], prev = done[done.length - 1];
+      return {
+        key: s.key, label: s.label, color: s.color, pts: pts,
+        line: done.map(function (p, i) { return (i ? 'L' : 'M') + p.x + ' ' + p.y; }).join(' '),
+        live: 'M' + prev.x + ' ' + prev.y + ' L' + last.x + ' ' + last.y,
+        added: vs[vs.length - 1] - vs[0]
+      };
+    });
+    var grid = [0, 20, 40, 60, 80, 100].map(function (v) { return { y: Y(v), label: v }; });
+    var step = n > 1 ? 1120 / (n - 1) : 1120;
+    var ticks = ms.map(function (m, i) { return { x: X(i), hx: X(i) - step / 2, m: i === n - 1 ? m + ' (to date)' : m, live: i === n - 1, hover: function () { self.setState({ hover: i }); } }; });
+    var hi = this.state.hover >= 0 && this.state.hover < n ? this.state.hover : -1;
+    var tip = hi < 0 ? { show: false } : { show: true, x: X(hi), flip: hi > n / 2, month: ms[hi] + (hi === n - 1 ? ' (to date)' : ''),
+      rows: series.map(function (sr) { return { key: sr.key, label: sr.label, color: sr.color, v: sr.pts[hi].v, y: sr.pts[hi].y }; }) };
     var to = function (page, filter) { return navFn(page, filter); };
     return {
       i10: 10, i12: 12, i14: 14,
@@ -66,12 +65,9 @@ class Component extends DCLogic {
       ],
       rangeOptions: ['Last 3 months', 'Last 6 months', 'Last 12 months'],
       range: this.state.range,
-      setRange: function (v) { self.setState({ range: val(v) }); },
-      growth: { pts: pts, line: line, area: line + ' L' + X(n - 1) + ' 260 L' + X(0) + ' 260 Z', grid: grid, added: vs[vs.length - 1] - vs[0] },
-      bars: { grid: [0, 2, 4, 6, 8].map(function (v) { return { y: BY(v), ty: BY(v) + 3, label: v }; }),
-        items: bm.map(function (m, i) { var x = 60 + i * 60; return { m: m, v1: bh[i], v2: ba[i], x1: x, x2: x + 16, tx: x + 15, y1: BY(bh[i]), h1: bh[i] * 30, y2: BY(ba[i]), h2: ba[i] * 30 }; }) },
-      types: { grid: [0, 20, 40, 60].map(function (v) { return { y: TY(v), ty: TY(v) + 3, label: v }; }),
-        items: tv.map(function (t, i) { var x = 60 + i * 92; return { m: t.m, v: t.v, x: x, tx: x + 22, y: TY(t.v), h: t.v * 3.6, vy: TY(t.v) - 6 }; }) },
+      setRange: function (v) { self.setState({ range: val(v), hover: -1 }); },
+      growth: { series: series, grid: grid, ticks: ticks, step: step },
+      tip: tip, clearHover: function () { self.setState({ hover: -1 }); },
       statusRows: [
         { label: 'Online', n: 74, color: 'var(--status-online)', go: to('DealerLicenses.dc.html', { status: 'online' }) },
         { label: 'Offline', n: 6, color: 'var(--status-offline)', go: to('DealerLicenses.dc.html', { status: 'offline' }) },
@@ -165,131 +161,70 @@ defineTemplate(Component, (v) => (
               </React.Fragment>
             ))}
           </section>
-          <section aria-label="Charts" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(420px, 1fr))", gap: "20px" }}>
-            <div className="db-card" style={{ gridColumn: "span 2", display: "flex", flexDirection: "column", gap: "16px", minWidth: "0" }}>
-              <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
-                <div>
-                  <h2 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>Network Growth</h2>
-                  <p style={{ margin: "0", fontSize: "12px", lineHeight: "20px", color: "var(--fg-secondary)" }}>Assigned licenses (screens installed at Hosts), by month</p>
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                  <span style={{ display: "inline-flex", alignItems: "center", fontSize: "14px", lineHeight: "20px" }}>
-                    <span className="db-dot" style={{ background: "var(--success-400)" }} />
-                    {"Screens added in range: "}
-                    <strong style={{ color: "var(--success-600)" }}>+{v.growth?.added}</strong>
-                  </span>
-                  <div style={{ width: "220px", flex: "none" }}>
-                    <NTV.Select size="l" options={v.rangeOptions} value={v.range} onChange={v.setRange} />
-                  </div>
-                </div>
-              </div>
-              <div style={{ position: "relative" }}>
-                <svg viewBox="0 0 860 300" role="img" aria-label="Network growth line chart" style={{ width: "100%", height: "auto", display: "block" }}>
-                  <defs>
-                    <linearGradient id="ng" x1="0" x2="0" y1="0" y2="1">
-                      <stop offset="0" stopColor="#3adb30" stopOpacity="0.45" />
-                      <stop offset="1" stopColor="#3adb30" stopOpacity="0.03" />
-                    </linearGradient>
-                  </defs>
-                  {(v.growth?.grid || []).map((_g, $index) => (
-                    <React.Fragment key={$index}>
-                      <line x1="40" x2="850" y1={_g?.y} y2={_g?.y} stroke="#e5e7eb" strokeDasharray="3 3" />
-                    </React.Fragment>
-                  ))}
-                  <path d={v.growth?.area} fill="url(#ng)" />
-                  <path d={v.growth?.line} fill="none" stroke="#31b828" strokeWidth="2.5" />
-                  {(v.growth?.pts || []).map((_p, $index) => (
-                    <React.Fragment key={$index}>
-                      <circle cx={_p?.x} cy={_p?.y} r="3.5" fill="#fff" stroke="#31b828" strokeWidth="2" />
-                    </React.Fragment>
-                  ))}
-                </svg>
-                {(v.growth?.grid || []).map((_g, $index) => (
-                  <React.Fragment key={$index}>
-                    <span className="ax-y" style={{ top: `${s(_g?.tp)}`, width: "3.6%" }}>{_g?.label}</span>
-                  </React.Fragment>
-                ))}
-                {(v.growth?.pts || []).map((_p, $index) => (
-                  <React.Fragment key={$index}>
-                    <span className="ax-x" style={{ left: `${s(_p?.xp)}` }}>{_p?.m}</span>
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-            <div className="db-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
-                <div>
-                  <h2 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>{"New Hosts & Advertisers"}</h2>
-                  <p style={{ margin: "0", fontSize: "12px", lineHeight: "20px", color: "var(--fg-secondary)" }}>Signed per month · last 6 months</p>
-                </div>
-                <div style={{ display: "flex", gap: "12px", fontSize: "12px", lineHeight: "20px", fontWeight: "600" }}>
-                  <span>
-                    <span className="db-dot" style={{ background: "var(--chart-1)" }} />
-                    Hosts
-                  </span>
-                  <span>
-                    <span className="db-dot" style={{ background: "var(--teal-main)" }} />
-                    Advertisers
-                  </span>
-                </div>
-              </div>
-              <div style={{ position: "relative" }}>
-                <svg viewBox="0 0 420 300" role="img" aria-label="New hosts and advertisers bar chart" style={{ width: "100%", height: "auto", display: "block" }}>
-                  {(v.bars?.grid || []).map((_g, $index) => (
-                    <React.Fragment key={$index}>
-                      <line x1="30" x2="410" y1={_g?.y} y2={_g?.y} stroke="#e5e7eb" strokeDasharray="3 3" />
-                    </React.Fragment>
-                  ))}
-                  {(v.bars?.items || []).map((_b, $index) => (
-                    <React.Fragment key={$index}>
-                      <rect x={_b?.x1} y={_b?.y1} width="14" height={_b?.h1} fill="#095af3" />
-                      <rect x={_b?.x2} y={_b?.y2} width="14" height={_b?.h2} fill="#26a69a" />
-                    </React.Fragment>
-                  ))}
-                </svg>
-                {(v.bars?.grid || []).map((_g, $index) => (
-                  <React.Fragment key={$index}>
-                    <span className="ax-y" style={{ top: `${s(_g?.tp)}`, width: "5.5%" }}>{_g?.label}</span>
-                  </React.Fragment>
-                ))}
-                {(v.bars?.items || []).map((_b, $index) => (
-                  <React.Fragment key={$index}>
-                    <span className="ax-x" style={{ left: `${s(_b?.xp)}` }}>{_b?.m}</span>
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-            <a href="DealerLicenses.dc.html" className="db-card db-link" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <section aria-label="Charts" className="db-card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
               <div>
-                <h2 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>Licenses</h2>
-                <p style={{ margin: "0", fontSize: "12px", lineHeight: "20px", color: "var(--fg-secondary)" }}>82 of 97 in use · 8 disabled</p>
+                <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "24px", fontWeight: "700" }}>Network Growth</h2>
+                <p style={{ margin: "0", fontSize: "12px", lineHeight: "20px", color: "var(--fg-secondary)" }}>{"Screens, Hosts and Advertisers on your network · this month updates live"}</p>
               </div>
-              <div style={{ position: "relative" }}>
-                <svg viewBox="0 0 420 300" role="img" aria-label="Licenses by type bar chart" style={{ width: "100%", height: "auto", display: "block" }}>
-                  {(v.types?.grid || []).map((_g, $index) => (
-                    <React.Fragment key={$index}>
-                      <line x1="30" x2="410" y1={_g?.y} y2={_g?.y} stroke="#e5e7eb" strokeDasharray="3 3" />
-                    </React.Fragment>
+              <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>
+                <div className="db-legend">
+                  {(v.growth?.series || []).map((_s) => (
+                    <span key={_s.key} className="db-legend__item">
+                      <span className="db-dot" style={{ background: _s.color }} />
+                      {_s.label}
+                    </span>
                   ))}
-                  {(v.types?.items || []).map((_b, $index) => (
-                    <React.Fragment key={$index}>
-                      <rect x={_b?.x} y={_b?.y} width="44" height={_b?.h} fill="#8e0064" />
-                    </React.Fragment>
-                  ))}
-                </svg>
-                {(v.types?.grid || []).map((_g, $index) => (
-                  <React.Fragment key={$index}>
-                    <span className="ax-y" style={{ top: `${s(_g?.tp)}`, width: "5.5%" }}>{_g?.label}</span>
-                  </React.Fragment>
-                ))}
-                {(v.types?.items || []).map((_b, $index) => (
-                  <React.Fragment key={$index}>
-                    <span className="ax-x" style={{ left: `${s(_b?.xp)}` }}>{_b?.m}</span>
-                    <span className="ax-x" style={{ left: `${s(_b?.xp)}`, bottom: "auto", top: `${s(_b?.vp)}`, fontWeight: "700", color: "#091635" }}>{_b?.v}</span>
-                  </React.Fragment>
-                ))}
+                </div>
+                <div className="db-range">
+                  <NTV.Select size="l" options={v.rangeOptions} value={v.range} onChange={v.setRange} />
+                </div>
               </div>
-            </a>
+            </div>
+            <div style={{ position: "relative" }} onMouseLeave={v.clearHover}>
+              <svg viewBox="0 0 1200 300" role="img" aria-label="Network growth line chart: screens, hosts and advertisers by month" style={{ width: "100%", height: "auto", display: "block", overflow: "visible" }}>
+                {(v.growth?.grid || []).map((_g, $index) => (
+                  <line key={'h' + $index} x1="40" x2="1190" y1={_g?.y} y2={_g?.y} stroke="var(--container-border)" strokeDasharray="3 4" />
+                ))}
+                {(v.growth?.ticks || []).map((_t, $index) => (
+                  <line key={'v' + $index} x1={_t?.x} x2={_t?.x} y1="20" y2="260" stroke="var(--container-border)" strokeDasharray="3 4" />
+                ))}
+                {(v.growth?.series || []).map((_s) => (
+                  <g key={_s.key}>
+                    <path d={_s.line} fill="none" stroke={_s.color} strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" />
+                    <path d={_s.live} fill="none" stroke={_s.color} strokeWidth="4" strokeDasharray="2 8" strokeLinecap="round" />
+                  </g>
+                ))}
+                {v.tip?.show ? (
+                  <>
+                    <line x1={v.tip.x} x2={v.tip.x} y1="20" y2="260" stroke="var(--fg-faint)" strokeWidth="1" />
+                    {v.tip.rows.map((_r) => (
+                      <circle key={_r.key} cx={v.tip.x} cy={_r.y} r="5" fill="var(--bg-surface)" stroke={_r.color} strokeWidth="2" />
+                    ))}
+                  </>
+                ) : null}
+                {(v.growth?.ticks || []).map((_t, $index) => (
+                  <rect key={'r' + $index} x={_t?.hx} y="20" width={v.growth?.step} height="250" fill="transparent" onMouseEnter={_t?.hover} style={{ cursor: "pointer" }} />
+                ))}
+              </svg>
+              {(v.growth?.grid || []).map((_g, $index) => (
+                <span key={$index} className="ax-y" style={{ top: `${s(_g?.tp)}`, width: "2.6%" }}>{_g?.label}</span>
+              ))}
+              {(v.growth?.ticks || []).map((_t, $index) => (
+                <span key={$index} className="ax-x" style={{ left: `${s(_t?.xp)}`, fontWeight: _t?.live ? "700" : undefined }}>{_t?.m}</span>
+              ))}
+              {v.tip?.show ? (
+                <div className="db-tip" style={{ left: v.tip.left, transform: v.tip.flip ? "translateX(calc(-100% - 12px))" : "translateX(12px)" }}>
+                  <p style={{ margin: "0 0 6px", fontWeight: "600" }}>{v.tip.month}</p>
+                  {v.tip.rows.map((_r) => (
+                    <div key={_r.key} className="db-tip__row">
+                      <span><span className="db-dot" style={{ background: _r.color }} />{_r.label}</span>
+                      <strong>{_r.v}</strong>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
           </section>
           <section aria-label="Status" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
             <div className="db-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>

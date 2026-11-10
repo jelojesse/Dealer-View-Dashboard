@@ -12,17 +12,22 @@ import { NTV } from '../ds/ntv360';
 import { addNav, contains, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import SummaryCard from '../components/SummaryCard';
+import FilterBy, { passes } from '../components/FilterBy';
+
+var REGIONS = ['Mid-Atlantic (MA)', 'Mid-East (ME)', 'Mid-West (MW)', 'North East (NE)', 'South East (SE)', 'South West (SW)'];
+/* Mock: every advertiser record says "South"; spread them over the dealer regions so the Region filter has something to do. */
+var regionOf = function (a) { return REGIONS[(parseInt(String(a.id).slice(1), 10) || 0) % REGIONS.length]; };
 import './DealerAdvertisers.css';
 
 /* ============================== Logic ============================== */
 
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { data: D.advertisers.slice(), query: '', status: '', del: null, toast: null }; }
+  constructor(props) { super(props); this.state = { data: D.advertisers.slice(), query: '', filters: {}, del: null, toast: null }; }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
     var self = this, s = this.state;
     var media = function (a) { return D.media.filter(function (m) { return m.adv === a.id; }); };
-    var rows = s.data.filter(function (a) { return (!s.status || a.status === s.status) && contains(a.name + ' ' + a.region + ' ' + a.state + ' ' + (a.state === 'AL' ? 'Alabama' : ''), s.query); });
+    var rows = s.data.filter(function (a) { return passes(s.filters, 'category', a.category) && passes(s.filters, 'region', regionOf(a)) && passes(s.filters, 'status', a.status) && contains(a.name + ' ' + regionOf(a) + ' ' + a.category + ' ' + a.state + ' ' + (a.state === 'AL' ? 'Alabama' : ''), s.query); });
     var cnt = function (k) { return s.data.filter(function (a) { return a.status === k; }).length; };
     var used = s.del ? media(s.del).filter(function (m) { return m.used; }).length : 0;
     return {
@@ -30,11 +35,15 @@ class Component extends DCLogic {
       cols: '50px minmax(220px, 2fr) 1fr 1fr 1fr 90px 140px 90px',
       total: s.data.length, activeCount: cnt('Active'), inactiveCount: cnt('Inactive'),
       legend: [{ label: 'Active', color: 'var(--success-main)' }, { label: 'Inactive', color: 'var(--danger-main)' }],
-      statusOptions: ['All Status', 'Active', 'Inactive'], statusValue: s.status || 'All Status',
-      setStatus: function (v) { var x = val(v); self.setState({ status: x === 'All Status' ? '' : x }); },
+      filterGroups: [
+        { key: 'category', title: 'Category', options: s.data.map(function (a) { return a.category; }).filter(function (c, i, arr) { return arr.indexOf(c) === i; }).sort() },
+        { key: 'region', title: 'Region', options: REGIONS },
+        { key: 'status', title: 'Status', options: ['Active', 'Inactive'] }
+      ],
+      filters: s.filters, setFilters: function (x) { self.setState({ filters: x }); },
       query: s.query, setQuery: function (v) { self.setState({ query: val(v) }); },
       rows: rows.map(function (a, i) {
-        return { n: i + 1, name: a.name, category: a.category, city: a.city, state: a.state, region: a.region, content: media(a).length, status: a.status, color: a.status === 'Active' ? 'var(--success-main)' : 'var(--danger-main)', created: a.created, createdBy: a.createdBy,
+        return { n: i + 1, name: a.name, category: a.category, city: a.city, state: a.state, region: regionOf(a), content: media(a).length, status: a.status, color: a.status === 'Active' ? 'var(--success-main)' : 'var(--danger-main)', created: a.created, createdBy: a.createdBy,
           open: navFn('DealerAdvertiserDetail.dc.html', { id: a.id }),
           edit: navFn('DealerAdvertiserDetail.dc.html', { id: a.id, edit: true }),
           remove: function () { self.setState({ del: a }); } };
@@ -88,11 +97,9 @@ defineTemplate(Component, (v) => (
             </div>
           </section>
           <div className="dv-between">
-            <div style={{ width: "220px", flex: "none" }}>
-              <NTV.Select size="l" placeholder="Filter by status" options={v.statusOptions} value={v.statusValue} onChange={v.setStatus} />
-            </div>
+            <FilterBy groups={v.filterGroups} value={v.filters} onChange={v.setFilters} />
             <div className="dv-row" style={{ flexWrap: "wrap", gap: "16px" }}>
-              <NTV.Input size="l" placeholder="Search Advertiser Name, Region or State" iconLeft="magnifying-glass" iconRight="sparkles" label="Search advertisers" value={v.query} onChange={v.setQuery} style={{ width: "460px", maxWidth: "100%" }} />
+              <NTV.Input size="l" placeholder="Search Advertiser Name, Category, Region or State" iconLeft="magnifying-glass" iconRight="sparkles" label="Search advertisers" value={v.query} onChange={v.setQuery} style={{ width: "460px", maxWidth: "100%" }} />
               <NTV.Button variant="secondary" size="xl" iconRight="file-excel" onClick={v.exportIt}>Export</NTV.Button>
             </div>
           </div>
