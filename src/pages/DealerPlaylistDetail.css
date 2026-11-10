@@ -131,3 +131,30 @@
 .pg-playlist-detail .pd-cell.grp.seg-start.seg-end::before{border-radius:6px}
 .pg-playlist-detail .pd-cell.grp.dash-l::before{border-left-style:dashed;border-top-left-radius:0;border-bottom-left-radius:0}
 .pg-playlist-detail .pd-cell.grp.dash-r::before{border-right-style:dashed;border-top-right-radius:0;border-bottom-right-radius:0}
+/* Standalone thumbnail (not in a block) — Figma "Type=Single Playlist" (node 5596:36142):
+   Default = tag pill; Hover = checkbox + "..." + bold red title; Selected = red border + checked box */
+.pg-playlist-detail .pd-cell.std .pd-tile__card{box-shadow:none;border:.5px solid var(--container-border);border-radius:var(--radius-md);box-sizing:border-box}
+.pg-playlist-detail .pd-cell.std .pd-tile__img{display:flex;align-items:flex-start;justify-content:space-between;padding:10px}
+.pg-playlist-detail .pd-pill{position:relative;z-index:1;display:inline-flex;align-items:center;height:16px;padding:0 6px;border-radius:10px;font-size:10px;line-height:12px;font-weight:600}
+.pg-playlist-detail .pd-check{position:relative;z-index:1;display:none;align-items:center;justify-content:center;width:20px;height:20px;box-sizing:border-box;border:1.5px solid var(--primary-400);border-radius:var(--radius-sm);background:var(--bg-surface);color:var(--white)}
+.pg-playlist-detail .pd-check.on{background:var(--accent-action);border-color:var(--accent-action)}
+.pg-playlist-detail .pd-more{position:relative;z-index:1;display:none;align-items:center;justify-content:center;width:24px;height:24px;margin-left:auto;padding:0;border:0;border-radius:50px;background:var(--bg-surface);color:var(--fg-primary);cursor:pointer}
+.pg-playlist-detail .pd-more:hover{color:var(--accent-action)}
+.pg-playlist-detail .pd-cell.std .pd-tile__name{font-weight:600;line-height:16px}
+.pg-playlist-detail .pd-cell.std:is(:hover,.menu-open) .pd-pill{display:none}
+.pg-playlist-detail .pd-cell.std:is(:hover,.menu-open) .pd-check,.pg-playlist-detail .pd-cell.std:is(:hover,.menu-open) .pd-more{display:inline-flex}
+.pg-playlist-detail .pd-cell.std:not(.sched):is(:hover,.menu-open) .pd-tile__name{font-weight:700;color:var(--accent-action)}
+.pg-playlist-detail .pd-cell.std.sched:is(:hover,.menu-open) .pd-tile__name{font-weight:700}
+.pg-playlist-detail .pd-cell.std.sel .pd-tile__card{border:1px solid var(--accent-action);box-shadow:none}
+.pg-playlist-detail .pd-cell.std.sel .pd-pill{display:none}
+.pg-playlist-detail .pd-cell.std.sel .pd-check{display:inline-flex}
+/* menu-action dialogs */
+.pg-playlist-detail .pd-full{display:flex;flex-direction:column;gap:10px;max-width:min(1200px,90vw)}
+.pg-playlist-detail .pd-full__head{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#fff;font-size:14px}
+.pg-playlist-detail .pd-full img{display:block;max-width:100%;max-height:80vh;border-radius:var(--radius-md);object-fit:contain;background:#000}
+.pg-playlist-detail .pd-swap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;max-height:360px;overflow:auto;margin-top:12px}
+.pg-playlist-detail .pd-swap__item{display:flex;flex-direction:column;padding:0;border:.5px solid var(--container-border);border-radius:var(--radius-md);overflow:hidden;background:var(--bg-surface);cursor:pointer;font-family:inherit;text-align:left}
+.pg-playlist-detail .pd-swap__item:hover{border-color:var(--accent-action)}
+.pg-playlist-detail .pd-swap__img{position:relative;display:block;aspect-ratio:16/9;padding:8px;box-sizing:border-box}
+.pg-playlist-detail .pd-swap__img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pg-playlist-detail .pd-swap__name{padding:8px 10px;background:var(--bg-app);font-size:12px;line-height:16px;font-weight:600;color:var(--fg-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}

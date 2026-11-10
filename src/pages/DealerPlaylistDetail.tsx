@@ -32,6 +32,8 @@ var SCHED = { active: ['var(--success-main)', 'Playing now'], upcoming: ['var(--
 // Block group frame colors, in order of appearance
 var GROUP_COLORS = ['var(--warning-main)', 'var(--danger-main)', 'var(--success-main)', 'var(--primary-400)'];
 var GRID_COLS = 8;
+// Standalone thumbnail tag pills: [background, text]
+var PILL = { image: ['var(--info-050)', 'var(--info-main)'], video: ['var(--danger-050)', 'var(--danger-main)'], widget: ['var(--teal-050)', 'var(--teal-600)'], block: ['var(--purple-050)', 'var(--purple-main)'] };
 
 class Component extends DCLogic {
   constructor(props) {
@@ -41,7 +43,7 @@ class Component extends DCLogic {
     var items = p.items.map(function (id, i) { var m = byId(D.media, id); var blk = !!(p.block && i === 0); var sc = (p.schedules || {})[id];
       return m ? { key: 'k' + i, blk: blk, m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: !sc, start: sc ? sc[0] : '', end: sc ? sc[1] : '',
         members: blk ? (p.blockMembers || []).map(function (mid) { return byId(D.media, mid); }).filter(Boolean) : null } : null; }).filter(Boolean);
-    this.state = { view: 'grid', kinds: [], q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', libQ: '', push: false, ad: null, md: null, info: null, toast: null };
+    this.state = { view: 'grid', kinds: [], q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', target: '', mvPos: '1', swQ: '', libQ: '', push: false, ad: null, md: null, info: null, toast: null };
   }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
@@ -107,7 +109,18 @@ class Component extends DCLogic {
         var B = it.blk ? ['CHANNEL', 'var(--warning-main)'] : ({ image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'], block: ['BLOCK', 'var(--purple-main)'] }[it.m.kind] || ['IMAGE', 'var(--info-main)']);
         var sel = !!s.sel[it.key], idx = s.items.indexOf(it);
         return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : (SCHED[schedState(it)] ? SCHED[schedState(it)][0] : 'var(--primary-050)'), capColor: (it.blk || schedState(it)) ? '#fff' : 'var(--fg-primary)', blk: it.blk, members: it.members || [], schedTip: schedState(it) ? SCHED[schedState(it)][1] + ' · ' + fmtDate(it.start) + ' – ' + fmtDate(it.end) : '', n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)', sched: schedState(it) ? fmtDate(it.start) + ' – ' + fmtDate(it.end) + ' (' + SCHED[schedState(it)][1] + ')' : 'Always',
-          checked: sel, cls: sel ? 'sel' : (it.blk ? 'blk' : ''),
+          checked: sel, cls: sel ? 'sel' : (it.blk ? 'blk' : ''), key: it.key, kind: it.m.kind, sched: !!schedState(it),
+          menuOpen: s.menu === it.key,
+          openMenu: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.setState({ menu: self.state.menu === it.key ? '' : it.key }); },
+          closeMenu: function () { self.setState({ menu: '' }); },
+          menuItems: [
+            { icon: 'maximize', label: 'Fullscreen', onClick: function () { self.setState({ modal: 'full', target: it.key }); } },
+            { icon: 'retweet', label: 'Quick Move', tone: 'info', onClick: function () { self.setState({ modal: 'move', target: it.key, mvPos: String(idx + 1) }); } },
+            { icon: 'right-left', label: 'Swap Content', tone: 'warning', onClick: function () { self.setState({ modal: 'swap', target: it.key, swQ: '' }); } },
+            { icon: 'gear', label: 'Settings', tone: 'success', onClick: function () { self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, start: it.start || '2026-11-15', end: it.end || '2026-12-31' } }); } },
+            'divider',
+            { icon: 'x', label: 'Remove', tone: 'danger', onClick: function () { self.setState({ modal: 'remove', target: it.key }); } }
+          ],
           toggle: function () { var o = Object.assign({}, self.state.sel); o[it.key] = !o[it.key]; self.setState({ sel: o }); },
           up: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); move(idx, -1); }, down: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); move(idx, 1); },
           modify: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, start: it.start || '2026-11-15', end: it.end || '2026-12-31' } }); } };
@@ -129,11 +142,13 @@ class Component extends DCLogic {
           var segStart = !!c.grp && (first || c.col === 0), segEnd = !!c.grp && (last || !next || next.col === 0);
           var cls = c.grp ? ['grp', segStart ? 'seg-start' : '', segEnd ? 'seg-end' : '', segStart && !first ? 'dash-l' : '', segEnd && !last ? 'dash-r' : ''].join(' ') : '';
           var member = !!c.m;
-          return { key: (c.grp || '') + k, span: c.span, cls: cls + (it.checked ? ' sel' : ''), color: c.color || 'transparent', toggle: it.toggle,
+          var std = !c.grp, pill = PILL[it.kind] || PILL.image;
+          return { key: (c.grp || '') + k, span: c.span, cls: cls + (it.checked ? ' sel' : '') + (std ? ' std' : '') + (std && it.sched ? ' sched' : '') + (std && it.menuOpen ? ' menu-open' : ''), color: c.color || 'transparent', toggle: it.toggle,
+            std: std, checked: it.checked, pillBg: pill[0], pillFg: pill[1], menuOpen: std && it.menuOpen, openMenu: it.openMenu, closeMenu: it.closeMenu, menuItems: it.menuItems,
             image: member ? c.m.image : it.image, title: member ? c.m.title : it.title, badge: member ? c.badge[0] : it.badge, badgeColor: member ? c.badge[1] : it.badgeColor,
             n: c.grp ? null : it.n, dur: c.head ? it.dur : null, tip: c.grp ? '' : it.schedTip,
-            capBg: c.head ? c.color : (member ? 'var(--primary-050)' : it.capBg), capColor: c.head ? '#fff' : (member ? 'var(--fg-primary)' : it.capColor),
-            actions: !member, up: it.up, down: it.down, modify: it.modify };
+            capBg: c.head ? c.color : (member ? 'var(--primary-050)' : (it.sched ? it.capBg : 'var(--bg-app)')), capColor: c.head ? '#fff' : (member ? 'var(--fg-primary)' : it.capColor),
+            actions: !member, gear: !!c.head, up: it.up, down: it.down, modify: it.modify };
         });
       })(itemVMs),
       empty: s.items.length === 0,
@@ -144,7 +159,19 @@ class Component extends DCLogic {
       pushOpen: s.push,
       pushTargets: (function () { var t = []; scs.forEach(function (sc) { sc.lic.forEach(function (lid) { var l = byId(D.licenses, lid); if (l) t.push({ alias: l.alias, willFail: l.status !== 'online' }); }); }); return t; })(),
       openPush: function () { self.setState({ push: true }); }, closePush: function () { self.setState({ push: false }); }, pushDone: function () {},
-      m: { add: s.modal === 'add', modify: s.modal === 'modify', info: s.modal === 'info', bulk: s.modal === 'bulk' },
+      m: { add: s.modal === 'add', modify: s.modal === 'modify', info: s.modal === 'info', bulk: s.modal === 'bulk', full: s.modal === 'full', move: s.modal === 'move', swap: s.modal === 'swap', remove: s.modal === 'remove' },
+      act: (function () {
+        var it = s.items.filter(function (x) { return x.key === s.target; })[0];
+        if (!it) return {};
+        return { title: it.m.title, image: it.m.image,
+          positions: s.items.map(function (x, i) { return String(i + 1); }), pos: s.mvPos, setPos: function (x) { self.setState({ mvPos: val(x) }); },
+          doMove: function () { var a = self.state.items.slice(), from = a.indexOf(it), to = Math.max(0, Math.min(a.length - 1, parseInt(self.state.mvPos, 10) - 1)); a.splice(from, 1); a.splice(to, 0, it); self.setState({ items: a, modal: '' }); toast(self, '“' + it.m.title + '” moved to position ' + (to + 1)); },
+          swQ: s.swQ, setSwQ: function (x) { self.setState({ swQ: val(x) }); },
+          lib: D.media.filter(function (m) { return m.id !== it.m.id && m.kind !== 'block' && contains(m.title, s.swQ); }).slice(0, 24).map(function (m) { var pl = PILL[m.kind] || PILL.image;
+            return { title: m.title, image: m.image, badge: m.kind.toUpperCase(), pillBg: pl[0], pillFg: pl[1],
+              pick: function () { self.setState({ items: self.state.items.map(function (x) { return x.key === it.key ? Object.assign({}, x, { m: m, dur: m.duration || x.dur }) : x; }), modal: '' }); toast(self, 'Swapped to “' + m.title + '”'); } }; }),
+          doRemove: function () { self.setState({ items: self.state.items.filter(function (x) { return x.key !== it.key; }), modal: '' }); toast(self, '“' + it.m.title + '” removed'); } };
+      })(),
       closeModal: close,
       openAdd: function () { self.setState({ modal: 'add', ad: { step: 0, kind: 'single', sel: {}, q: '', blockName: p.name + ' Block', layout: '2 + 2 grid', dur: '15 sec' } }); },
       ad: {
@@ -252,7 +279,15 @@ defineTemplate(Component, (v) => (
                         <div className="pd-tile__card">
                           <div className="pd-tile__img">
                             <img src={_c.image} alt="" />
-                            <span className="pd-tag" style={{ color: `${s(_c.badgeColor)}`, borderColor: `${s(_c.badgeColor)}` }}>{_c.badge}</span>
+                            {_c.std ? (
+                              <>
+                                <span className="pd-pill" style={{ background: _c.pillBg, color: _c.pillFg }}>{_c.badge}</span>
+                                <span className={`pd-check ${_c.checked ? "on" : ""}`} aria-hidden="true">{_c.checked ? <NTV.Icon name="check" size={v.i12} /> : null}</span>
+                                <button type="button" className="pd-more" aria-label="More actions" aria-haspopup="menu" aria-expanded={_c.menuOpen} onClick={_c.openMenu}><NTV.Icon name="ellipsis" size={10} /></button>
+                              </>
+                            ) : (
+                              <span className="pd-tag" style={{ color: `${s(_c.badgeColor)}`, borderColor: `${s(_c.badgeColor)}` }}>{_c.badge}</span>
+                            )}
                           </div>
                           <div className="pd-tile__cap" style={{ background: `${s(_c.capBg)}`, color: `${s(_c.capColor)}` }}>
                             <span className="pd-tile__name">{_c.n ? <span className="pd-num">{_c.n}</span> : null}{_c.title}</span>
@@ -263,11 +298,12 @@ defineTemplate(Component, (v) => (
                                 <button type="button" className="dv-ib pd-capbtn" aria-label="Move later" onClick={_c.down}><NTV.Icon name="angle-down" size={v.i10} /></button>
                               </>
                             ) : null}
-                            {_c.actions && v.notReorder ? (
+                            {_c.gear && v.notReorder ? (
                               <button type="button" className="dv-ib pd-capbtn" aria-label="Modify" onClick={_c.modify}><NTV.Icon name="gear" size={v.i10} /></button>
                             ) : null}
                           </div>
                         </div>
+                        {_c.menuOpen ? <NTV.ActionMenu items={_c.menuItems} onClose={_c.closeMenu} style={{ top: "38px", right: "10px" }} /> : null}
                       </div>
                     ))}
                   </div>
@@ -667,6 +703,56 @@ defineTemplate(Component, (v) => (
           </NTV.StatusModal>
         </div>
         </>
+      ) : null}
+      {v.m?.full ? (
+        <div className="dv-ov" onClick={v.closeModal}>
+          <div className="pd-full" onClick={(e) => e.stopPropagation()}>
+            <div className="pd-full__head">
+              <strong>{v.act?.title}</strong>
+              <button type="button" className="dv-ib" aria-label="Close" onClick={v.closeModal} style={{ color: "#fff" }}><NTV.Icon name="x" size={v.i14} /></button>
+            </div>
+            <img src={v.act?.image} alt={v.act?.title} />
+          </div>
+        </div>
+      ) : null}
+      {v.m?.move ? (
+        <div className="dv-ov">
+          <NTV.Modal title="Quick Move" width={v.w460} onClose={v.closeModal}>
+            <p className="dv-p" style={{ marginBottom: "12px" }}>Move <strong style={{ color: "var(--fg-primary)" }}>{v.act?.title}</strong> to position:</p>
+            <NTV.Select size="l" options={v.act?.positions} value={v.act?.pos} onChange={v.act?.setPos} />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px" }}>
+              <NTV.Button variant="primary" tone="neutral" size="xl" iconRight={v.none} onClick={v.closeModal}>Cancel</NTV.Button>
+              <NTV.Button variant="primary" size="xl" iconRight={v.none} onClick={v.act?.doMove}>Move</NTV.Button>
+            </div>
+          </NTV.Modal>
+        </div>
+      ) : null}
+      {v.m?.swap ? (
+        <div className="dv-ov">
+          <NTV.Modal title="Swap Content" width={v.w640} onClose={v.closeModal}>
+            <p className="dv-p" style={{ marginBottom: "12px" }}>Replace <strong style={{ color: "var(--fg-primary)" }}>{v.act?.title}</strong> with:</p>
+            <NTV.Input size="l" placeholder="Search Media Library" iconLeft="magnifying-glass" label="Search media library" value={v.act?.swQ} onChange={v.act?.setSwQ} />
+            <div className="pd-swap">
+              {(v.act?.lib || []).map((_m, $i) => (
+                <button key={$i} type="button" className="pd-swap__item" onClick={_m.pick}>
+                  <span className="pd-swap__img"><img src={_m.image} alt="" /><span className="pd-pill" style={{ background: _m.pillBg, color: _m.pillFg }}>{_m.badge}</span></span>
+                  <span className="pd-swap__name">{_m.title}</span>
+                </button>
+              ))}
+            </div>
+          </NTV.Modal>
+        </div>
+      ) : null}
+      {v.m?.remove ? (
+        <div className="dv-ov">
+          <NTV.StatusModal status="warning" title="Remove Content?" width={v.w460}>
+            <p className="dv-p" style={{ textAlign: "center" }}>Remove <strong style={{ color: "var(--fg-primary)" }}>{v.act?.title}</strong> from this playlist? The file stays in your Media Library.</p>
+            <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginTop: "20px" }}>
+              <NTV.Button variant="primary" tone="neutral" size="xl" iconRight={v.none} onClick={v.closeModal}>Cancel</NTV.Button>
+              <button type="button" className="ntv-btn ntv-btn--danger ntv-btn--xl" onClick={v.act?.doRemove}>Remove</button>
+            </div>
+          </NTV.StatusModal>
+        </div>
       ) : null}
       {v.toast?.show ? (
         <>
