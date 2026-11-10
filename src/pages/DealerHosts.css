@@ -80,8 +80,22 @@
 /* Hosts table: fixed at header + 10 rows (44px each); "Show More..." rows scroll inside */
 .pg-hosts .dv-table.hosts-table{max-height:calc(44px * 11 + 2px)} /* +2px = top/bottom border */
 /* Host Analytics chart header — matches Figma "Network Growth" chart (Dealer Account Overview, node 2:1791) */
-.pg-hosts .ha-title{margin:0;font-size:16px;line-height:24px;font-weight:700;color:var(--fg-primary)}
-.pg-hosts .ha-sub{margin:0;font-size:12px;line-height:18px;color:var(--fg-secondary)}
-.pg-hosts .ha-legend{display:flex;align-items:center;gap:16px;font-size:14px;line-height:20px;font-weight:600;color:var(--fg-secondary);white-space:nowrap}
+.pg-hosts .ha-head{display:flex;flex-direction:column;gap:5px}
+.pg-hosts .ha-title{margin:0;font-size:14px;line-height:20px;font-weight:700;color:var(--fg-primary)}
+.pg-hosts .ha-sub{margin:0;font-size:12px;line-height:20px;color:var(--fg-secondary)}
+.pg-hosts .ha-legend{display:flex;align-items:center;gap:10px;font-size:14px;line-height:20px;font-weight:700;color:var(--fg-primary);white-space:nowrap}
 .pg-hosts .ha-legend>span{display:inline-flex;align-items:center;gap:4px}
 .pg-hosts .ha-dot{display:inline-block;width:8px;height:8px;border-radius:999px;flex:none}
+.pg-hosts .ha-select{min-width:0;width:120px;flex:none}
+/* Top Host(s) widget — Figma "Widget" node 32:32543 */
+.pg-hosts .th-card{display:flex;flex-direction:column;gap:16px}
+.pg-hosts .th-text{display:flex;flex-direction:column;gap:4px}
+.pg-hosts .th-title{margin:0;font-size:20px;line-height:32px;font-weight:700;color:var(--fg-primary)}
+.pg-hosts .th-desc{margin:0;font-size:12px;line-height:20px;font-weight:500;color:var(--fg-secondary)}
+.pg-hosts .th-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.pg-hosts .th-row{display:flex;align-items:center;justify-content:space-between;gap:12px;height:28px;text-decoration:none}
+.pg-hosts .th-name{font-size:14px;line-height:20px;font-weight:600;color:var(--fg-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-hosts .th-row:hover .th-name{color:var(--accent-action)}
+.pg-hosts .th-count{flex:none;white-space:nowrap;font-size:14px;line-height:20px}
+.pg-hosts .th-count strong{font-weight:700;color:var(--fg-primary)}
+.pg-hosts .th-count span{font-size:12px;line-height:16px;color:var(--fg-secondary)}

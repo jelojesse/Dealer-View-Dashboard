@@ -169,27 +169,21 @@ defineTemplate(Component, (v) => (
           {v.analytics ? (
             <>
               <section aria-label="Host analytics" style={{ display: "grid", gridTemplateColumns: "minmax(0, 2fr) minmax(320px, 1fr)", gap: "20px" }}>
-              <div className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              <div className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 <div className="dv-between" style={{ gap: "16px" }}>
-                  <div>
+                  <div className="ha-head">
                     <h2 className="ha-title">Host Analytics</h2>
-                    <p className="ha-sub">Total Hosts and new Hosts registered, by month</p>
+                    <p className="ha-sub">Performance overview</p>
                   </div>
-                  <div className="dv-row" style={{ gap: "16px", flexWrap: "wrap", justifyContent: "flex-end", flex: "1 1 auto" }}>
+                  <div className="dv-row" style={{ gap: "50px", flexWrap: "wrap", justifyContent: "flex-end", flex: "1 1 auto" }}>
                   <div className="ha-legend">
                     <span><span className="ha-dot" style={{ background: "var(--success-main)" }} />Total Host</span>
                     <span><span className="ha-dot" style={{ background: "var(--info-main)" }} />New Host</span>
                   </div>
                   <div className="dv-row" style={{ gap: "10px" }}>
-                    <div style={{ width: "210px", flex: "none" }}>
-                      <NTV.Select size="l" placeholder="Month" options={v.monthOptions} value={v.month} onChange={v.setMonth} />
-                    </div>
-                    <div style={{ width: "210px", flex: "none" }}>
-                      <NTV.Select size="l" placeholder="Year" options={v.yearOptions} value={v.year} onChange={v.setYear} />
-                    </div>
-                    <div style={{ width: "210px", flex: "none" }}>
-                      <NTV.Select size="l" options={v.graphOptions} value={v.graph} onChange={v.setGraph} />
-                    </div>
+                    <NTV.Select size="s" className="ha-select" placeholder="Month" options={v.monthOptions} value={v.month} onChange={v.setMonth} />
+                    <NTV.Select size="s" className="ha-select" placeholder="Year" options={v.yearOptions} value={v.year} onChange={v.setYear} />
+                    <NTV.Select size="s" className="ha-select" options={v.graphOptions} value={v.graph} onChange={v.setGraph} />
                   </div>
                   </div>
                 </div>
@@ -280,26 +274,24 @@ defineTemplate(Component, (v) => (
                   ) : null}
                 </div>
               </div>
-              <div className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <div className="dv-row" style={{ gap: "14px", marginBottom: "6px" }}>
+              <div className="dv-card th-card">
+                <div className="dv-row" style={{ gap: "16px" }}>
                   <NTV.IconTile icon="map" tone="success" />
-                  <div>
-                    <h2 className="dv-h2">Top Host(s)</h2>
-                    <p className="dv-sub">Hosts with the most licenses.</p>
+                  <div className="th-text">
+                    <h2 className="th-title">Top Host(s)</h2>
+                    <p className="th-desc">Host with most licenses.</p>
                   </div>
                 </div>
-                {(v.top || []).map((_t, $index) => (
-                  <React.Fragment key={$index}>
-                    <a href="DealerHostDetail.dc.html" onClick={_t?.open} className="dv-between" style={{ flexWrap: "nowrap", textDecoration: "none", color: "var(--fg-primary)", fontSize: "14px", lineHeight: "24px" }} data-nav={_t?.openNav}>
-                      <span>{_t?.n}{". "}{_t?.name}</span>
-                      <span>
-                        <strong>{_t?.lic}</strong>
- 
-                        <span className="dv-sub" style={{ display: "inline" }}>License(s)</span>
-                      </span>
-                    </a>
-                  </React.Fragment>
-                ))}
+                <ol className="th-list">
+                  {(v.top || []).map((_t, $index) => (
+                    <li key={$index}>
+                      <a href="DealerHostDetail.dc.html" onClick={_t?.open} className="th-row" data-nav={_t?.openNav}>
+                        <span className="th-name">{_t?.n}{". "}{_t?.name}</span>
+                        <span className="th-count"><strong>{_t?.lic}</strong> <span>License(s)</span></span>
+                      </a>
+                    </li>
+                  ))}
+                </ol>
               </div>
             </section>
             </>
