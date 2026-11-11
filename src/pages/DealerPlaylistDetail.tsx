@@ -54,7 +54,7 @@ class Component extends DCLogic {
         members: blk ? (p.blockMembers || []).map(function (mid) { return byId(D.media, mid); }).filter(Boolean) : null } : null; }).filter(Boolean);
     this.state = { view: 'grid', kinds: [], sched: '', q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', menuRect: null, hoverGrp: '', target: '', mvPos: '1', swQ: '', libQ: '', libLimit: 10, push: false, ad: null, md: null, info: null, toast: null };
   }
-  componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
+  componentWillUnmount() { clearTimeout(this._hoverT); if (this._tt) clearTimeout(this._tt); }
   renderVals() {
     var self = this, s = this.state, p = s.p, itemVMs = [], libAll = [];
     var secs = function (d) { return parseInt(d, 10) || 15; };
@@ -175,8 +175,10 @@ class Component extends DCLogic {
             menuItems: std ? it.menuItems : it.menuItems.filter(function (x) { return x === 'divider' || x.label !== 'Swap Content'; }),
             grpHover: hovered || (!!c.grp && it.menuOpen), overlay: segFirst && (hovered || it.menuOpen), overlaySpan: segFirst ? c.seg.span : 0, overlayMain: segFirst && !!c.seg.main,
             grpName: c.grp ? it.title : '', grpInfo: c.grp ? (it.members.length + 1) + ' contents' : '', grpSecs: grpSecs + ' seconds',
-            enter: c.grp ? function () { if (self.state.hoverGrp !== c.grp) self.setState({ hoverGrp: c.grp }); } : null,
-            leave: c.grp ? function () { self.setState({ hoverGrp: '' }); } : null,
+            // hover is debounced: the overlay covers tiles when it appears, which makes the browser report a "leave";
+            // a short delay (cancelled by any enter inside the block) keeps it from blinking
+            enter: c.grp ? function () { clearTimeout(self._hoverT); if (self.state.hoverGrp !== c.grp) self.setState({ hoverGrp: c.grp }); } : null,
+            leave: c.grp ? function () { clearTimeout(self._hoverT); self._hoverT = setTimeout(function () { if (self.state.hoverGrp) self.setState({ hoverGrp: '' }); }, 120); } : null,
             image: member ? c.m.image : it.image, title: member ? c.m.title : it.title, badge: member ? c.badge[0] : it.badge, badgeColor: member ? c.badge[1] : it.badgeColor,
             n: c.grp ? null : it.n, dur: c.head ? it.dur : null, tip: c.grp ? '' : it.schedTip,
             capBg: c.head ? c.color : (member ? 'var(--primary-050)' : (it.sched ? it.capBg : 'var(--bg-app)')), capColor: c.head ? '#fff' : (member ? 'var(--fg-primary)' : it.capColor),
@@ -339,7 +341,7 @@ defineTemplate(Component, (v) => (
                         </div>
                         {_c.menuOpen && _c.std ? <NTV.ActionMenu items={_c.menuItems} onClose={_c.closeMenu} style={{ top: "38px", right: "10px" }} /> : null}
                         {_c.overlay ? (
-                          <div className="pd-grp-overlay" style={{ "--n": _c.overlaySpan }} onClick={_c.toggle}>
+                          <div className="pd-grp-overlay" style={{ "--n": _c.overlaySpan }} onClick={_c.toggle} onMouseEnter={_c.enter} onMouseMove={_c.enter}>
                             {_c.overlayMain ? (
                               <>
                                 <strong className="pd-grp-overlay__name">{_c.grpName}</strong>
