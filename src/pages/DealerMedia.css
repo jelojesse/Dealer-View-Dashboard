@@ -164,8 +164,6 @@
 .pg-media .ml-ffield label em,.pg-media .ml-ffield span em{font-style:normal;font-weight:400;color:var(--primary-300)}
 .pg-media .ml-frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 /* Header "New Folder" (recording): orange brand gradient. */
-.pg-media .ml-btn-brand.ntv-btn--default{background:var(--gradient-brand)}
-.pg-media .ml-btn-brand.ntv-btn--default:hover{background:var(--gradient-button-hover)}
 
 /* PickField: a filled select shows a red ✕ in place of the chevron. */
 .pg-media .ml-pick-wrap{position:relative}
