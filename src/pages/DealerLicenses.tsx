@@ -41,6 +41,10 @@ import './DealerLicenses.css';
 
 /* ============================== Logic ============================== */
 
+/* Dates shown MM/DD/YY like the rest of the table. Creation date is mock: a week before the earlier of install / request (Sep 1 for spares). */
+var mdy = function (txt) { var d = new Date(txt); if (!txt || isNaN(d)) return '---'; var p = function (n) { return ('0' + n).slice(-2); }; return p(d.getMonth() + 1) + '/' + p(d.getDate()) + '/' + String(d.getFullYear()).slice(-2); };
+var created = function (l) { var t = [l.install, l.request].map(function (x) { return new Date(x).getTime(); }).filter(function (x) { return !isNaN(x); }); if (!t.length) return 'Sep 1, 2026'; var d = new Date(Math.min.apply(null, t)); d.setDate(d.getDate() - 7); return d.toDateString(); };
+
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -64,8 +68,9 @@ class Component extends DCLogic {
     var n = parseInt(s.reqCount, 10);
     return {
       none: null, i10: 10, i12: 12, w500: 500,
-      /* #, Screenshot, License Key, Host, Timezone, Alias, Last Update, Last Startup, Upload, Download, Display, MAC, Anydesk, Install */
-      cols: '48px 104px minmax(180px, 1fr) minmax(160px, 1fr) 104px minmax(120px, .8fr) 136px 136px 112px 124px 72px 136px 168px 104px',
+      /* #, Screenshot, License Key, Host, Timezone, Alias, Last Update, Last Startup, Upload, Download, Display, MAC, Anydesk,
+         Installation Date, Installation Request Date, Creation Date (dates are read-only for dealers) */
+      cols: '48px 104px minmax(180px, 1fr) minmax(160px, 1fr) 104px minmax(120px, .8fr) 136px 136px 112px 124px 72px 136px 168px 112px 120px 120px',
       total: L.length,
       byType: { Ad: L.filter(function (l) { return l.type === 'Ad'; }).length, Menu: L.filter(function (l) { return l.type === 'Menu'; }).length, Closed: L.filter(function (l) { return l.type === 'Closed'; }).length },
       range: s.range, setRange: function (r) { self.setState({ range: r }); }, today: new Date(2026, 10, 11),
@@ -89,7 +94,7 @@ class Component extends DCLogic {
         return { n: i + 1, alias: l.alias, keyShort: l.key.slice(0, 18) + '…', host: l.host ? hostName(l.host) : '—', tz: tzOf(l), color: st.color,
           hasShot: on && !!m, shot: m ? m.image : '', lastUpdate: l.host ? '11/0' + (1 + k % 9) + '/26 12:0' + (k % 10) + ' AM' : '—', lastStartup: l.host ? '11/0' + (1 + k % 9) + '/26 12:1' + (k % 10) + ' AM' : '—',
           up: on ? l.speed : '---', down: on ? (parseInt(l.speed, 10) + 4) + ' MB/s' : '---', speedTint: on ? 'var(--success-050)' : 'transparent', speedColor: on ? 'var(--success-600)' : 'var(--fg-secondary)',
-          display: on ? 'ON' : 'OFF', mac: 'd8:3a:dd:' + hx(7) + ':' + hx(13) + ':' + hx(29), anydesk: l.anydesk.replace(/ /g, ''), pw: l.anypw, install: l.host ? l.install : '—',
+          display: on ? 'ON' : 'OFF', mac: 'd8:3a:dd:' + hx(7) + ':' + hx(13) + ':' + hx(29), anydesk: l.anydesk.replace(/ /g, ''), pw: l.anypw, install: l.host ? mdy(l.install) : '---', request: l.host ? mdy(l.request) : '---', created: mdy(created(l)),
           open: navFn('DealerLicenseDetail.dc.html', { id: l.id }),
           openHost: navFn('DealerHostDetail.dc.html', { id: l.host }),
           copyKey: copy(l.key, 'License key'), copyId: copy(l.anydesk.replace(/ /g, ''), 'AnyDesk ID'), copyPw: copy(l.anypw, 'AnyDesk password') };
@@ -234,7 +239,7 @@ defineTemplate(Component, (v) => (
               </div>
             </div>
             <div className="dv-table">
-              <div role="table" aria-label="Licenses" style={{ minWidth: "1830px" }}>
+              <div role="table" aria-label="Licenses" style={{ minWidth: "2080px" }}>
                 <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: `${s(v.cols)}` }}>
                   <div style={{ textAlign: "center" }}>#</div>
                   <div style={{ textAlign: "center" }}>Screenshot</div>
@@ -249,7 +254,9 @@ defineTemplate(Component, (v) => (
                   <div>Display</div>
                   <div>MAC Address</div>
                   <div>Anydesk</div>
-                  <div>Install Date</div>
+                  <div>Installation Date</div>
+                  <div style={{ whiteSpace: "normal", lineHeight: "16px" }}>Installation Request Date</div>
+                  <div>Creation Date</div>
                 </div>
                 {(v.rows || []).map((_r, $index) => (
                   <React.Fragment key={$index}>
@@ -295,6 +302,8 @@ defineTemplate(Component, (v) => (
                         </div>
                       </div>
                       <div>{_r?.install}</div>
+                      <div>{_r?.request}</div>
+                      <div>{_r?.created}</div>
                     </div>
                   </React.Fragment>
                 ))}
