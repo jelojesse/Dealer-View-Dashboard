@@ -132,11 +132,11 @@ defineTemplate(Component, (v) => (
                 <div className="dv-row" style={{ gap: "14px", alignItems: "flex-start" }}>
                   <NTV.IconTile icon="id-card" tone="danger" />
                   <div>
-                    <p style={{ margin: "0", fontSize: "18px", lineHeight: "28px", fontWeight: "700" }}>Total Licenses</p>
-                    <p className="dv-sub" style={{ fontSize: "11px" }}>All licenses you own</p>
+                    <p style={{ margin: "0", fontSize: "20px", lineHeight: "32px", fontWeight: "700" }}>Total Licenses</p>
+                    <p className="dv-sub" style={{ fontWeight: "500" }}>All licenses you own</p>
                   </div>
                 </div>
-                <span style={{ fontSize: "26px", lineHeight: "36px", fontWeight: "700" }}>{v.total}</span>
+                <span style={{ fontSize: "28px", lineHeight: "42px", fontWeight: "700" }}>{v.total}</span>
               </div>
               <div className="dv-between" style={{ fontSize: "12px" }}>
                 <span>
@@ -157,8 +157,8 @@ defineTemplate(Component, (v) => (
               <div className="dv-row" style={{ gap: "14px", alignItems: "flex-start" }}>
                 <NTV.IconTile icon="play" tone="danger" />
                 <div>
-                  <p style={{ margin: "0", fontSize: "18px", lineHeight: "28px", fontWeight: "700" }}>Player UI</p>
-                  <p className="dv-sub" style={{ fontSize: "11px" }}>Version running on your players</p>
+                  <p style={{ margin: "0", fontSize: "20px", lineHeight: "32px", fontWeight: "700" }}>Player UI</p>
+                  <p className="dv-sub" style={{ fontWeight: "500" }}>Version running on your players</p>
                 </div>
               </div>
               <div className="dv-between" style={{ fontSize: "12px" }}>
@@ -180,8 +180,8 @@ defineTemplate(Component, (v) => (
               <div className="dv-row" style={{ gap: "14px", alignItems: "flex-start" }}>
                 <NTV.IconTile icon="network-wired" tone="danger" />
                 <div>
-                  <p style={{ margin: "0", fontSize: "18px", lineHeight: "28px", fontWeight: "700" }}>Player Server</p>
-                  <p className="dv-sub" style={{ fontSize: "11px" }}>Server version your players sync with</p>
+                  <p style={{ margin: "0", fontSize: "20px", lineHeight: "32px", fontWeight: "700" }}>Player Server</p>
+                  <p className="dv-sub" style={{ fontWeight: "500" }}>Server version your players sync with</p>
                 </div>
               </div>
               <div className="dv-between" style={{ fontSize: "12px" }}>
@@ -222,7 +222,7 @@ defineTemplate(Component, (v) => (
           <section className="dv-card" aria-label="Licenses Data" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div className="dv-between">
               <div className="dv-row" style={{ gap: "20px" }}>
-                <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>Licenses Data</h2>
+                <h2 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>Licenses Data</h2>
                 <div className="dv-legend" aria-label="Legend">
                   {(v.legend || []).map((_g, $index) => (
                     <React.Fragment key={$index}>

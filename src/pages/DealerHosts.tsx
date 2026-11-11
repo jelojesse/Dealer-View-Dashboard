@@ -123,7 +123,7 @@ defineTemplate(Component, (v) => (
               <div className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div className="dv-between">
                   <div>
-                    <h2 className="dv-h3" style={{ fontSize: "14px" }}>Host Analytics</h2>
+                    <h2 className="dv-h3">Host Analytics</h2>
                     <p className="dv-sub">Performance overview</p>
                   </div>
                   <div className="dv-row" style={{ gap: "10px" }}>
@@ -222,7 +222,7 @@ defineTemplate(Component, (v) => (
                 <div className="dv-row" style={{ gap: "14px", marginBottom: "6px" }}>
                   <NTV.IconTile icon="map" tone="success" />
                   <div>
-                    <h2 className="dv-h2">Top Host(s)</h2>
+                    <h2 className="dv-h3">Top Host(s)</h2>
                     <p className="dv-sub">Hosts with the most licenses.</p>
                   </div>
                 </div>
@@ -253,7 +253,7 @@ defineTemplate(Component, (v) => (
           <section className="dv-card" aria-label="Hosts Data" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div className="dv-between">
               <div className="dv-row" style={{ gap: "20px" }}>
-                <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>Hosts Data</h2>
+                <h2 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>Hosts Data</h2>
                 <div className="dv-legend" aria-label="Legend">
                   {(v.legend || []).map((_g, $index) => (
                     <React.Fragment key={$index}>

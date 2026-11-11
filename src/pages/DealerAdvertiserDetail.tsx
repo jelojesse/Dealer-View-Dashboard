@@ -172,11 +172,11 @@ defineTemplate(Component, (v) => (
                     <div className="dv-row" style={{ gap: "14px", alignItems: "flex-start" }}>
                       <NTV.IconTile icon={_k?.icon} tone={_k?.tone} />
                       <div>
-                        <p style={{ margin: "0", fontSize: "18px", lineHeight: "28px", fontWeight: "700" }}>{_k?.label}</p>
-                        <p className="dv-sub" style={{ fontSize: "11px" }}>{_k?.desc}</p>
+                        <p style={{ margin: "0", fontSize: "20px", lineHeight: "32px", fontWeight: "700" }}>{_k?.label}</p>
+                        <p className="dv-sub" style={{ fontWeight: "500" }}>{_k?.desc}</p>
                       </div>
                     </div>
-                    <span style={{ fontSize: "26px", lineHeight: "36px", fontWeight: "700" }}>{_k?.value}</span>
+                    <span style={{ fontSize: "28px", lineHeight: "42px", fontWeight: "700" }}>{_k?.value}</span>
                   </div>
                   <div className="dv-between" style={{ fontSize: "12px" }}>
                     <span className="dv-row" style={{ gap: "8px" }}>

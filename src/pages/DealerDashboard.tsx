@@ -191,7 +191,7 @@ defineTemplate(Component, (v) => (
                       <NTV.IconTile icon={_k?.icon} tone={_k?.tone} />
                       <div>
                         <p style={{ margin: "0", fontSize: "20px", lineHeight: "32px", fontWeight: "700" }}>{_k?.title}</p>
-                        <p style={{ margin: "0", fontSize: "12px", lineHeight: "20px", color: "var(--fg-secondary)" }}>{_k?.desc}</p>
+                        <p style={{ margin: "0", fontSize: "12px", lineHeight: "20px", fontWeight: "500", color: "var(--fg-secondary)" }}>{_k?.desc}</p>
                       </div>
                     </div>
                     <p style={{ margin: "0", fontSize: "28px", lineHeight: "42px", fontWeight: "700" }}>{_k?.value}</p>
@@ -213,7 +213,7 @@ defineTemplate(Component, (v) => (
           <section aria-label="Charts" className="db-card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
               <div>
-                <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "24px", fontWeight: "700" }}>Network Growth</h2>
+                <h2 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>Network Growth</h2>
                 <p style={{ margin: "0", fontSize: "12px", lineHeight: "20px", color: "var(--fg-secondary)" }}>{"Screens, Hosts and Advertisers on your network · this month updates live"}</p>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "24px" }}>

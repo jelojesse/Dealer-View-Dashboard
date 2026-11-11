@@ -107,7 +107,7 @@ defineTemplate(Component, (v) => (
           <section className="dv-card" aria-label="Advertiser's Data" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div className="dv-between">
               <div className="dv-row" style={{ gap: "20px" }}>
-                <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>Advertiser’s Data</h2>
+                <h2 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>Advertiser’s Data</h2>
                 <div className="dv-legend" aria-label="Legend">
                   {(v.legend || []).map((_g, $index) => (
                     <React.Fragment key={$index}>

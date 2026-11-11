@@ -102,7 +102,7 @@ defineTemplate(Component, (v) => (
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "stretch", gap: "20px" }}>
             <section className="dv-card" aria-labelledby="hosts-title" style={{ flex: "1 1 480px", maxWidth: "592px", display: "flex", flexDirection: "column", gap: "16px" }}>
               <div className="dv-between">
-                <h2 id="hosts-title" className="dv-h2">Hosts</h2>
+                <h2 id="hosts-title" className="dv-h3">Hosts</h2>
                 <button type="button" className="dv-a" onClick={v.reload} style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontWeight: "400", fontSize: "14px" }}>
                   <span>Reload Hosts</span>
                   <NTV.Icon name="arrow-rotate-right" size={v.iconMd} />
@@ -154,7 +154,7 @@ defineTemplate(Component, (v) => (
                     <div style={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", minHeight: "40px", marginBottom: "8px" }}>
                       <div style={{ minWidth: "0" }}>
                         <h3 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "600", color: "var(--fg-secondary)" }}>Assigned Licenses</h3>
-                        <p className="dv-sub" style={{ fontSize: "10px", lineHeight: "15px" }}>Licenses already on this host · locked ones play another screen</p>
+                        <p className="dv-sub">Licenses already on this host · locked ones play another screen</p>
                       </div>
                       <NTV.Button variant="primary" size="m" iconRight="calendar" disabled={v.noneOn} onClick={v.openBulkDate}>Bulk Set Installation Date</NTV.Button>
                       {v.bulkOpen ? (
@@ -192,7 +192,7 @@ defineTemplate(Component, (v) => (
                     ) : null}
                     <div style={{ marginTop: "16px", marginBottom: "4px" }}>
                       <h3 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "600", color: "var(--fg-secondary)" }}>Unassigned Licenses</h3>
-                      <p className="dv-sub" style={{ fontSize: "10px", lineHeight: "15px" }}>Your licenses not assigned to any host</p>
+                      <p className="dv-sub">Your licenses not assigned to any host</p>
                     </div>
                     {(v.poolRows || []).map((_r, $index) => (
                       <React.Fragment key={$index}>
@@ -228,7 +228,7 @@ defineTemplate(Component, (v) => (
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: "12px" }}>
                   <div>
-                    <h2 className="dv-h2">{v.screenName}</h2>
+                    <h2 className="dv-h3">{v.screenName}</h2>
                     <p className="dv-p" style={{ lineHeight: "20px" }}>{v.screenDesc}</p>
                   </div>
                   <button type="button" onClick={v.selectBackground} aria-pressed={v.bgSelected} style={{ display: "inline-flex", alignItems: "center", height: "28px", padding: "4px 8px", border: "0", borderRadius: "var(--radius-sm)", background: "#5273c0", color: "var(--white)", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", lineHeight: "20px", fontWeight: "500" }}>Select Background</button>
@@ -238,7 +238,7 @@ defineTemplate(Component, (v) => (
               <section className="dv-card" aria-labelledby="preview-title" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div className="dv-between">
                   <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", minHeight: "32px" }}>
-                    <h2 id="preview-title" className="dv-h2">Playlist Content Preview</h2>
+                    <h2 id="preview-title" className="dv-h3">Playlist Content Preview</h2>
                     <span className="dv-p" style={{ lineHeight: "20px" }}>
                       {"( "}
                       <a href="DealerPlaylistDetail.dc.html" onClick={v.pv?.open} style={{ textDecoration: "underline", textUnderlineOffset: "2px" }} data-nav={v.pv?.openNav}>{v.pv?.name}</a>

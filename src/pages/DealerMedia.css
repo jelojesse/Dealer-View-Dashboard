@@ -164,8 +164,6 @@
 .pg-media .ml-ffield label em,.pg-media .ml-ffield span em{font-style:normal;font-weight:400;color:var(--primary-300)}
 .pg-media .ml-frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 /* Header "New Folder" (recording): orange brand gradient. */
-.pg-media .ml-btn-brand.ntv-btn--default{background:var(--gradient-brand)}
-.pg-media .ml-btn-brand.ntv-btn--default:hover{background:var(--gradient-button-hover)}
 
 /* PickField: a filled select shows a red ✕ in place of the chevron. */
 .pg-media .ml-pick-wrap{position:relative}
@@ -220,7 +218,52 @@
 .pg-media .ml-cfmodal{align-items:center;text-align:center}
 .pg-media .ml-cfmodal .ntv-statusmodal__actions{display:flex;justify-content:center;gap:12px}
 .pg-media .ml-okmodal .ntv-statusmodal__actions .ntv-btn{min-width:80px;justify-content:center}
-.pg-media .ml-folder.drop{border-color:var(--accent-action);background:var(--accent-30);color:var(--accent-action)}
+/* Drag target (recording): accent border + accent name on a white tile. */
+.pg-media .ml-folder.drop{border-color:var(--accent-action);background:var(--bg-surface);color:var(--accent-action)}
+.pg-media .ml-fname{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+/* New Folder button: 14/20 text per Figma 7673:130020 (other xl buttons stay 16px). */
+.pg-media .ml-btn-nf.ntv-btn{font-size:14px;line-height:20px}
+.pg-media .ml-fdup{flex:none;display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border-radius:999px;background:var(--accent-action);color:var(--white);font-size:10px;line-height:16px;font-weight:700}
+
+/* Bulk delete confirm (recording): centered lead text + red note box. */
+.pg-media .ml-cfline{display:block}
+.pg-media .ml-cfbox{display:flex;flex-direction:column;gap:6px;margin-top:12px;padding:10px 14px;border-radius:var(--radius-sm);background:var(--danger-050);color:var(--danger-main);font-size:12px;line-height:16px}
+.pg-media .ml-cfbox-warn{display:block;margin-top:2px}
+
+/* "Add Files" modal (Figma 6160:130753 / 130855 / 130957) */
+.pg-media .ml-mvmodal .ml-fsub{margin-bottom:16px}
+.pg-media .ml-mvtools{margin-bottom:16px}
+.pg-media .ml-mvall{display:inline-flex;align-items:center;gap:10px;padding:6px 10px;font-size:14px;line-height:20px;font-weight:600;color:var(--fg-primary);cursor:pointer}
+.pg-media .ml-mvbox{height:372px;box-sizing:border-box;overflow-y:auto;background:var(--bg-app);border:1px solid var(--container-border);border-radius:var(--radius-md);scrollbar-width:thin}
+.pg-media .ml-mvrow{display:flex;align-items:center;justify-content:space-between;padding:16px;border-bottom:1px solid var(--container-border);cursor:pointer;outline:none}
+.pg-media .ml-mvrow:hover,.pg-media .ml-mvrow:focus-visible{box-shadow:inset 0 0 0 1px var(--accent-action)}
+.pg-media .ml-mvrow:hover .ml-mvrow-l>span:last-child{color:var(--accent-action)}
+.pg-media .ml-mvrow.on{background:rgba(209,3,52,.12)}
+.pg-media .ml-mvrow.on .ml-mvrow-l>span:last-child{color:var(--accent-action)}
+.pg-media .ml-mvrow-l{display:flex;align-items:center;gap:10px;font-size:14px;line-height:20px;font-weight:600;color:var(--fg-primary)}
+.pg-media .ml-mvrow-l .ntv-icon,.pg-media .ml-mvrow-l>svg{color:var(--accent-action)}
+.pg-media .ml-mvview{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:0;border-radius:60px;background:rgba(209,3,52,.12);color:var(--accent-action);font:700 11px/16px var(--font-sans);letter-spacing:.02em;text-transform:uppercase;cursor:pointer}
+.pg-media .ml-mvview>span{display:none}
+/* Hovering the › expands it into "VIEW FOLDER ›" (recording). */
+.pg-media .ml-mvview:hover>span,.pg-media .ml-mvview:focus-visible>span{display:inline}
+.pg-media .ml-mvcrumbs{display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:12px;line-height:16px}
+.pg-media .ml-mvcrumbs button{padding:0;border:0;background:none;font:500 12px/16px var(--font-sans);color:var(--fg-primary);cursor:pointer}
+.pg-media .ml-mvcrumbs button:hover{color:var(--accent-action);text-decoration:underline}
+.pg-media .ml-mvcrumbs b{color:var(--accent-action)}
+.pg-media .ml-mvprev{height:380px;padding:12px 12px 12px 20px;display:flex;flex-direction:column;gap:16px}
+.pg-media .ml-mvprev-t{font-size:14px;line-height:20px;font-weight:600;color:var(--fg-primary)}
+.pg-media .ml-mvprev-t>span{color:var(--fg-secondary);font-weight:400}
+.pg-media .ml-mvgrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+.pg-media .ml-mvcard{border:1px solid var(--container-border);border-radius:var(--radius-md);background:var(--bg-surface);overflow:hidden}
+.pg-media .ml-mvthumb{position:relative;height:48px;background:var(--primary-100)}
+.pg-media .ml-mvthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pg-media .ml-mvthumb .ml-badge{position:absolute;top:4px;left:4px}
+.pg-media .ml-mvcard-row{display:flex;align-items:center;gap:4px;padding:8px 6px 8px 9px;font-size:12px;line-height:20px}
+.pg-media .ml-mvcard-row>span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-media .ml-mvmore{align-self:center;font-size:12px}
+.pg-media .ml-mvfoot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:16px}
+.pg-media .ml-mvnote{display:inline-flex;align-items:center;gap:5px;padding:12px 10px;border-radius:6px;background:rgba(255,165,0,.12);color:var(--warning-400,#dd8f00);font-size:12px;line-height:16px}
+.pg-media .ml-mvnote strong{font-weight:600}
 .pg-media .ml-add{display:flex;align-items:center;justify-content:center;min-height:64px;border-radius:var(--radius-md);background:var(--primary-100);border:0;cursor:pointer;color:var(--fg-secondary)}
 .pg-media .ml-add:hover{color:var(--accent-action)}
 /* Card hover (Figma 6160:129446): badge hides; checkbox top-left + round ⋯ top-right appear.

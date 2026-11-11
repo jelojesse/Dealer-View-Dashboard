@@ -83,7 +83,7 @@ defineTemplate(Component, (v) => (
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "stretch", gap: "20px" }}>
             <section className="dv-card" aria-labelledby="zones-title" style={{ flex: "1 1 380px", maxWidth: "484px", display: "flex", flexDirection: "column", gap: "16px" }}>
               <div className="dv-between">
-                <h2 id="zones-title" className="dv-h2">Zones</h2>
+                <h2 id="zones-title" className="dv-h3">Zones</h2>
                 <button type="button" className="dv-a" onClick={v.reload} style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontWeight: "400", fontSize: "14px" }}>
                   <span>Reload Playlists</span>
                   <NTV.Icon name="arrow-rotate-right" size={v.iconMd} />
@@ -101,7 +101,7 @@ defineTemplate(Component, (v) => (
             <section className="dv-card" aria-labelledby="screen-title" style={{ flex: "999 1 560px", display: "flex", flexDirection: "column", gap: "16px" }}>
               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
                 <div>
-                  <h2 id="screen-title" className="dv-h2">{v.screenName}</h2>
+                  <h2 id="screen-title" className="dv-h3">{v.screenName}</h2>
                   <p className="dv-p" style={{ lineHeight: "20px" }}>Click on a Zone to assign a playlist to it or use the Zone list.</p>
                 </div>
                 <div role="status" style={{ display: "inline-flex", alignItems: "center", gap: "10px", padding: "8px 12px", border: "1px solid var(--container-border)", borderRadius: "var(--radius-sm)" }}>
@@ -144,7 +144,7 @@ defineTemplate(Component, (v) => (
           <section className="dv-card" aria-labelledby="preview-title" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <div className="dv-between">
               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", minHeight: "32px" }}>
-                <h2 id="preview-title" className="dv-h2">Playlist Content Preview</h2>
+                <h2 id="preview-title" className="dv-h3">Playlist Content Preview</h2>
                 {v.pv?.showPlaylist ? (
                   <>
                     <span className="dv-p" style={{ lineHeight: "20px" }}>

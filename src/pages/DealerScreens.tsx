@@ -145,7 +145,7 @@ defineTemplate(Component, (v) => (
           </div>
           <section className="dv-card" aria-label="Screen Data" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div className="dv-between">
-              <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>Screen Data</h2>
+              <h2 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>Screen Data</h2>
               <div className="dv-row">
                 <NTV.IconButton icon="arrows-rotate" label="Refresh table" variant="secondary" size="m" onClick={v.refresh} />
                 <NTV.IconButton icon="gear" label="Table settings" variant="secondary" size="m" />

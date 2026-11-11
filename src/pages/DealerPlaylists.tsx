@@ -167,7 +167,7 @@ defineTemplate(Component, (v) => (
           {v.isPl ? <NTV.ActiveFilters chips={v.activeChips} onClear={v.clearFilters} style={{ marginTop: "-10px" }} /> : null}
           <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div className="dv-between">
-              <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>{v.tableTitle}</h2>
+              <h2 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>{v.tableTitle}</h2>
               <NTV.ColumnVisibilityButton key={v.tab} columns={v.colColumns} tableColumns={v.tableColCount} onToggle={v.toggleCol} onReset={v.resetCols} />
             </div>
             {v.isPl ? (

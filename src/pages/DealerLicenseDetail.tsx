@@ -377,7 +377,7 @@ defineTemplate(Component, (v) => (
                   <div className="dv-between">
                     <div>
                       <h2 className="dv-h3">System Info</h2>
-                      <p className="dv-sub" style={{ fontSize: "10px" }}>{"Last speedtest · "}{v.speedAt}</p>
+                      <p className="dv-sub">{"Last speedtest · "}{v.speedAt}</p>
                     </div>
                     <NTV.Button variant="secondary" size="m" iconLeft="arrows-rotate" iconRight={v.none} disabled={v.speedOff} onClick={v.runSpeed}>{v.speedLabel}</NTV.Button>
                   </div>
@@ -491,8 +491,8 @@ defineTemplate(Component, (v) => (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1.2fr", gap: "20px" }}>
               <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div className="dv-between">
-                  <h2 className="dv-h3" style={{ fontSize: "14px" }}>{v.screenName}</h2>
-                  <span className="dv-sub" style={{ fontSize: "10px" }}>Click a zone to filter the playlist</span>
+                  <h2 className="dv-h3">{v.screenName}</h2>
+                  <span className="dv-sub">Click a zone to filter the playlist</span>
                 </div>
                 <div style={{ position: "relative", aspectRatio: "16 / 9", display: "grid", gridTemplateColumns: "753fr 165fr", gridTemplateRows: "417fr 89fr", gap: "3px", padding: "3px", borderRadius: "var(--radius-sm)", background: `${s(v.bgFill)}` }}>
                   <button type="button" onClick={v.zMain} style={{ gridColumn: "1 / 2", gridRow: "1 / 2", border: "0", borderRadius: "2px", cursor: "pointer", color: "#fff", fontFamily: "inherit", background: `${s(v.zc?.main)}` }}>
@@ -519,8 +519,8 @@ defineTemplate(Component, (v) => (
               </section>
               <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 <div className="dv-between">
-                  <h2 className="dv-h3" style={{ fontSize: "14px" }}>Assets Breakdown</h2>
-                  <span className="dv-sub" style={{ fontSize: "10px" }}>{v.zoneLabel}</span>
+                  <h2 className="dv-h3">Assets Breakdown</h2>
+                  <span className="dv-sub">{v.zoneLabel}</span>
                 </div>
                 <div className="dv-row" style={{ gap: "24px" }}>
                   <div style={{ position: "relative", width: "150px", height: "150px", flex: "none" }}>
@@ -557,8 +557,8 @@ defineTemplate(Component, (v) => (
               </section>
               <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 <div className="dv-between">
-                  <h2 className="dv-h3" style={{ fontSize: "14px" }}>Duration Breakdown</h2>
-                  <span className="dv-sub" style={{ fontSize: "10px" }}>{v.zoneLabel}</span>
+                  <h2 className="dv-h3">Duration Breakdown</h2>
+                  <span className="dv-sub">{v.zoneLabel}</span>
                 </div>
                 <div className="dv-row" style={{ gap: "24px" }}>
                   <div style={{ position: "relative", width: "150px", height: "150px", flex: "none" }}>

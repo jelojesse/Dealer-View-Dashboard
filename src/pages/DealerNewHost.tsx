@@ -143,7 +143,7 @@ defineTemplate(Component, (v) => (
               <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "stretch" }}>
               <section className="dv-card" style={{ flex: "1 1 560px", display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div>
-                  <h2 className="dv-h2">Host details</h2>
+                  <h2 className="dv-h3">Host details</h2>
                   <p className="dv-sub">{v.formSub}</p>
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "12px" }}>

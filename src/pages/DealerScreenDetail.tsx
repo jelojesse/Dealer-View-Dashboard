@@ -273,7 +273,7 @@ defineTemplate(Component, (v) => (
           <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "stretch" }}>
             <section className="dv-card" aria-labelledby="info-title" style={{ flex: "1 1 560px", display: "flex", flexDirection: "column", gap: "16px" }}>
               <div>
-                <h2 id="info-title" className="dv-h2">Screen Information</h2>
+                <h2 id="info-title" className="dv-h3">Screen Information</h2>
                 <p className="dv-sub">{v.infoSub}</p>
               </div>
               <div>
@@ -346,7 +346,7 @@ defineTemplate(Component, (v) => (
             <section aria-labelledby="preview-title" style={{ flex: "1 1 560px", minWidth: "0", display: "flex", flexDirection: "column", gap: "12px" }}>
               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: "12px" }}>
                 <div>
-                  <h2 id="preview-title" className="dv-h2">Screen Preview</h2>
+                  <h2 id="preview-title" className="dv-h3">Screen Preview</h2>
                   <p className="dv-sub">{v.templateName}{" · 1920 × 1080 · "}{v.previewHint}</p>
                 </div>
                 <button type="button" aria-pressed={v.bgSelected} onClick={v.selectBackground} style={{ display: "inline-flex", alignItems: "center", height: "28px", padding: "4px 8px", border: "0", borderRadius: "var(--radius-sm)", background: "#5273c0", color: "var(--white)", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", lineHeight: "20px", fontWeight: "500" }}>Select Background</button>
@@ -359,7 +359,7 @@ defineTemplate(Component, (v) => (
             <section className="dv-card" aria-labelledby="lic-title" style={{ flex: "1 1 560px", display: "flex", flexDirection: "column", gap: "16px" }}>
               <div className="dv-between">
                 <div>
-                  <h2 id="lic-title" className="dv-h2" style={{ color: `${s(v.licTitleColor)}` }}>License List</h2>
+                  <h2 id="lic-title" className="dv-h3" style={{ color: `${s(v.licTitleColor)}` }}>License List</h2>
                   <p className="dv-sub">{v.playingText}</p>
                 </div>
                 <div style={{ display: "flex", gap: "12px" }}>
@@ -407,7 +407,7 @@ defineTemplate(Component, (v) => (
             <section className="dv-card" aria-labelledby="tpl-title" style={{ flex: "1 1 560px", display: "flex", flexDirection: "column", gap: "16px" }}>
               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
                 <div>
-                  <h2 id="tpl-title" className="dv-h2">{v.templateName}</h2>
+                  <h2 id="tpl-title" className="dv-h3">{v.templateName}</h2>
                   <p className="dv-sub">{v.zonesHint}</p>
                 </div>
                 {v.notDemo ? (
