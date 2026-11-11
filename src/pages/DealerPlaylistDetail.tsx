@@ -141,7 +141,8 @@ class Component extends DCLogic {
             'divider',
             { icon: 'x', label: 'Remove', tone: 'danger', onClick: function () { self.setState({ modal: 'remove', target: it.key }); } }
           ],
-          toggle: function () { var o = Object.assign({}, self.state.sel); o[it.key] = !o[it.key]; self.setState({ sel: o }); },
+          // blocks can never be selected (no click-select, no Mark All, no checkbox)
+          toggle: it.blk ? null : function () { var o = Object.assign({}, self.state.sel); o[it.key] = !o[it.key]; self.setState({ sel: o }); },
           up: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); move(idx, -1); }, down: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); move(idx, 1); },
           modify: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, start: it.start || '2026-11-15', end: it.end || '2026-12-31' } }); } };
       }),
@@ -375,7 +376,7 @@ defineTemplate(Component, (v) => (
                       </div>
                       {(v.items || []).map((_it) => (
                         <div key={_it.key} role="row" className={`pd-lrow ${_it.checked ? "is-sel" : ""}`}>
-                          <div className="pd-lcell pd-lcell--check"><NTV.Checkbox checked={_it.checked} onChange={_it.toggle} ariaLabel={`Select ${_it.title}`} /></div>
+                          <div className="pd-lcell pd-lcell--check">{_it.blk ? null : <NTV.Checkbox checked={_it.checked} onChange={_it.toggle} ariaLabel={`Select ${_it.title}`} />}</div>
                           <div className="pd-lcell"><span className="pd-lthumb"><img src={_it.image} alt="" /></span></div>
                           <div className="pd-lcell pd-lcell--name" title={_it.title}>{_it.title}</div>
                           <div className="pd-lcell"><span className="pd-pill" style={{ background: _it.blk ? "var(--primary-050)" : PILL_OF(_it.kind)[0], color: _it.blk ? "var(--fg-secondary)" : PILL_OF(_it.kind)[1] }}>{_it.typeTag}</span></div>
