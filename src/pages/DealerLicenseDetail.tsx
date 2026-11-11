@@ -9,6 +9,7 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
 import { STATUS, addNav, arrived, byId, contains, go, hostName, navFn, peekNav, plByName, screenName, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import './DealerLicenseDetail.css';
@@ -20,12 +21,27 @@ var ZC = { Main: 'var(--chart-1)', Vertical: 'var(--chart-2)', Horizontal: 'var(
 function donut(items) { var C = 314.16, tot = items.reduce(function (a, b) { return a + b.n; }, 0) || 1, acc = 0; return items.map(function (it) { var len = it.n / tot * C, seg = { label: it.label, value: it.value, pct: Math.round(it.n / tot * 100) + '%', color: it.color, dash: len.toFixed(2) + ' ' + C, off: (-acc).toFixed(2) }; acc += len; return seg; }); }
 function secs(m) { return parseInt(m.duration, 10) || 15; }
 function fmtS(n) { return n >= 60 ? Math.floor(n / 60) + 'm ' + (n % 60) + 's' : n + 's'; }
+/* Settings tab (License Page V2 · Setting): player feature toggles. */
+var SETTINGS = [
+  { key: 'shot', title: 'Enable Scheduled Screenshot', text: 'For players with limited internet data, Disabling this feature is recommended. Manual screenshot will still be available of use.' },
+  { key: 'speed', title: 'Enable Speedtest', text: 'Internet Speedtest uses almost 200MB of internet data. For players with limited internet data, disabling this feature is recommended' },
+  { key: 'email', title: 'Enable Email Settings', text: 'Allows the dealer to receive email notifications from this license when the device is offline.' },
+  { key: 'display', title: 'Display Control Settings', text: 'Allow the player to control the TV display based on the business hour schedule.' },
+  { key: 'notify', title: 'Enable Notification Settings', text: 'Allow the dealer to receive Alert notifications from this licenses when the device is offline.' },
+  { key: 'resource', title: 'Enable Resource Log Sending', text: "This will send the player's CPU and RAM average usage every 2 hours. Requires data usage, toggle off to disable." },
+  { key: 'dcp', title: 'Enable FE-DCP Tool', text: 'Enables DCP Monitoring Tool. Enter password to enable' }
+];
+var blankTime = function () { return { h: '12', m: '00', p: 'PM' }; };
+/* Sample screenshot images for players without a screen assigned. */
+var SAMPLE_SHOTS = ['m1', 'm5', 'm9'];
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     var f = arrived('DealerLicenseDetail.dc.html') || {};
     var l = byId(D.licenses, f.id) || byId(D.licenses, 'l44');
-    this.state = { seePlaying: true, gridQ: '', l: Object.assign({}, l), tab: 'Details', zone: 'All', showBg: true, now: 0, actions: false, modal: '', cf: null, aliasDraft: '', tagMenu: false, pwShown: false, speed: null, shots: null, code: '', linking: false, toast: null };
+    this.state = { seePlaying: true, gridQ: '', l: Object.assign({}, l), tab: 'Details', zone: 'All', showBg: true, now: 0, actions: false, modal: '', cf: null, aliasDraft: '', tagMenu: false, pwShown: false, speed: null, shots: null, shooting: false, code: '', linking: false, toast: null,
+      settings: { shot: true, speed: false, email: true, display: false, notify: true, resource: false, dcp: false }, dcpPw: '', bootDelay: '',
+      reboots: [blankTime(), blankTime(), blankTime(), blankTime(), blankTime(), blankTime()] };
   }
   componentDidMount() { var self = this; this._np = setInterval(function () { self.setState({ now: self.state.now + 1 }); }, 2500); }
   componentWillUnmount() { clearInterval(this._np); if (this._tt) clearTimeout(this._tt); if (this._x) clearTimeout(this._x); }
@@ -45,12 +61,16 @@ class Component extends DCLogic {
     var nowIdx = shown.length && s.seePlaying ? s.now % shown.length : -1;
     var runAction = function (label, msg) { return function () { self.setState({ actions: false, modal: '' }); toast(self, label + '…', 'info'); self._x = setTimeout(function () { toast(self, msg); }, 1400); }; };
     var confirmA = function (label, text, msg) { return function () { self.setState({ actions: false, modal: 'confirm', cf: { title: label + '?', text: text, okLabel: label, ok: runAction(label, msg) } }); }; };
-    var shots = s.shots || (sc && online ? zoneItems('Main').slice(0, 3).map(function (x, i) { return { image: x.m.image, time: ['Today 9:41 AM', 'Today 8:12 AM', 'Yesterday 6:30 PM'][i] }; }) : []);
+    var SHOT_TIMES = ['Today 9:41 AM', 'Today 8:12 AM', 'Yesterday 6:30 PM'];
+    var seedImgs = (sc ? zoneItems('Main').slice(0, 3).map(function (x) { return x.m.image; }) : []);
+    SAMPLE_SHOTS.forEach(function (id) { var m = byId(D.media, id); if (seedImgs.length < 3 && m) seedImgs.push(m.image); });
+    var shots = s.shots || (online ? seedImgs.map(function (img, i) { return { image: img, time: SHOT_TIMES[i] }; }) : []);
+    var setReboot = function (i, patch) { var r = self.state.reboots.slice(); r[i] = Object.assign({}, r[i], patch); self.setState({ reboots: r }); };
     var tagsOn = (l.tags || []).map(function (t) { return byId(D.tags, t); }).filter(Boolean);
     var code = (s.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
     var cf = s.cf || {};
     return {
-      none: null, i10: 10, i14: 14, w460: 460, w500: 500, w1000: 1000,
+      none: null, i10: 10, i12: 12, i14: 14, w460: 460, w500: 500, w1000: 1000,
       crumbs: [{ label: 'Licenses', href: 'DealerLicenses.dc.html' }, l.alias],
       alias: l.alias, key: l.key, type: l.type, install: l.host ? l.install : '—', request: l.request,
       hostName: l.host ? hostName(l.host) : 'Unassigned', openHost: navFn('DealerHostDetail.dc.html', { id: l.host }),
@@ -69,9 +89,22 @@ class Component extends DCLogic {
         { label: 'Reboot Pi', icon: 'power-off', cls: '', run: confirmA('Reboot Pi', 'The Raspberry Pi restarts. The screen is off for 1–2 minutes.', 'Pi rebooted') },
         { label: 'Reset Data', icon: 'trash', cls: 'dv-danger', run: confirmA('Reset Data', 'Downloaded content and cache are cleared and fetched again. This can take several minutes on slow internet.', 'Player data reset') }
       ],
-      tabs: ['Details', 'Content'].map(function (t) { return { label: t, on: s.tab === t, pick: function () { self.setState({ tab: t }); } }; }),
+      tabs: ['Details', 'Content', 'Settings'].map(function (t) { return { label: t, on: s.tab === t, pick: function () { self.setState({ tab: t }); } }; }),
       i48: 48, i10: 10,
-      unlinked: (l.status === 'ready' || l.status === 'pending') && s.tab === 'Details', showDetails: s.tab === 'Details' && !(l.status === 'ready' || l.status === 'pending'), showContent: s.tab === 'Content',
+      unlinked: (l.status === 'ready' || l.status === 'pending') && s.tab === 'Details', showDetails: s.tab === 'Details' && !(l.status === 'ready' || l.status === 'pending'), showContent: s.tab === 'Content', showSettings: s.tab === 'Settings',
+      settings: SETTINGS.map(function (x) { return { key: x.key, title: x.title, text: x.text, on: !!s.settings[x.key], isDcp: x.key === 'dcp',
+        toggle: function (on) { var n = Object.assign({}, self.state.settings); n[x.key] = on; self.setState({ settings: n }); toast(self, x.title.replace(/^Enable /, '') + (on ? ' enabled' : ' disabled')); } }; }),
+      dcpPw: s.dcpPw, setDcpPw: function (v) { self.setState({ dcpPw: val(v) }); },
+      bootDelay: s.bootDelay, setBootDelay: function (v) { self.setState({ bootDelay: val(v) }); },
+      rebootCols: [[0, 1], [2, 3], [4, 5]].map(function (pair) { return pair.map(function (i) { var r = s.reboots[i];
+        return { label: 'Reboot Time ' + (i + 1) + ':', h: r.h, m: r.m, p: r.p,
+          setH: function (e) { setReboot(i, { h: e.target.value.replace(/\D/g, '').slice(0, 2) }); },
+          setM: function (e) { setReboot(i, { m: e.target.value.replace(/\D/g, '').slice(0, 2) }); },
+          flip: function () { setReboot(i, { p: self.state.reboots[i].p === 'AM' ? 'PM' : 'AM' }); },
+          clear: function () { setReboot(i, { h: '', m: '', p: 'AM' }); } }; }); }),
+      saveSettings: function () { toast(self, 'Player settings saved'); },
+      editBg: function () { toast(self, 'Choose a background image for the player', 'info'); },
+      shooting: s.shooting,
       copyKey: function () { try { navigator.clipboard.writeText(l.key); } catch (e) {} toast(self, 'License key copied', 'info'); },
       shotCount: shots.length, clearShots: function () { self.setState({ shots: [] }); toast(self, 'Screenshots deleted'); },
       devices: [['Pi', 'raspberry-pi', online], ['Player', 'play', online], ['TV', 'tv', online], ['Display', 'tv', online && l.type !== 'Closed']].map(function (d) { return { name: d[0], icon: d[1], state: d[2] ? 'Online' : 'Offline', color: d[2] ? 'var(--success-400)' : 'var(--fg-secondary)', tint: d[2] ? 'var(--success-050)' : 'var(--primary-100)' }; }),
@@ -89,10 +122,20 @@ class Component extends DCLogic {
       zHor: function () { self.setState({ zone: self.state.zone === 'Horizontal' ? 'All' : 'Horizontal', now: 0 }); },
       isDetails: s.tab === 'Details', isContent: s.tab === 'Content',
       offline: !online, shots: shots,
-      takeShot: function () { self.setState({ shots: [{ image: D.B.steak, time: 'Just now' }].concat(shots.slice(0, 2)) }); toast(self, 'Screenshot captured'); },
+      takeShot: function () {
+        self.setState({ shooting: true });
+        self._x = setTimeout(function () {
+          var cur = self.state.shots || shots, img = (sc ? zoneItems('Main')[0] : null);
+          self.setState({ shooting: false, shots: [{ image: img ? img.m.image : D.B.steak, time: 'Just now' }].concat(cur.slice(0, 5)) });
+          toast(self, 'Screenshot captured');
+        }, 1600);
+      },
       piText: online ? 'Pi is online' : (l.status === 'offline' ? 'Offline for 26h' : st.label),
       lastOnline: online ? 'Now' : (l.status === 'offline' ? 'Nov 8, 2026 · 9:14 AM' : '—'), uptime: online ? '6d 4h' : '—',
-      anydesk: l.anydesk, pw: s.pwShown ? l.anypw : '••••••••', pwLabel: s.pwShown ? 'Hide Password' : 'Show Password',
+      anydesk: l.anydesk, pw: l.anypw,
+      copyPw: function () { try { navigator.clipboard.writeText(l.anypw); } catch (e) {} toast(self, 'AnyDesk password copied', 'info'); },
+      refreshRpi: function () { toast(self, 'RPi time refreshed', 'info'); },
+      hoursList: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(function (d, i) { return { day: d, text: 'Open 24 hours', today: i === 0 }; }), pwLabel: s.pwShown ? 'Hide Password' : 'Show Password',
       togglePw: function () { self.setState({ pwShown: !self.state.pwShown }); },
       copyId: function () { try { navigator.clipboard.writeText(l.anydesk.replace(/ /g, '')); } catch (e) {} toast(self, 'AnyDesk ID copied', 'info'); },
       openAnydesk: function () { toast(self, 'Opening AnyDesk session ' + l.anydesk + '…', 'info'); },
@@ -125,7 +168,7 @@ class Component extends DCLogic {
         set: function (v) { self.setState({ code: val(v) }); },
         blocked: code.length !== 6 || s.linking,
         go: function () { self.setState({ linking: true }); self._x = setTimeout(function () { self.setState({ linking: false, modal: '', l: Object.assign({}, self.state.l, { status: 'online', net: self.state.l.net || 'LAN' }) }); toast(self, 'Device linked · ' + self.state.l.alias + ' is online'); }, 1800); } },
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
   }
 }
@@ -160,6 +203,7 @@ defineTemplate(Component, (v) => (
                     </span>
                   </React.Fragment>
                 ))}
+                <span className="dv-pill" style={{ background: "var(--primary-100)", color: "var(--fg-primary)", height: "22px" }}>{v.type}{" license"}</span>
                 <span className="dv-pill" style={{ background: `${s(v.st?.tint)}`, color: `${s(v.st?.color)}`, height: "22px" }}>
                   <span className="dv-dot" style={{ background: `${s(v.st?.color)}` }} />
                   {v.st?.label}
@@ -181,37 +225,43 @@ defineTemplate(Component, (v) => (
                   </>
                 ) : null}
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "auto auto auto", gap: "4px 32px", fontSize: "12px", lineHeight: "18px" }}>
+              <div className="ld-meta">
                 <span>
-                  <span className="dv-sub" style={{ display: "inline" }}>Host Name:</span>
- 
+                  <span className="ld-meta__k">Dealer Name:</span>
+                  <strong>Ibanez Lighting Inc.</strong>
+                </span>
+                <span>
+                  <span className="ld-meta__k">Business Hours:</span>
+                  <strong>Monday: Open 24 hours</strong>
+                  <span className="ld-hrs" tabIndex={0} aria-label="Business hours for the week">
+                    <NTV.Icon name="circle-info" size={v.i12} />
+                    <span className="ld-hrs__pop" role="tooltip">
+                      {(v.hoursList || []).map((_d) => (
+                        <span key={_d.day} className={"ld-hrs__row" + (_d.today ? " is-today" : "")}>
+                          <span>{_d.day}</span>
+                          <span>{_d.text}</span>
+                        </span>
+                      ))}
+                    </span>
+                  </span>
+                </span>
+                <span>
+                  <span className="ld-meta__k">RPi Time:</span>
+                  <strong>Nov 10, 2026, 09:58:55 AM</strong>
+                  <button type="button" className="dv-ib ld-ib" aria-label="Refresh RPi time" onClick={v.refreshRpi}><NTV.Icon name="arrows-rotate" size={v.i12} /></button>
+                </span>
+                <span>
+                  <span className="ld-meta__k">Hostname:</span>
                   <a className="dv-a" href="DealerHostDetail.dc.html" onClick={v.openHost} data-nav={v.openHostNav}>{v.hostName}</a>
                 </span>
                 <span>
-                  <span className="dv-sub" style={{ display: "inline" }}>Business Hours:</span>
- 
-                  <strong>Monday: Open 24 hours</strong>
+                  <span className="ld-meta__k">Timezone:</span>
+                  <strong>US/Central - Nov 10, 2026, 09:58:55 AM</strong>
                 </span>
                 <span>
-                  <span className="dv-sub" style={{ display: "inline" }}>RPi Time:</span>
- 
-                  <strong>Nov 10, 2026, 09:58:55 AM</strong>
-                </span>
-                <span>
-                  <span className="dv-sub" style={{ display: "inline" }}>Type:</span>
- 
-                  <strong>{v.type}{" license"}</strong>
-                </span>
-                <span>
-                  <span className="dv-sub" style={{ display: "inline" }}>Timezone:</span>
- 
-                  <strong>US/Central</strong>
-                </span>
-                <span className="dv-row" style={{ gap: "4px" }}>
-                  <span className="dv-sub" style={{ display: "inline" }}>License Key:</span>
- 
+                  <span className="ld-meta__k">License Key:</span>
                   <strong>{v.key}</strong>
-                  <button type="button" className="dv-ib" style={{ width: "20px", height: "20px", color: "var(--accent-action)" }} aria-label="Copy license key" onClick={v.copyKey}><NTV.Icon name="copy" size={v.i10} /></button>
+                  <button type="button" className="dv-ib ld-ib" aria-label="Copy license key" onClick={v.copyKey}><NTV.Icon name="copy" size={v.i12} /></button>
                 </span>
               </div>
             </div>
@@ -221,10 +271,7 @@ defineTemplate(Component, (v) => (
                   <NTV.Button variant="secondary" size="xl" iconRight="link" onClick={v.openLink}>Link Device</NTV.Button>
                 </>
               ) : null}
-              <button type="button" className="ntv-btn ntv-btn--primary ntv-btn--default ntv-btn--xl" onClick={v.toggleActions} disabled={v.actionsOff} style={{ background: "var(--red-orange-main)" }}>
-                <span>Take Action</span>
-                <NTV.Icon name="angle-right" size={v.i14} />
-              </button>
+              <NTV.Button variant="primary" size="xl" iconRight="angle-right" disabled={v.actionsOff} onClick={v.toggleActions}>Take Action</NTV.Button>
               {v.actionsOpen ? (
                 <>
                   <div className="dv-menu" role="menu" style={{ top: "52px", right: "0", minWidth: "220px" }}>
@@ -262,61 +309,19 @@ defineTemplate(Component, (v) => (
           ) : null}
           {v.showDetails ? (
             <>
-              <div style={{ display: "grid", gridTemplateColumns: "330px minmax(0, 1fr)", gap: "20px", alignItems: "start" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-                <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  <div className="dv-between">
-                    <h2 className="dv-h3">Live Screenshot</h2>
-                    <span className="dv-sub">{v.shotCount}{" Screenshot"}</span>
-                  </div>
-                  <div style={{ minHeight: "170px", padding: "10px", borderRadius: "var(--radius-sm)", background: "var(--bg-app)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", alignContent: "start" }}>
-                    {(v.shots || []).map((_x, $index) => (
-                      <React.Fragment key={$index}>
-                        <div>
-                          <div className="dv-thumb" style={{ aspectRatio: "16 / 10" }}><img src={_x?.image} alt="Screenshot" /></div>
-                          <p className="dv-sub" style={{ fontSize: "9px", textAlign: "center" }}>{_x?.time}</p>
-                        </div>
-                      </React.Fragment>
-                    ))}
-                  </div>
-                  <div className="dv-row">
-                    <NTV.Button variant="primary" size="m" iconLeft="image" iconRight={v.none} disabled={v.offline} onClick={v.takeShot} style={{ flex: "1" }}>Screenshot Player</NTV.Button>
-                    <NTV.Button variant="secondary" size="m" iconRight="trash" onClick={v.clearShots}>Delete</NTV.Button>
-                  </div>
-                </section>
-                <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <h2 className="dv-h3">Screen Info</h2>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
-                    <div className="dv-kv2">
-                      <span>Screen Name</span>
-                      <span>
-                        <a className="dv-a" href="DealerScreenDetail.dc.html" onClick={v.openScreen} data-nav={v.openScreenNav}>{v.screenName}</a>
-                      </span>
-                    </div>
-                    <div className="dv-kv2">
-                      <span>Screen Template</span>
-                      <span>{v.templateName}</span>
-                    </div>
-                  </div>
-                  <p className="dv-sub">Playlist Per Zone</p>
-                  {(v.zoneLinks || []).map((_z, $index) => (
-                    <React.Fragment key={$index}>
-                      <a href="DealerPlaylistDetail.dc.html" onClick={_z?.open} className="dv-row" style={{ gap: "10px", padding: "8px 6px", borderRadius: "var(--radius-sm)", textDecoration: "none", color: "var(--fg-primary)", fontSize: "12px" }} data-nav={_z?.openNav}>
-                        <span style={{ width: "22px", height: "14px", borderRadius: "2px", background: `${s(_z?.color)}`, flex: "none" }} />
-                        <strong style={{ width: "80px" }}>{_z?.zone}</strong>
-                        <span style={{ flex: "1", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{_z?.playlist}</span>
-                        <NTV.Icon name="angle-right" size={v.i10} />
-                      </a>
-                    </React.Fragment>
-                  ))}
-                  {v.noScreen ? (
-                    <>
-                      <p className="dv-sub">No screen on this license yet.</p>
-                    </>
-                  ) : null}
-                </section>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+              <section className="dv-card ld-shots">
+                <NTV.IconButton icon="camera-viewfinder" label="Take screenshot" variant="primary" size="xl" disabled={v.offline} onClick={v.takeShot} />
+                <NTV.IconButton icon="trash" label="Delete screenshots" variant="primary" tone="neutral" size="xl" onClick={v.clearShots} />
+                {(v.shots || []).map((_x, $index) => (
+                  <figure key={$index} className="ld-snap">
+                    <span className="dv-thumb"><img src={_x?.image} alt="Screenshot" /></span>
+                    <figcaption>{_x?.time}</figcaption>
+                  </figure>
+                ))}
+                {!v.shotCount ? <span className="ld-noshot">No Available Screenshots</span> : null}
+              </section>
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(320px, 470px)", gap: "20px", alignItems: "start" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "20px", minWidth: "0" }}>
                 <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                   <h2 className="dv-h3">Pi and Player Status</h2>
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0, 1fr))", gap: "12px" }}>
@@ -335,7 +340,7 @@ defineTemplate(Component, (v) => (
                       </React.Fragment>
                     ))}
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: "12px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: "12px", paddingTop: "16px", borderTop: "1px solid var(--container-border)" }}>
                     <div className="dv-kv2">
                       <span>Last Startup</span>
                       <span style={{ fontWeight: "400" }}>{v.lastOnline}</span>
@@ -363,7 +368,7 @@ defineTemplate(Component, (v) => (
                       <span>Anydesk Password</span>
                       <span className="dv-row" style={{ gap: "4px", fontWeight: "400" }}>
                         {v.pw}
-                        <button type="button" className="dv-ib" style={{ width: "20px", height: "20px", color: "var(--accent-action)" }} aria-label="Show password" onClick={v.togglePw}><NTV.Icon name="eye" size={v.i10} /></button>
+                        <button type="button" className="dv-ib" style={{ width: "20px", height: "20px", color: "var(--accent-action)" }} aria-label="Copy AnyDesk password" onClick={v.copyPw}><NTV.Icon name="copy" size={v.i10} /></button>
                       </span>
                     </div>
                   </div>
@@ -447,7 +452,38 @@ defineTemplate(Component, (v) => (
                   </div>
                 </section>
               </div>
-            </div>
+                <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <h2 className="dv-h3">Screen Info</h2>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px" }}>
+                    <div className="dv-kv2">
+                      <span>Screen Name</span>
+                      <span>
+                        <a className="dv-a" href="DealerScreenDetail.dc.html" onClick={v.openScreen} data-nav={v.openScreenNav}>{v.screenName}</a>
+                      </span>
+                    </div>
+                    <div className="dv-kv2">
+                      <span>Screen Template</span>
+                      <span>{v.templateName}</span>
+                    </div>
+                  </div>
+                  <p className="dv-sub">Playlist Per Zone</p>
+                  {(v.zoneLinks || []).map((_z, $index) => (
+                    <React.Fragment key={$index}>
+                      <a href="DealerPlaylistDetail.dc.html" onClick={_z?.open} className="dv-row" style={{ gap: "10px", padding: "8px 6px", borderRadius: "var(--radius-sm)", textDecoration: "none", color: "var(--fg-primary)", fontSize: "12px" }} data-nav={_z?.openNav}>
+                        <span style={{ width: "22px", height: "14px", borderRadius: "2px", background: `${s(_z?.color)}`, flex: "none" }} />
+                        <strong style={{ width: "80px" }}>{_z?.zone}</strong>
+                        <span style={{ flex: "1", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{_z?.playlist}</span>
+                        <NTV.Icon name="link" size={v.i12} />
+                      </a>
+                    </React.Fragment>
+                  ))}
+                  {v.noScreen ? (
+                    <>
+                      <p className="dv-sub">No screen on this license yet.</p>
+                    </>
+                  ) : null}
+                </section>
+              </div>
             </>
           ) : null}
           {v.showContent ? (
@@ -595,12 +631,83 @@ defineTemplate(Component, (v) => (
             </section>
             </>
           ) : null}
+          {v.showSettings ? (
+            <div className="ld-settings">
+              <div className="ld-settings__col">
+                {(v.settings || []).map((_x) => (
+                  <section key={_x.key} className="dv-card ld-set">
+                    <div className="ld-set__row">
+                      <div className="ld-set__txt">
+                        <h3>{_x.title}</h3>
+                        <p>{_x.text}</p>
+                      </div>
+                      <NTV.Switch checked={_x.on} label={_x.title} onChange={_x.toggle} />
+                    </div>
+                    {_x.isDcp ? (
+                      <label className="ld-set__field">
+                        <span>Enter Password</span>
+                        <NTV.Input size="l" type="password" placeholder="Enter Password" value={v.dcpPw} onChange={v.setDcpPw} disabled={!_x.on} />
+                      </label>
+                    ) : null}
+                  </section>
+                ))}
+              </div>
+              <div className="ld-settings__col">
+                <section className="dv-card ld-add">
+                  <h2 className="dv-h3">Additional Settings</h2>
+                  <label className="ld-set__field">
+                    <span>Player Boot Delay</span>
+                    <NTV.Input size="l" placeholder="Enter delay in seconds" value={v.bootDelay} onChange={v.setBootDelay} />
+                  </label>
+                  <div className="ld-reboots">
+                    {(v.rebootCols || []).map((_col, ci) => (
+                      <div key={ci} className="ld-reboots__col">
+                        {_col.map((_r) => (
+                          <div key={_r.label} className="ld-reboot">
+                            <span className="ld-reboot__label">{_r.label}</span>
+                            <span className="ld-time">
+                              <input aria-label={_r.label + ' hour'} value={_r.h} placeholder="--" onChange={_r.setH} />
+                              <span>:</span>
+                              <input aria-label={_r.label + ' minute'} value={_r.m} placeholder="--" onChange={_r.setM} />
+                              <button type="button" onClick={_r.flip} aria-label="Toggle AM/PM">{_r.p}</button>
+                            </span>
+                            <button type="button" className="ld-clear" aria-label={'Clear ' + _r.label} onClick={_r.clear}><NTV.Icon name="x" size={v.i12} /></button>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <NTV.Button variant="primary" size="xl" iconRight="floppy-disk" onClick={v.saveSettings}>Save</NTV.Button>
+                  </div>
+                </section>
+                <section className="dv-card ld-add">
+                  <h2 className="dv-h3">Player Background Settings</h2>
+                  <p className="ld-disclaimer">
+                    <span style={{ color: "var(--warning-main)", display: "inline-flex" }}><NTV.Icon name="triangle-exclamation" size={v.i14} /></span>
+                    <span>{"Disclaimer: The background changer requires "}<strong>Player Server version 2.9.3 or higher</strong>{" and "}<strong>Player UI version 3.0.43 or above</strong>{" to work."}</span>
+                  </p>
+                  <div className="ld-bg">
+                    <NTV.IconButton icon="pen-to-square" label="Change player background" variant="primary" size="l" onClick={v.editBg} className="ld-bg__edit" />
+                  </div>
+                </section>
+              </div>
+            </div>
+          ) : null}
         </main>
       </div>
       {v.actionsOpen ? (
         <>
           <div aria-hidden="true" onClick={v.toggleActions} style={{ position: "fixed", inset: "0", zIndex: "5" }} />
         </>
+      ) : null}
+      {v.shooting ? (
+        <div className="dv-ov">
+          <div className="ld-shooting" role="status" aria-live="polite">
+            <span className="ld-shooting__icon"><NTV.Icon name="camera-viewfinder" size={v.i48} /></span>
+            <strong>Taking screenshot, Please wait...</strong>
+          </div>
+        </div>
       ) : null}
       {v.m?.confirm ? (
         <>
@@ -674,14 +781,7 @@ defineTemplate(Component, (v) => (
         </div>
         </>
       ) : null}
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));

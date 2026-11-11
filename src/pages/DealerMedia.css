@@ -49,7 +49,6 @@
 .pg-media .dv-mi{display:flex;align-items:center;gap:10px;width:100%;padding:8px 14px;border:0;background:transparent;text-align:left;font-family:inherit;font-size:14px;line-height:20px;color:var(--fg-primary);cursor:pointer}
 .pg-media .dv-mi:hover{background:var(--primary-050)}
 .pg-media .dv-mi.dv-danger{color:var(--danger-main)}
-.pg-media .dv-toast{position:fixed;right:24px;bottom:24px;z-index:200;display:flex;align-items:center;gap:10px;min-width:280px;max-width:420px;padding:12px 16px;border-radius:var(--radius-md);background:var(--bg-surface);box-shadow:var(--shadow-card);border-left:4px solid var(--success-main);font-size:14px;line-height:20px}
 .pg-media .dv-thumb{position:relative;overflow:hidden;border-radius:var(--radius-sm);background:var(--primary-100)}
 .pg-media .dv-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
 .pg-media .dv-grid{display:grid;gap:16px}
@@ -75,16 +74,166 @@
 .pg-media .dv-kv2{display:flex;flex-direction:column;font-size:12px;line-height:18px}
 .pg-media .dv-kv2>span:first-child{color:var(--fg-secondary)}
 .pg-media .dv-kv2>span:last-child{font-weight:600;color:var(--fg-primary)}
+/* Media Type filter fills its 210px slot so the 16px gap to the next button is the visible gap. */
+.pg-media .ml-typesel .ntv-select{display:block;width:100%}
 .pg-media .ml-stat{display:flex;flex-direction:column;gap:16px}
 .pg-media .ml-folder{display:flex;align-items:center;gap:12px;height:48px;padding:0 6px 0 14px;border:1px solid var(--container-border);border-radius:var(--radius-md);background:var(--bg-surface);cursor:pointer;position:relative;font-size:12px;line-height:20px}
-.pg-media .ml-folder:hover{border-color:var(--accent-action)}
+.pg-media .ml-folder{user-select:none}
+/* States (recording): hover = soft fill; selected (single click) = accent border + accent icon/name; open (double click) = .on, solid accent. */
+.pg-media .ml-folder:hover:not(.on):not(.picked){background:var(--bg-app)}
 .pg-media .ml-folder.on{background:var(--accent-action);border-color:var(--accent-action);color:var(--white)}
 .pg-media .ml-folder.on .dv-ib{color:var(--white)}
-.pg-media .ml-card{position:relative;border:2px solid transparent;border-radius:var(--radius-md);overflow:hidden;background:var(--bg-surface);box-shadow:0 0 0 1px var(--container-border);cursor:pointer}
+/* Folder selection for bulk actions: checkbox replaces the icon on hover / while selected. */
+.pg-media .ml-folder.picked:not(.on){border-color:var(--accent-action);background:var(--bg-surface);color:var(--accent-action)}
+.pg-media .ml-folder.picked:not(.on) .dv-ib{color:var(--accent-action)}
+.pg-media .ml-card{position:relative;border:2px solid transparent;border-radius:var(--radius-md);background:var(--bg-surface);box-shadow:0 0 0 1px var(--container-border);cursor:pointer}
+.pg-media .ml-card .ml-thumb{border-radius:calc(var(--radius-md) - 2px) calc(var(--radius-md) - 2px) 0 0}
 .pg-media .ml-card:hover{box-shadow:0 0 0 1px var(--accent-action)}
 .pg-media .ml-card.sel{border-color:var(--accent-action)}
 .pg-media .ml-badge{position:absolute;left:6px;top:6px;padding:0 6px;border-radius:4px;background:var(--white);font-size:9px;line-height:16px;font-weight:700;letter-spacing:.3px}
 .pg-media .ml-sec{display:flex;align-items:center;gap:6px;border:0;background:none;padding:0;font-family:inherit;font-size:14px;line-height:20px;color:var(--fg-primary);cursor:pointer}
-.pg-media .ml-add{display:flex;align-items:center;justify-content:center;aspect-ratio:16/10;border-radius:var(--radius-md);background:var(--primary-100);border:0;cursor:pointer;color:var(--fg-secondary)}
+/* Folders/Media card + folder panel (Figma): side by side at one fixed height; each grid scrolls
+   inside its card and the "Showing … / Show More…" footer stays pinned at the bottom. */
+/* No folder open: Folders/Media card fills the width at 560px tall.
+   Folder open: the card is 1240×670 (shrinks on narrower screens) and the folder panel is 620×670. */
+.pg-media .ml-panel{flex:none;width:620px}
+/* Folder preview panel — Figma 7637:129889: 20px padding; 40px header; 16px; info (2×280 columns, 20px gap,
+   divider between rows); 20px; 32px "Media Contents" row with 300×32 search; 16px; 4 cards per row (139×104), 8px gap. */
+.pg-media .ml-panel.ml-pane{gap:0;padding:20px}
+.pg-media .ml-pnl-head{display:flex;align-items:center;justify-content:space-between;height:40px;flex:none}
+.pg-media .ml-pnl-title{display:flex;align-items:center;gap:12px;min-width:0;margin:0;font-size:20px;line-height:28px;font-weight:700;color:var(--accent-action)}
+.pg-media .ml-pnl-title>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-media .ml-pnl-x{display:flex;align-items:center;justify-content:center;flex:none;width:40px;height:40px;padding:0;border:0;border-radius:var(--radius-sm);background:transparent;color:var(--fg-secondary);cursor:pointer}
+.pg-media .ml-pnl-x:hover{background:var(--primary-050);color:var(--accent-action)}
+.pg-media .ml-pnl-info{flex:none;margin-top:16px}
+.pg-media .ml-pnl-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.pg-media .ml-pnl-row--top{padding-bottom:20px;border-bottom:1px solid var(--container-border)}
+.pg-media .ml-pnl-row--top+.ml-pnl-row{padding-top:20px}
+.pg-media .ml-pnl-kv{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pg-media .ml-pnl-kv>span{font-size:12px;line-height:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-media .ml-pnl-kv>span:first-child{font-weight:600;color:var(--fg-primary)}
+.pg-media .ml-pnl-kv>span:last-child{color:var(--fg-secondary)}
+.pg-media .ml-pnl-media{display:flex;align-items:center;justify-content:space-between;gap:16px;height:32px;margin-top:28px;flex:none}
+.pg-media .ml-pnl-label{font-size:14px;line-height:20px;color:var(--fg-primary);white-space:nowrap}
+.pg-media .ml-pnl-label>span{color:var(--fg-secondary)}
+.pg-media .ml-pnl-search{width:300px;height:32px;padding:6px 10px;box-sizing:border-box}
+.pg-media .ml-pnl-search input{font-size:12px}
+/* 16px gap above the cards (the scroll area's 2px padding/negative margin keeps card outlines unclipped). */
+.pg-media .ml-scroll.ml-pnl-grid{margin-top:14px}
+.pg-media .ml-pnl-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;align-content:start}
+.pg-media .ml-pnl-cards .ml-thumb{height:62px}
+.pg-media .ml-pnl-cards .ml-add{min-height:104px;height:100%}
+.pg-media .ml-eye--round{border-radius:999px;background:var(--primary-100)}
+.pg-media .ml-panel .ml-foot{margin-top:12px}
+/* Empty folder state (Figma 7659:130010) */
+.pg-media .ml-pnl-empty{flex:1 1 0;min-height:240px;margin-top:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;background:var(--bg-app);border:1px solid var(--container-border);border-radius:var(--radius-lg)}
+.pg-media .ml-pnl-empty-add{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;border:0;background:var(--fg-faint);color:var(--white);cursor:pointer;transition:background .15s}
+.pg-media .ml-pnl-empty-add:hover,.pg-media .ml-pnl-empty-add:focus-visible{background:var(--accent-action)}
+.pg-media .ml-pnl-empty-title{margin:0;font-size:14px;line-height:24px;font-weight:700;color:var(--fg-primary)}
+.pg-media .ml-pnl-empty-sub{margin:0;font-size:12px;line-height:20px;color:var(--fg-secondary)}
+.pg-media .ml-split{display:flex;gap:20px;align-items:stretch;height:560px}
+.pg-media .ml-main{flex:1 1 0}
+.pg-media .ml-split--open{height:670px}
+.pg-media .ml-split--open .ml-main{flex:0 1 1240px}
+.pg-media .ml-pane{display:flex;flex-direction:column;gap:16px;min-height:0}
+.pg-media .ml-scroll{flex:1 1 0;min-height:0;overflow-y:auto;margin:-2px;padding:2px;scrollbar-width:thin}
+.pg-media .ml-foot{margin-top:auto;flex:none}
+/* Drag & drop: dragged cards fade; the drop target under the pointer gets an accent outline. */
+.pg-media .ml-card[draggable="true"]{cursor:grab}
+.pg-media .ml-card img,.pg-media .ml-card video{-webkit-user-drag:none;user-select:none}
+.pg-media .ml-card.dragging{opacity:.4}
+.pg-media .ml-drop{outline:2px dashed var(--accent-action);outline-offset:-2px;background:var(--accent-30)}
+.pg-media .ml-scroll.ml-drop{border-radius:var(--radius-md)}
+/* Form modals (Figma: Upload Content 7263:125968, Rename Folder 6160:130633, Reassign Folder 6160:130198):
+   20px padding; 16px title with a 12px subtitle under it; 20px to the fields; fields are a 24px label +
+   4px + 40px input, 16px apart; 20px to the footer; 106×40 buttons, 12px apart, right-aligned. */
+.pg-media .ml-fmodal{gap:0}
+.pg-media .ml-fmodal .ntv-modal__head h2{font-size:16px;line-height:20px}
+.pg-media .ml-fmodal .ntv-modal__close{margin-top:3px}
+.pg-media .ml-fsub{margin:0 0 20px;font-size:12px;line-height:16px;color:var(--fg-secondary)}
+.pg-media .ml-ffields{display:flex;flex-direction:column;gap:16px}
+.pg-media .ml-ffield{display:flex;flex-direction:column;gap:4px}
+.pg-media .ml-ffield>label,.pg-media .ml-ffield>span{font-size:14px;line-height:24px;font-weight:600;color:var(--fg-secondary)}
+.pg-media .ml-ffield .ntv-select{display:block;width:100%}
+.pg-media .ml-ffoot{display:flex;justify-content:flex-end;gap:12px;margin-top:20px}
+.pg-media .ml-ffoot .ntv-btn{min-width:106px;justify-content:center}
+.pg-media .ml-ffoot .ml-ffoot-left{margin-right:auto}
+.pg-media .ml-fmodal .ntv-select.is-filled .ntv-select__trigger{background:var(--bg-surface);font-weight:600}
+/* Dropdown list spans the full width of its field (DS default is left-aligned, 200px min). */
+.pg-media .ml-fmodal .ntv-select__menu{left:0;right:0;max-height:220px;overflow-y:auto;box-sizing:border-box}
+.pg-media .ml-ffield label em,.pg-media .ml-ffield span em{font-style:normal;font-weight:400;color:var(--primary-300)}
+.pg-media .ml-frow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* Header "New Folder" (recording): orange brand gradient. */
+.pg-media .ml-btn-brand.ntv-btn--default{background:var(--gradient-brand)}
+.pg-media .ml-btn-brand.ntv-btn--default:hover{background:var(--gradient-button-hover)}
+
+/* PickField: a filled select shows a red ✕ in place of the chevron. */
+.pg-media .ml-pick-wrap{position:relative}
+.pg-media .ml-pick.has-value .ntv-select__trigger>svg:last-child{visibility:hidden}
+.pg-media .ml-pick-x{position:absolute;right:10px;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:22px;height:22px;padding:0;border:0;border-radius:var(--radius-sm);background:transparent;color:var(--accent-action);cursor:pointer}
+.pg-media .ml-pick-x:hover{background:var(--accent-30)}
+
+/* Notice banner (no advertiser for host, bad file). */
+.pg-media .ml-ferr{display:flex;align-items:center;gap:10px;min-height:36px;padding:8px 12px;box-sizing:border-box;border:1px solid var(--danger-main);border-radius:var(--radius-sm);background:var(--danger-050);color:var(--danger-600);font-size:12px;line-height:18px;font-weight:600}
+
+/* Playlist multi-select + chips box */
+.pg-media .ml-msel{position:relative}
+.pg-media .ml-msel-trigger{display:flex;align-items:center;justify-content:space-between;width:100%;height:40px;padding:0 14px;box-sizing:border-box;border:1px solid var(--fg-secondary);border-radius:var(--radius-sm);background:var(--bg-surface);font:400 14px/20px var(--font-sans);color:var(--fg-secondary);cursor:pointer}
+.pg-media .ml-msel-trigger:hover,.pg-media .ml-msel.is-open .ml-msel-trigger{border-color:var(--accent-action);color:var(--accent-action)}
+.pg-media .ml-msel-menu{position:absolute;z-index:30;left:0;right:0;top:calc(100% + 6px);max-height:240px;overflow-y:auto;padding:6px 0;background:var(--list-bg,var(--bg-surface));border:1px solid var(--container-border);border-radius:var(--radius-sm);box-shadow:var(--shadow-card)}
+.pg-media .ml-msel-opt{padding:6px 12px}
+.pg-media .ml-msel-opt:hover{background:var(--primary-050)}
+.pg-media .ml-msel-opt .ntv-check{width:100%;font-size:12px;color:var(--fg-secondary)}
+.pg-media .ml-plbox{min-height:80px;padding:10px;box-sizing:border-box;border:1px dashed var(--container-border);border-radius:var(--radius-sm);background:var(--bg-app)}
+.pg-media .ml-plchips{display:flex;flex-wrap:wrap;gap:8px}
+.pg-media .ml-plchip{display:inline-flex;align-items:center;gap:8px;height:22px;padding:0 6px 0 10px;border:1px solid var(--info-main);border-radius:4px;background:var(--info-050);color:var(--info-600);font-size:10px;line-height:14px;font-weight:600}
+.pg-media .ml-plchip button{display:flex;align-items:center;justify-content:center;width:14px;height:14px;padding:0;border:0;border-radius:999px;background:transparent;color:inherit;cursor:pointer}
+.pg-media .ml-plchip button:hover{background:rgba(9,22,53,.1)}
+.pg-media .ml-plempty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;color:var(--fg-secondary);text-align:center}
+.pg-media .ml-plempty strong{margin-top:4px;font-size:10px;line-height:14px;color:var(--fg-primary)}
+.pg-media .ml-plempty span{font-size:8px;line-height:12px}
+
+/* Create Advertiser Profile */
+.pg-media .ml-logo{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;height:104px;padding:0;box-sizing:border-box;border:1px dashed var(--container-border);border-radius:var(--radius-sm);background:var(--bg-app);color:var(--fg-primary);font-family:inherit;cursor:pointer;overflow:hidden}
+.pg-media button.ml-logo:hover{border-color:var(--accent-action)}
+.pg-media .ml-logo-icon{display:flex;align-items:center;justify-content:center;width:32px;height:32px;margin-bottom:8px;border-radius:999px;background:var(--primary-100)}
+.pg-media .ml-logo strong{font-size:10px;line-height:14px}
+.pg-media .ml-logo>span:not(.ml-logo-icon):not(.ml-logo-name){font-size:8px;line-height:12px;color:var(--fg-secondary)}
+.pg-media .ml-logo.has-file{border-style:dashed;border-color:var(--accent-action);cursor:default}
+.pg-media .ml-logo.has-file img,.pg-media .ml-logo.has-file video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pg-media .ml-logo-name{position:absolute;left:0;right:0;bottom:0;padding:4px 10px;background:linear-gradient(transparent,rgba(9,22,53,.55));color:var(--white);font-size:10px;line-height:14px;text-align:left}
+.pg-media .ml-logo-x{position:absolute;right:8px;top:8px;display:flex;align-items:center;justify-content:center;width:16px;height:16px;padding:0;border:0;border-radius:999px;background:var(--accent-action);color:var(--white);cursor:pointer}
+.pg-media .ml-color-head{display:flex;align-items:center;justify-content:space-between;position:relative}
+.pg-media .ml-color-head>span{font-size:14px;line-height:24px;font-weight:600;color:var(--fg-secondary)}
+.pg-media .ml-addcolor{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border:1px solid var(--fg-secondary);border-radius:4px;background:var(--bg-surface);font:400 9px/12px var(--font-sans);color:var(--fg-secondary);cursor:pointer}
+.pg-media .ml-addcolor:hover{border-color:var(--accent-action);color:var(--accent-action)}
+.pg-media .ml-color-input{position:absolute;right:0;top:22px;width:1px;height:1px;opacity:0;border:0;padding:0}
+.pg-media .ml-colors{display:flex;flex-wrap:wrap;gap:12px;min-height:58px;padding:8px 10px;box-sizing:border-box;border:1px dashed var(--container-border);border-radius:var(--radius-sm);background:var(--bg-app);align-items:flex-start}
+.pg-media .ml-colors-empty{align-self:center;font-size:11px;color:var(--fg-secondary)}
+.pg-media .ml-swatch{position:relative;display:flex;flex-direction:column;gap:2px;width:76px;padding:4px;border-radius:4px;background:var(--bg-surface);box-shadow:0 0 0 1px var(--container-border)}
+.pg-media .ml-swatch-chip{height:26px;border-radius:2px}
+.pg-media .ml-swatch-hex{font-size:7px;line-height:10px;color:var(--fg-secondary)}
+.pg-media .ml-swatch button{position:absolute;right:6px;top:6px;display:flex;align-items:center;justify-content:center;width:10px;height:10px;padding:0;border:0;border-radius:999px;background:rgba(255,255,255,.85);color:var(--fg-primary);cursor:pointer}
+
+/* Success pop-up (Folder Reassigned / Advertiser Profile Created) */
+.pg-media .ml-okmodal{align-items:center;text-align:center}
+.pg-media .ml-cfmodal{align-items:center;text-align:center}
+.pg-media .ml-cfmodal .ntv-statusmodal__actions{display:flex;justify-content:center;gap:12px}
+.pg-media .ml-okmodal .ntv-statusmodal__actions .ntv-btn{min-width:80px;justify-content:center}
+.pg-media .ml-folder.drop{border-color:var(--accent-action);background:var(--accent-30);color:var(--accent-action)}
+.pg-media .ml-add{display:flex;align-items:center;justify-content:center;min-height:64px;border-radius:var(--radius-md);background:var(--primary-100);border:0;cursor:pointer;color:var(--fg-secondary)}
 .pg-media .ml-add:hover{color:var(--accent-action)}
-.pg-media .ml-check{position:absolute;right:6px;top:6px;width:18px;height:18px;border-radius:4px;background:var(--accent-action);color:#fff;display:flex;align-items:center;justify-content:center}
+/* Card hover (Figma 6160:129446): badge hides; checkbox top-left + round ⋯ top-right appear.
+   Selected cards keep the checkbox visible; an open menu keeps the hover state. */
+.pg-media .ml-cb{position:absolute;left:6px;top:6px;z-index:2;display:flex;opacity:0}
+.pg-media .ml-cb .ntv-check__box{background:var(--white)}
+.pg-media .ml-cb .ntv-check__box.is-on{background:var(--accent-action)}
+.pg-media .ml-more{position:absolute;right:6px;top:6px;z-index:3;opacity:0}
+.pg-media .ml-card:hover .ml-badge,.pg-media .ml-card:focus-within .ml-badge,.pg-media .ml-card.is-menu .ml-badge,.pg-media .ml-card.sel .ml-badge{visibility:hidden}
+.pg-media .ml-card:hover .ml-cb,.pg-media .ml-card:focus-within .ml-cb,.pg-media .ml-card.is-menu .ml-cb,.pg-media .ml-card.sel .ml-cb,
+.pg-media .ml-card:hover .ml-more,.pg-media .ml-card:focus-within .ml-more,.pg-media .ml-card.is-menu .ml-more{opacity:1}
+.pg-media .ml-card.is-menu{z-index:5}
+.pg-media .ml-eye{color:var(--fg-secondary)}
+/* All Folders modal (Figma 6160:132420) */
+.pg-media .ml-afgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-content:start;height:364px;overflow-y:auto;padding:12px;border-radius:var(--radius-md);background:var(--bg-app)}
+.pg-media .ml-folder--big{height:60px;padding:0 10px 0 16px;gap:16px;font-size:14px;line-height:20px}

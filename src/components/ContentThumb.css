@@ -1,0 +1,25 @@
+/* ContentThumb + the hover parts (HoverVideo, ThumbMenu) the Media Library cards reuse.
+   Class names are ct-* so these work on any page, whatever that page scopes for dv-*. */
+.ct-media{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.ct-video{transition:opacity .15s ease}
+.ct-play{position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:999px;background:rgba(9,22,53,.6);color:var(--white);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s ease;pointer-events:none}
+.ct-play.is-on{opacity:1}
+@media (prefers-reduced-motion: reduce){.ct-video,.ct-play{transition:none}}
+
+/* ⋯ button + menu */
+.ct-menuwrap{position:relative;display:inline-flex}
+.ct-more{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:0;border-radius:999px;background:var(--white);color:var(--fg-primary);box-shadow:0 1px 3px rgba(9,22,53,.25);cursor:pointer}
+.ct-more:hover,.ct-more[aria-expanded="true"]{color:var(--accent-action)}
+.ct-more:focus-visible{outline:2px solid var(--accent-action);outline-offset:1px}
+.ct-menu.dv-menu,.ct-menu{position:absolute;top:28px;right:0;z-index:60;min-width:176px;background:var(--list-bg, var(--bg-surface));border:1px solid var(--container-border);border-radius:var(--radius-sm);box-shadow:var(--shadow-card);padding:4px 0;text-align:left}
+.ct-mi{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;padding:8px 14px;border:0;background:transparent;text-align:left;font-family:var(--font-sans);font-size:14px;line-height:20px;font-weight:400;color:var(--fg-primary);text-decoration:none;cursor:pointer;white-space:nowrap}
+.ct-mi>svg,.ct-mi>.ntv-icon{color:var(--accent-action);flex:none}
+.ct-mi:hover,.ct-mi:focus-visible{background:var(--primary-050);color:var(--fg-primary);text-decoration:none;outline:none}
+.ct-mi.is-danger,.ct-mi.is-danger>svg,.ct-mi.is-danger>.ntv-icon{color:var(--danger-main)}
+
+/* ContentThumb hover: badge hides, checkbox + ⋯ show */
+.ct-thumb .ct-corner{position:absolute;right:8px;top:8px;z-index:2;opacity:0}
+.ct-thumb .ct-check{position:absolute;left:8px;top:8px;z-index:2;opacity:0}
+.ct-thumb.is-interactive:hover .ct-tag,.ct-thumb.is-interactive:focus-within .ct-tag,.ct-thumb.is-menu .ct-tag,.ct-thumb.is-checked .ct-tag{visibility:hidden}
+.ct-thumb.is-interactive:hover .ct-corner,.ct-thumb.is-interactive:focus-within .ct-corner,.ct-thumb.is-menu .ct-corner,
+.ct-thumb.is-interactive:hover .ct-check,.ct-thumb.is-interactive:focus-within .ct-check,.ct-thumb.is-checked .ct-check{opacity:1}

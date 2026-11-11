@@ -1,3 +1,16 @@
 /* Shared Dealer View utility classes (dv-*) used across pages. Built on NTV360 tokens. */
 body{margin:0;background:var(--bg-app);font-family:var(--font-sans);color:var(--fg-primary)}
 
+
+/* --- NTV360 overrides (patch the local DS bundle; mirror these in the design-system source) --- */
+/* Selected nav tab label: same size as the other tabs (bundle had 16px). */
+.ntv-navtab__current{font-size:14px;line-height:20px}
+/* Dropdown with a value: secondary style instead of dark navy/bold. */
+.ntv-select.is-filled .ntv-select__trigger{background:var(--bg-surface);border-color:var(--fg-secondary);color:var(--fg-secondary);font-weight:400}
+.ntv-select.is-filled .ntv-select__trigger:hover,.ntv-select.is-open .ntv-select__trigger{border-color:var(--accent-action);color:var(--accent-action)}
+/* Breadcrumbs: parent crumbs stay secondary grey like the angle-right separator
+   (page CSS `.pg-x a{color:accent}` was overriding the bundle). Current crumb stays bold accent. */
+.ntv-crumbs a.ntv-crumbs__item{color:var(--fg-secondary)}
+.ntv-crumbs a.ntv-crumbs__item:hover{color:var(--accent-action)}
+/* Tray: inset container that holds a grid of tiles inside a card (16px padding, app fill, border stroke). */
+.dv-tray{padding:16px;background:var(--bg-app);border:1px solid var(--container-border);border-radius:var(--radius-md);box-sizing:border-box}

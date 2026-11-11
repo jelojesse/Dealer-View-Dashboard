@@ -9,7 +9,9 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
-import { addNav, arrived, byId, contains, hostName, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
+import Toast from '../components/Toast';
+import DateRangePicker from '../components/DateRangePicker';
+import { addNav, arrived, byId, contains, go, hostName, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
 import ContentBlock from '../components/ContentBlock';
 import ContentThumb from '../components/ContentThumb';
 import DealerNav from '../components/DealerNav';
@@ -23,7 +25,7 @@ import './DealerPlaylistDetail.css';
 var KINDS = [{ key: 'image', label: 'Image' }, { key: 'video', label: 'Video' }, { key: 'widget', label: 'Widget' }, { key: 'block', label: 'Block' }];
 
 // "Today" for schedule status (the mock data's current date)
-var TODAY = '2026-11-10';
+var TODAY = '2026-11-11';
 var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 var fmtDate = function (iso) { var x = (iso || '').split('-'); return x.length === 3 ? MON[+x[1] - 1] + ' ' + (+x[2]) : iso; };
 // Schedule status → caption color (Figma: green playing, orange upcoming, red ended)
@@ -100,7 +102,7 @@ class Component extends DCLogic {
     var md = s.md, mi = md ? s.items.filter(function (x) { return x.key === md.key; })[0] : null;
     var setMd = function (o) { self.setState({ md: Object.assign({}, self.state.md, o) }); };
     var info = s.info || { name: '', desc: '' };
-    return {
+    var R = {
       none: null, i12: 12, i14: 14, i32: 32, w460: 460, w500: 500, w640: 640, w960: 960,
       crumbs: [{ label: 'Playlist', href: 'DealerPlaylists.dc.html' }, p.name],
       name: p.name, desc: p.desc, count: s.items.length, loop: loop >= 60 ? Math.floor(loop / 60) + 'm ' + (loop % 60) + 's' : loop + 's',
@@ -133,6 +135,7 @@ class Component extends DCLogic {
       openAssigned: function () { self.setState({ folder: '__assigned', libLimit: 10 }); }, openFloating: function () { self.setState({ folder: '__floating', libLimit: 10 }); },
       folders: ['Food Assets', 'Promo Videos', 'Brand Logos', 'Seasonal', 'Menus'].map(function (f) { return { name: f, n: D.media.filter(function (m) { return m.folder === f; }).length, open: function () { self.setState({ folder: f, libLimit: 10 }); } }; }),
       folderCount: 5, folderShown: 5,
+      uploadContent: function () { go('DealerMedia.dc.html'); },
       hostGroups: (function () { var g = {}; scs.forEach(function (sc) { if (!contains(sc.name + ' ' + hostName(sc.host), s.scQ)) return; (g[sc.host] = g[sc.host] || []).push(sc); }); return Object.keys(g).map(function (hid) { var open = s.openHost === hid || (!s.openHost && hid === Object.keys(g)[0]); return { name: hostName(hid), count: g[hid].length, open: open, icon: open ? 'angle-up' : 'angle-down', toggle: function () { self.setState({ openHost: open ? '-' : hid }); },
         screens: g[hid].map(function (sc) { var z = Object.keys(sc.zones).filter(function (k) { return sc.zones[k] === p.name; }); return { name: sc.name, template: sc.template, zone: z.join(', ') || '—', bg: s.pvScreen === sc.id ? 'var(--accent-30)' : 'transparent', pick: function () { self.setState({ pvScreen: sc.id }); } }; }) }; }); })(),
       scQ: s.scQ, setScQ: function (v) { self.setState({ scQ: val(v) }); },
@@ -149,8 +152,8 @@ class Component extends DCLogic {
       items: itemVMs = s.items.filter(function (it) { return (!s.kinds.length || s.kinds.indexOf(it.m.kind) !== -1) && (!s.sched || schedBucket(it) === s.sched) && contains(it.m.title, s.q); }).map(function (it, i) {
         var B = it.blk ? ['CHANNEL', 'var(--warning-main)'] : ({ image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'], block: ['BLOCK', 'var(--purple-main)'] }[it.m.kind] || ['IMAGE', 'var(--info-main)']);
         var sel = !!s.sel[it.key], idx = s.items.indexOf(it);
-        return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : (SCHED[schedState(it)] ? SCHED[schedState(it)][0] : 'var(--primary-050)'), capColor: (it.blk || schedState(it)) ? '#fff' : 'var(--fg-primary)', blk: it.blk, members: it.members || [], schedTip: schedState(it) ? SCHED[schedState(it)][1] + ' · ' + fmtDate(it.start) + ' – ' + fmtDate(it.end) : '', n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)', sched: schedState(it) ? fmtDate(it.start) + ' – ' + fmtDate(it.end) + ' (' + SCHED[schedState(it)][1] + ')' : 'Always',
-          checked: sel, cls: sel ? 'sel' : (it.blk ? 'blk' : ''), key: it.key, blockColor: it.color, typeTag: it.blk ? 'BLOCK' : B[0], longDur: longDur(it.dur), added: fullDate(it.m.uploaded), uploader: it.blk ? 'Dealer Admin' : uploaderOf(it.m), kind: it.m.kind, sched: !!schedState(it),
+        return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : (SCHED[schedState(it)] ? SCHED[schedState(it)][0] : 'var(--primary-050)'), capColor: (it.blk || schedState(it)) ? '#fff' : 'var(--fg-primary)', blk: it.blk, members: it.members || [], schedTip: schedState(it) ? SCHED[schedState(it)][1] + ' · ' + fmtDate(it.start) + ' – ' + fmtDate(it.end) : '', n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)',
+          checked: sel, cls: sel ? 'sel' : (it.blk ? 'blk' : ''), key: it.key, blockColor: it.color, typeTag: it.blk ? 'BLOCK' : B[0], longDur: longDur(it.dur), added: fullDate(it.m.uploaded), uploader: it.blk ? 'Dealer Admin' : uploaderOf(it.m), sched: !!schedState(it),
           menuOpen: s.menu === it.key,
           openMenu: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); var r = ev && ev.currentTarget && ev.currentTarget.getBoundingClientRect ? ev.currentTarget.getBoundingClientRect() : null; self.setState({ menu: self.state.menu === it.key ? '' : it.key, menuRect: r }); },
           menuRect: s.menuRect,
@@ -296,6 +299,8 @@ class Component extends DCLogic {
         everywhere: md.everywhere, selected: !md.everywhere, setEverywhere: function () { setMd({ everywhere: true }); }, setSelected: function () { setMd({ everywhere: false }); },
         hosts: scs.map(function (sc) { return { name: hostName(sc.host), on: !!md.hosts[sc.host], toggle: function () { var o = Object.assign({}, self.state.md.hosts); o[sc.host] = !o[sc.host]; setMd({ hosts: o }); } }; }),
         always: md.always, ranged: !md.always, setAlways: function () { setMd({ always: true }); }, setRanged: function () { setMd({ always: false }); },
+        range: { start: new Date(md.start + 'T00:00:00'), end: new Date(md.end + 'T00:00:00') },
+        setRange: function (r) { var iso = function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }; setMd({ start: iso(r.start), end: iso(r.end || r.start) }); }, today: new Date(TODAY + 'T00:00:00'),
         start: md.start, end: md.end, setStart: function (e) { setMd({ start: val(e) }); }, setEnd: function (e) { setMd({ end: val(e) }); },
         save: function () { var x = self.state.md; self.setState({ items: self.state.items.map(function (it) { return (it.key === x.key || (x.bulk && x.bulk.indexOf(it.key) !== -1)) ? Object.assign({}, it, { dur: x.dur, trans: x.trans, mute: x.mute, everywhere: x.everywhere, hosts: x.hosts, always: x.always, start: x.start, end: x.end }) : it; }), modal: '', md: null }); toast(self, 'Content settings saved'); }
       } : {},
@@ -304,8 +309,9 @@ class Component extends DCLogic {
         setName: function (v) { self.setState({ info: Object.assign({}, self.state.info, { name: val(v) }) }); },
         setDesc: function (v) { self.setState({ info: Object.assign({}, self.state.info, { desc: val(v) }) }); },
         save: function () { self.setState({ p: Object.assign({}, self.state.p, { name: self.state.info.name.trim(), desc: self.state.info.desc }), modal: '' }); toast(self, 'Playlist info saved'); } },
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
+    return R;
   }
 }
 
@@ -331,7 +337,7 @@ defineTemplate(Component, (v) => (
               <p className="pd-desc">{v.desc}</p>
             </div>
             <div className="dv-row" style={{ gap: "16px" }}>
-              <NTV.Button variant="primary" size="xl" iconRight="arrow-up-from-bracket" disabled={v.noScreens} onClick={v.openPush}>Push Updates</NTV.Button>
+              <NTV.Button variant="secondary" size="xl" iconRight="arrow-up-from-bracket" disabled={v.noScreens} onClick={v.openPush}>Push Updates</NTV.Button>
               <NTV.Button variant="primary" size="xl" iconRight="plus" onClick={v.openAdd}>Add Content</NTV.Button>
             </div>
           </div>
@@ -345,7 +351,7 @@ defineTemplate(Component, (v) => (
                   <h2 className="pd-h2">Media Contents</h2>
                   <span className="pd-count">All contents ({v.count})</span>
                 </div>
-                <div className="dv-between">
+                <div className="dv-between pd-toolbar">
                   <div className="dv-row" style={{ gap: "10px" }}>
                     <NTV.FilterDropdown label={v.filterLabel} groups={v.filterGroups} />
                     {v.isGrid ? <NTV.Button variant={v.reorderVariant} size="xl" iconLeft="grip-vertical" iconRight={v.none} onClick={v.toggleReorder}>{v.reorderLabel}</NTV.Button> : null}
@@ -471,10 +477,8 @@ defineTemplate(Component, (v) => (
               </div>
               <aside className="dv-card pd-side">
                 <NTV.Input size="l" placeholder="Search Content or Folder" iconLeft="magnifying-glass" label="Search content or folder" value={v.libQ} onChange={v.setLibQ} />
-                <a href="DealerMedia.dc.html" className="ntv-btn ntv-btn--secondary ntv-btn--default ntv-btn--xl pd-upload">
-                  <NTV.Icon name="upload" size={v.i14} />
-                  <span>Upload Content</span>
-                </a>
+                <NTV.Button variant="secondary" size="xl" className="pd-upload" iconLeft="upload" onClick={v.uploadContent}>Upload Content</NTV.Button>
+                <a data-go="DealerMedia.dc.html" href="DealerMedia.dc.html" hidden tabIndex={-1} aria-hidden="true" />
                 {v.inFolder ? (
                   <div className="pd-sec">
                     <div className="pd-sec__head">
@@ -759,16 +763,10 @@ defineTemplate(Component, (v) => (
                 <NTV.Radio name="sc" checked={v.md?.ranged} label="Play between dates" onChange={v.md?.setRanged} />
                 {v.md?.ranged ? (
                   <>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                     <div>
-                      <label className="dv-label" htmlFor="sd1">Start</label>
-                      <input id="sd1" className="dv-field" type="date" value={v.md?.start} onChange={v.md?.setStart} />
+                      <span className="dv-label">Start Date – End Date</span>
+                      <DateRangePicker compact block value={v.md?.range} onChange={v.md?.setRange} today={v.md?.today} />
                     </div>
-                    <div>
-                      <label className="dv-label" htmlFor="sd2">End</label>
-                      <input id="sd2" className="dv-field" type="date" value={v.md?.end} onChange={v.md?.setEnd} />
-                    </div>
-                  </div>
                   </>
                 ) : null}
               </div>
@@ -869,14 +867,7 @@ defineTemplate(Component, (v) => (
           </NTV.StatusModal>
         </div>
       ) : null}
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));

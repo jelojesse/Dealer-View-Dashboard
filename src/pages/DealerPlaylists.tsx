@@ -9,6 +9,7 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
 import { addNav, byId, contains, navFn, peekNav, screenName, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import SummaryCard from '../components/SummaryCard';
@@ -115,7 +116,7 @@ class Component extends DCLogic {
       del: !tp ? {} : tp.screens.length ? { can: false, status: 'error', title: 'Can’t Delete Playlist', cancel: 'Close', text: tp.name + ' is used by ' + tp.screens.length + ' screen(s): ' + tp.screens.map(screenName).slice(0, 3).join(', ') + (tp.screens.length > 3 ? '…' : '') + '. Replace it on those screens first.' }
         : { can: true, status: 'warning', title: 'Delete Playlist?', cancel: 'Cancel', text: 'Delete ' + tp.name + '? Its content stays in your Media Library.' },
       doDelete: function () { var id = self.state.target; self.setState({ pls: self.state.pls.filter(function (p) { return p.id !== id; }), modal: '' }); toast(self, 'Playlist deleted'); },
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
   }
 }
@@ -158,7 +159,7 @@ defineTemplate(Component, (v) => (
             <div style={{ flex: "none" }}>
               {v.isPl ? <NTV.FilterDropdown label={v.filterLabel} groups={v.filterGroups} /> : null}
             </div>
-            <div className="dv-row" style={{ gap: "16px" }}>
+            <div className="dv-row" style={{ gap: "12px" }}>
               <NTV.Input size="l" placeholder={v.searchPh} iconLeft="magnifying-glass" iconRight={v.isBlocks ? "sparkles" : v.none} label={v.searchPh} value={v.query} onChange={v.setQuery} style={{ width: "500px", maxWidth: "100%" }} />
               <NTV.Button variant="secondary" size="xl" iconRight="file-excel" onClick={v.exportIt}>Export</NTV.Button>
             </div>
@@ -321,14 +322,7 @@ defineTemplate(Component, (v) => (
           </NTV.StatusModal>
         </div>
       ) : null}
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));

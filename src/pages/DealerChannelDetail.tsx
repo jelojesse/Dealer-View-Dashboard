@@ -11,19 +11,48 @@ import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
 import { addNav, arrived, byId, contains, go, navFn, peekNav, screenName, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
+import FilterBy, { passes } from '../components/FilterBy';
 import './DealerChannelDetail.css';
 
 /* ============================== Logic ============================== */
 
 function mineIds() { try { var v = JSON.parse(localStorage.getItem('ntvChannels') || 'null'); if (v) return v; } catch (e) {} return D.channels.filter(function (c) { return c.mine; }).map(function (c) { return c.id; }); }
+var PAGE = 12;
+var KIND = { image: ['Image', 'IMAGE', 'var(--info-main)'], video: ['Video', 'VIDEO', 'var(--danger-main)'] };
+var DUR_BUCKETS = ['Under 30 sec', '30–60 sec', 'Over 60 sec'];
+function secsOf(d) { var m = /(d+)s*min/.exec(d || ''), x = /(d+)s*sec/.exec(d || ''); return (m ? +m[1] * 60 : 0) + (x ? +x[1] : 0) || 15; }
+function bucketOf(sec) { return sec < 30 ? DUR_BUCKETS[0] : sec <= 60 ? DUR_BUCKETS[1] : DUR_BUCKETS[2]; }
+/* Deterministic per-channel content set drawn from the media library (image + video only).
+   Media are grouped by picture and the group order is rotated per channel, so each run of
+   ~15 items shows distinct images; later passes use the "2"/"3" variants of the same files. */
+function channelContents(c) {
+  var idx = parseInt(c.id.slice(1), 10) || 0, groups = [], byImg = {};
+  D.media.forEach(function (m) { if (!KIND[m.kind]) return; if (!byImg[m.image]) { byImg[m.image] = []; groups.push(byImg[m.image]); } byImg[m.image].push(m); });
+  var G = groups.length, start = (idx * 7) % G, out = [];
+  for (var i = 0; i < c.contents; i++) {
+    var g = groups[(start + i * (G % 2 ? 2 : 1)) % G], m = g[Math.floor(i / G) % g.length], k = KIND[m.kind], sec = secsOf(m.duration);
+    out.push({ i: i, id: c.id + '-' + i, image: m.image, title: m.title, kind: k[0], badge: k[1], badgeColor: k[2], meta: m.duration || '15 sec', sec: sec, bucket: bucketOf(sec), size: m.size, uploaded: m.uploaded, by: (m.folder || 'Media Library') + ' · Uploaded ' + m.uploaded });
+  }
+  return out;
+}
 class Component extends DCLogic {
-  constructor(props) { super(props); var f = arrived('DealerChannelDetail.dc.html') || {}; var mine = mineIds(); this.state = { c: byId(D.channels, f.id) || byId(D.channels, mine[0]) || D.channels[0], tab: 'Contents', modal: '', pi: 0, q: '', sel: 0 }; }
+  constructor(props) { super(props); var f = arrived('DealerChannelDetail.dc.html') || {}; var mine = mineIds(); this.state = { c: byId(D.channels, f.id) || byId(D.channels, mine[0]) || D.channels[0], tab: 'Contents', modal: '', pi: 0, q: '', sel: 0, view: 'grid', filters: {}, marked: {}, deleted: {}, order: null, reorder: false, drag: null, limit: PAGE }; }
   renderVals() {
     var self = this, s = this.state, c = s.c;
     var idx = parseInt(c.id.slice(1), 10);
     var pls = D.playlists.filter(function (p, i) { return (i + idx) % 4 === 0; }).slice(0, 3);
     var scs = {}; pls.forEach(function (p) { p.screens.forEach(function (x) { scs[x] = 1; }); });
-    var contents = []; for (var i = 0; i < Math.min(c.contents, 12); i++) { var m = D.media[(idx * 3 + i) % D.media.length]; contents.push({ i: i, image: i === 0 ? c.image : m.image, title: c.name + ' · Episode ' + (i + 1), meta: (30 + (i * 17) % 90) + ' sec', size: (4 + i % 9) + '.2 MB' }); }
+    if (!this._all || this._allFor !== c.id) { this._all = channelContents(c); this._allFor = c.id; }
+    var base = this._all.filter(function (x) { return !s.deleted[x.i]; });
+    if (s.order) { var pos = {}; s.order.forEach(function (n, k) { pos[n] = k; }); base = base.slice().sort(function (a, b) { return (pos[a.i] == null ? 1e6 + a.i : pos[a.i]) - (pos[b.i] == null ? 1e6 + b.i : pos[b.i]); }); }
+    var contents = base.length ? base : [{ i: -1, image: c.image, title: c.name, meta: '—', size: '—', by: 'Media Library', badge: '', kind: '' }];
+    var filtered = base.filter(function (x) { return passes(s.filters, 'type', x.kind) && passes(s.filters, 'duration', x.bucket) && contains(x.title, s.q); });
+    var shownItems = filtered.slice(0, s.limit);
+    var markedN = base.filter(function (x) { return s.marked[x.i]; }).length;
+    var allMarked = filtered.length > 0 && filtered.every(function (x) { return s.marked[x.i]; });
+    var selItem = contents.filter(function (x) { return x.i === s.sel; })[0] || contents[0];
+    var setMark = function (i, on) { var mk = Object.assign({}, self.state.marked); if (on) mk[i] = true; else delete mk[i]; self.setState({ marked: mk }); };
+    var dropOn = function (target) { var from = self.state.drag; if (from == null || from === target) return; var ids = base.map(function (x) { return x.i; }), a = ids.indexOf(from), b = ids.indexOf(target); ids.splice(a, 1); ids.splice(b, 0, from); self.setState({ order: ids, drag: null }); };
     var mine = mineIds().indexOf(c.id) !== -1;
     return {
       none: null, i10: 10, i14: 14, w460: 460, w900: 900,
@@ -31,9 +60,20 @@ class Component extends DCLogic {
       c: c, plCount: pls.length, scCount: Object.keys(scs).length, notMine: !mine,
       tabs: [['Contents', 'Channel Contents'], ['Playing Where', 'Playing Where']].map(function (t) { return { label: t[1], on: s.tab === t[0], pick: function () { self.setState({ tab: t[0] }); } }; }),
       isContents: s.tab === 'Contents', isWhere: s.tab === 'Playing Where',
-      q: s.q, setQ: function (v) { self.setState({ q: val(v) }); },
-      sel: contents[s.sel % contents.length],
-      contents: contents.filter(function (x) { return contains(x.title, s.q); }).map(function (x) { return Object.assign({}, x, { border: s.sel === x.i ? 'var(--accent-action)' : 'var(--container-border)', pick: function () { self.setState({ sel: x.i }); } }); }),
+      q: s.q, setQ: function (v) { self.setState({ q: val(v), limit: PAGE }); },
+      total: base.length, filteredN: filtered.length, shownN: shownItems.length, hasMore: filtered.length > shownItems.length, noContents: filtered.length === 0,
+      showMore: function () { self.setState({ limit: self.state.limit + PAGE }); },
+      filterGroups: [{ key: 'type', title: 'Type', options: ['Image', 'Video'] }, { key: 'duration', title: 'Duration', options: DUR_BUCKETS }],
+      filters: s.filters, setFilters: function (x) { self.setState({ filters: x, limit: PAGE }); },
+      isGrid: s.view === 'grid', isList: s.view === 'list', toGrid: function () { self.setState({ view: 'grid' }); }, toList: function () { self.setState({ view: 'list' }); },
+      reorder: s.reorder, reorderLabel: s.reorder ? 'Done' : 'Reorder', reorderIcon: s.reorder ? 'check' : 'grip-vertical', toggleReorder: function () { self.setState({ reorder: !self.state.reorder, drag: null }); },
+      markLabel: allMarked ? 'Unmark All' : 'Mark All', markAll: function () { var mk = {}; if (!allMarked) filtered.forEach(function (x) { mk[x.i] = true; }); self.setState({ marked: mk }); },
+      markedN: markedN, noneMarked: markedN === 0, bulkLabel: markedN ? 'Bulk Delete (' + markedN + ')' : 'Bulk Delete',
+      bulkDelete: function () { var del = Object.assign({}, self.state.deleted); Object.keys(self.state.marked).forEach(function (k) { del[k] = true; }); self.setState({ deleted: del, marked: {} }); },
+      sel: selItem,
+      contents: shownItems.map(function (x) { var on = !!s.marked[x.i], picked = s.sel === x.i; return Object.assign({}, x, { marked: on, picked: picked, cls: 'ch-tile' + (on ? ' is-marked' : '') + (picked ? ' is-picked' : '') + (s.reorder ? ' is-reorder' : '') + (s.drag === x.i ? ' is-drag' : ''), rowCls: 'dv-tr' + (on || picked ? ' dv-sel' : ''),
+        pick: function () { self.setState({ sel: x.i }); }, toggle: function () { setMark(x.i, !on); }, stop: function (e) { e.stopPropagation(); },
+        dragStart: function (e) { if (!s.reorder) return; e.dataTransfer.effectAllowed = 'move'; self.setState({ drag: x.i }); }, dragOver: function (e) { if (s.reorder) e.preventDefault(); }, drop: function (e) { e.preventDefault(); dropOn(x.i); }, dragEnd: function () { self.setState({ drag: null }); } }); }),
       where: pls.map(function (p, i) { var lic = 0; p.screens.forEach(function (x) { var sc = byId(D.screens, x); lic += sc ? sc.lic.length : 0; }); return { n: i + 1, name: p.name, screens: p.screens.map(screenName).slice(0, 2).join(', ') + (p.screens.length > 2 ? ' +' + (p.screens.length - 2) : ''), lic: lic, open: navFn('DealerPlaylistDetail.dc.html', { id: p.id }) }; }),
       noWhere: pls.length === 0,
       m: { preview: s.modal === 'preview', unassign: s.modal === 'unassign' },
@@ -94,30 +134,83 @@ defineTemplate(Component, (v) => (
               <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
                 <div className="dv-between">
                   <h2 className="dv-h3">Channel Contents</h2>
-                  <span className="dv-sub">All contents ({v.c?.contents})</span>
+                  <span className="dv-sub">All contents ({v.total})</span>
                 </div>
-                <div className="dv-between">
-                  <span className="dv-sub">Click a content to see its details</span>
-                  <NTV.Input size="l" placeholder="Search Channel Content" iconLeft="magnifying-glass" label="Search content" value={v.q} onChange={v.setQ} style={{ width: "280px" }} />
+                <div className="dv-between ch-toolbar">
+                  <div className="dv-row" style={{ gap: "12px" }}>
+                    <FilterBy groups={v.filterGroups} value={v.filters} onChange={v.setFilters} />
+                    <NTV.Button variant="secondary" size="xl" iconLeft={v.reorderIcon} className={v.reorder ? "is-open" : ""} aria-pressed={v.reorder} onClick={v.toggleReorder}>{v.reorderLabel}</NTV.Button>
+                  </div>
+                  <div className="dv-row" style={{ gap: "12px" }}>
+                    <NTV.Input size="l" placeholder="Search Channel Content" iconLeft="magnifying-glass" label="Search content" value={v.q} onChange={v.setQ} style={{ width: "260px" }} />
+                    <NTV.Button variant="primary" size="xl" iconLeft="square-check" onClick={v.markAll}>{v.markLabel}</NTV.Button>
+                    <NTV.Button variant="secondary" size="xl" iconLeft="trash" disabled={v.noneMarked} onClick={v.bulkDelete}>{v.bulkLabel}</NTV.Button>
+                    <div className="dv-vt" role="group" aria-label="View">
+                      <button type="button" aria-label="Grid view" aria-pressed={v.isGrid} onClick={v.toGrid}><NTV.Icon name="grid-2" size={v.i14} /></button>
+                      <button type="button" aria-label="List view" aria-pressed={v.isList} onClick={v.toList}><NTV.Icon name="list" size={v.i14} /></button>
+                    </div>
+                  </div>
                 </div>
-                <div className="dv-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "10px" }}>
-                  {(v.contents || []).map((_m, $index) => (
-                    <React.Fragment key={$index}>
-                      <button type="button" onClick={_m?.pick} style={{ padding: "0", border: `2px solid ${s(_m?.border)}`, borderRadius: "var(--radius-md)", overflow: "hidden", background: "var(--bg-surface)", cursor: "pointer", textAlign: "left", fontFamily: "inherit" }}>
+                {v.reorder ? <span className="dv-sub">Drag contents to change their play order, then click Done.</span> : null}
+                {v.isGrid && !v.noContents ? (
+                  <div className="dv-tray dv-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "10px" }}>
+                    {(v.contents || []).map((_m, $index) => (
+                      <div key={_m?.id} role="button" tabIndex={0} className={_m?.cls} onClick={_m?.pick} draggable={v.reorder} onDragStart={_m?.dragStart} onDragOver={_m?.dragOver} onDrop={_m?.drop} onDragEnd={_m?.dragEnd}>
                         <div className="dv-thumb" style={{ aspectRatio: "16 / 10", borderRadius: "0" }}>
-                          <img src={_m?.image} alt="" />
-                          <span style={{ position: "absolute", left: "6px", top: "6px", padding: "0 6px", borderRadius: "4px", background: "#fff", fontSize: "9px", lineHeight: "16px", fontWeight: "700", color: "var(--danger-main)" }}>VIDEO</span>
+                          <img src={_m?.image} alt="" draggable={false} />
+                          <span className="ch-badge" style={{ color: `${s(_m?.badgeColor)}` }}>{_m?.badge}</span>
+                          <span className="ch-tile__check" onClick={_m?.stop}>
+                            {v.reorder ? <NTV.Icon name="grip-vertical" size={v.i14} /> : <NTV.Checkbox checked={_m?.marked} onChange={_m?.toggle} />}
+                          </span>
                         </div>
-                        <div style={{ padding: "6px 8px", fontSize: "11px", lineHeight: "16px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--fg-primary)" }}>{_m?.title}</div>
-                      </button>
-                    </React.Fragment>
-                  ))}
+                        <div className="ch-tile__name">{_m?.title}</div>
+                        <div className="ch-tile__meta"><span>{_m?.meta}</span><span>{_m?.size}</span></div>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+                {v.isList && !v.noContents ? (
+                  <div className="dv-table ch-list">
+                    <div role="table" aria-label="Channel contents">
+                      <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: "40px 90px 1.6fr 90px 100px 100px 120px" }}>
+                        <div />
+                        <div>Thumbnail</div>
+                        <div>File Name</div>
+                        <div>File Type</div>
+                        <div>Duration</div>
+                        <div>Size</div>
+                        <div>Uploaded</div>
+                      </div>
+                      {(v.contents || []).map((_it, $index) => (
+                        <div key={_it?.id} role="row" className={_it?.rowCls} onClick={_it?.pick} draggable={v.reorder} onDragStart={_it?.dragStart} onDragOver={_it?.dragOver} onDrop={_it?.drop} onDragEnd={_it?.dragEnd} style={{ gridTemplateColumns: "40px 90px 1.6fr 90px 100px 100px 120px", minHeight: "52px", cursor: v.reorder ? "grab" : "pointer" }}>
+                          <div onClick={_it?.stop}>
+                            {v.reorder ? <NTV.Icon name="grip-vertical" size={v.i14} /> : <NTV.Checkbox checked={_it?.marked} onChange={_it?.toggle} />}
+                          </div>
+                          <div>
+                            <span className="dv-thumb" style={{ display: "block", width: "56px", height: "34px" }}><img src={_it?.image} alt="" draggable={false} /></span>
+                          </div>
+                          <div>{_it?.title}</div>
+                          <div>
+                            <span style={{ fontSize: "9px", fontWeight: "700", color: `${s(_it?.badgeColor)}` }}>{_it?.badge}</span>
+                          </div>
+                          <div>{_it?.meta}</div>
+                          <div>{_it?.size}</div>
+                          <div>{_it?.uploaded}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {v.noContents ? <div className="dv-empty" style={{ border: "1px dashed var(--container-border)", borderRadius: "var(--radius-md)" }}>No contents match these filters.</div> : null}
+                <div className="dv-foot" style={{ marginTop: "0" }}>
+                  <span>{"Showing "}{v.shownN}{" of "}{v.filteredN}{" items"}</span>
+                  {v.hasMore ? <button type="button" onClick={v.showMore}>Show More...</button> : null}
                 </div>
               </section>
               <aside className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 <div className="dv-thumb" style={{ aspectRatio: "16 / 10" }}><img src={v.sel?.image} alt="" /></div>
                 <strong style={{ fontSize: "15px" }}>{v.sel?.title}</strong>
-                <p className="dv-sub" style={{ fontSize: "11px" }}>NTV360 Content Team · Aug 28, 2026</p>
+                <p className="dv-sub" style={{ fontSize: "11px" }}>{v.sel?.by}</p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", padding: "12px", borderRadius: "var(--radius-sm)", background: "var(--bg-app)" }}>
                   <div className="dv-kv2">
                     <span>Content Duration</span>

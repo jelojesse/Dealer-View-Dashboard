@@ -8,22 +8,22 @@ export const D = {
     "short": "Ibanez Lighting"
   },
   "B": {
-    "btb": "images/8a2e22dd42dd5d67dbc30a39aec23ef3.jpg",
-    "telescope": "images/3150cc95c587f5d4777692f813e16534.jpg",
-    "starlens": "images/945726549cb1ef1b00c0d26d31d3f3f2.jpg",
-    "orbit": "images/ec827ec7c42f6fc992bed1db57a88695.jpg",
-    "steak": "images/f31035d36ea14a442085349a66032fb9.jpg",
-    "porkchop": "images/bbaf85c5b94c73e37b4cbffa9a642166.jpg",
-    "salad": "images/9c0f78293758033c038e452ab3445fa5.jpg",
-    "astral": "images/2de7073d659fa227749c8f0299496129.jpg",
-    "buynow": "images/c51d296b0dad7f7ba90c8108bd8d63f3.jpg",
-    "banso": "images/f2c9944edfb94cbe0a09023cec5e30b5.jpg",
-    "advert": "images/825ea224ea2530bd83245ef39053693e.jpg",
-    "zSteak": "images/c4a37fb83fc3e691fe48d16d07aea2c3.jpg",
-    "zBottle": "images/00a9efca3bfe9d27b9efdfc8e2059e1a.jpg",
-    "zBuy": "images/b31eb17cc186f1f9342c815ac2bb13e9.jpg",
-    "zWood": "images/eb46f209fd54080980c88eeb301eaed2.jpg",
-    "oranges": "images/071fd1b30a9fd087421447c24a93d410.jpg",
+    "btb": "images/ch-beyond-the-blue.jpg",
+    "telescope": "images/star-garden-observatory.jpg",
+    "starlens": "images/starlit-river.jpg",
+    "orbit": "images/planet-grove.jpg",
+    "steak": "images/comet-meadow.jpg",
+    "porkchop": "images/the-moonlight-garden.jpg",
+    "salad": "images/galactic-forest-gathering.jpg",
+    "astral": "images/astral-grove-library.jpg",
+    "buynow": "images/forest-beneath-the-nebula.jpg",
+    "banso": "images/celestial-tree-of-life.jpg",
+    "advert": "images/dancing-aurora.jpg",
+    "zSteak": "images/comet-meadow-hero.jpg",
+    "zBottle": "images/mirrors-of-the-wetlands.jpg",
+    "zBuy": "images/explorer-with-map.jpg",
+    "zWood": "images/vast-empty-mountain.jpg",
+    "oranges": "images/hadal-amphipod.jpg",
     "map": "images/5b2e0dcf217c7df2f651979c9ad77235.jpg"
   },
   "terr": [
@@ -3318,9 +3318,9 @@ export const D = {
   "media": [
     {
       "id": "m1",
-      "title": "Steak.jpg",
+      "title": "Comet Meadow.jpg",
       "kind": "image",
-      "image": "images/sample/jungle-colors.jpg",
+      "image": "images/comet-meadow.jpg",
       "source": "Advertisers",
       "used": true,
       "adv": "a1",
@@ -3332,9 +3332,9 @@ export const D = {
     },
     {
       "id": "m2",
-      "title": "Porkchop.mp4",
+      "title": "Dancing Aurora.mp4",
       "kind": "video",
-      "image": "images/sample/moonlight-garden.jpg",
+      "image": "images/dancing-aurora.jpg",
       "source": "Hosts",
       "used": true,
       "adv": null,
@@ -3346,9 +3346,9 @@ export const D = {
     },
     {
       "id": "m3",
-      "title": "Salad Cooking widget",
+      "title": "Galactic Forest Gathering widget",
       "kind": "widget",
-      "image": "images/sample/cosmic-pond.jpg",
+      "image": "images/galactic-forest-gathering.jpg",
       "source": "Others",
       "used": true,
       "adv": null,
@@ -3362,7 +3362,7 @@ export const D = {
       "id": "m4",
       "title": "Astral Grove Library.jpg",
       "kind": "image",
-      "image": "images/sample/astral-grove-library.jpg",
+      "image": "images/astral-grove-library.jpg",
       "source": "Widgets",
       "used": false,
       "adv": null,
@@ -3374,9 +3374,9 @@ export const D = {
     },
     {
       "id": "m5",
-      "title": "Buy Now Banner.jpg",
+      "title": "Forest Beneath the Nebula.jpg",
       "kind": "image",
-      "image": "images/sample/galactic-forest-gathering.jpg",
+      "image": "images/forest-beneath-the-nebula.jpg",
       "source": "Channels",
       "used": true,
       "adv": null,
@@ -3388,9 +3388,9 @@ export const D = {
     },
     {
       "id": "m6",
-      "title": "Banso Promo.jpg",
+      "title": "Star Garden Observatory.jpg",
       "kind": "image",
-      "image": "images/sample/celestial-tree-of-life.jpg",
+      "image": "images/star-garden-observatory.jpg",
       "source": "Advertisers",
       "used": true,
       "adv": "a6",
@@ -3402,9 +3402,9 @@ export const D = {
     },
     {
       "id": "m7",
-      "title": "Advertisement.mp4",
+      "title": "Starlit River.mp4",
       "kind": "video",
-      "image": "images/sample/star-garden-observatory.jpg",
+      "image": "images/starlit-river.jpg",
       "source": "Hosts",
       "used": true,
       "adv": null,
@@ -3416,9 +3416,9 @@ export const D = {
     },
     {
       "id": "m8",
-      "title": "Telescope.jpg",
+      "title": "Planet Grove.jpg",
       "kind": "image",
-      "image": "images/sample/telescope.jpg",
+      "image": "images/planet-grove.jpg",
       "source": "Others",
       "used": true,
       "adv": null,
@@ -3430,9 +3430,9 @@ export const D = {
     },
     {
       "id": "m9",
-      "title": "StarLens.jpg",
+      "title": "Explorer with Map.jpg",
       "kind": "image",
-      "image": "images/sample/starlit-river.jpg",
+      "image": "images/explorer-with-map.jpg",
       "source": "Widgets",
       "used": true,
       "adv": null,
@@ -3444,9 +3444,9 @@ export const D = {
     },
     {
       "id": "m10",
-      "title": "OrbitWear.jpg",
+      "title": "Hadal Amphipod.jpg",
       "kind": "image",
-      "image": "images/sample/forest-beneath-the-nebula.jpg",
+      "image": "images/hadal-amphipod.jpg",
       "source": "Channels",
       "used": true,
       "adv": null,
@@ -3458,9 +3458,9 @@ export const D = {
     },
     {
       "id": "m11",
-      "title": "Sizzle Reel.mp4",
+      "title": "The Moonlight Garden.mp4",
       "kind": "video",
-      "image": "images/sample/comet-meadow.jpg",
+      "image": "images/the-moonlight-garden.jpg",
       "source": "Advertisers",
       "used": false,
       "adv": "a11",
@@ -3472,9 +3472,9 @@ export const D = {
     },
     {
       "id": "m12",
-      "title": "Lounge Bottle.jpg",
+      "title": "Celestial Tree of Life.jpg",
       "kind": "image",
-      "image": "images/sample/planet-grove.jpg",
+      "image": "images/celestial-tree-of-life.jpg",
       "source": "Hosts",
       "used": true,
       "adv": null,
@@ -3486,9 +3486,9 @@ export const D = {
     },
     {
       "id": "m13",
-      "title": "Shopee Deals.mp4",
+      "title": "Vast Empty Mountain.mp4",
       "kind": "video",
-      "image": "images/sample/whispers-of-the-desert.jpg",
+      "image": "images/vast-empty-mountain.jpg",
       "source": "Others",
       "used": true,
       "adv": null,
@@ -3500,9 +3500,9 @@ export const D = {
     },
     {
       "id": "m14",
-      "title": "Wood Texture.jpg",
+      "title": "Mirrors of the Wetlands.jpg",
       "kind": "image",
-      "image": "images/sample/eco-friendly-kitchenware.jpg",
+      "image": "images/mirrors-of-the-wetlands.jpg",
       "source": "Widgets",
       "used": true,
       "adv": null,
@@ -3514,9 +3514,9 @@ export const D = {
     },
     {
       "id": "m15",
-      "title": "Sunbright Oranges.jpg",
+      "title": "Galactic Forest Gathering.jpg",
       "kind": "image",
-      "image": "images/sample/generated-image.jpg",
+      "image": "images/galactic-forest-gathering.jpg",
       "source": "Channels",
       "used": true,
       "adv": null,
@@ -3528,9 +3528,9 @@ export const D = {
     },
     {
       "id": "m16",
-      "title": "Beyond the Blue Clip.mp4",
+      "title": "Blooming Symphony.mp4",
       "kind": "video",
-      "image": "images/sample/beyond-the-blue.jpg",
+      "image": "images/blooming-symphony.jpg",
       "source": "Advertisers",
       "used": true,
       "adv": "a16",
@@ -3542,9 +3542,9 @@ export const D = {
     },
     {
       "id": "m17",
-      "title": "Steak 2.jpg",
+      "title": "The Moonlight Garden.jpg",
       "kind": "image",
-      "image": "images/sample/predators-patience.jpg",
+      "image": "images/the-moonlight-garden.jpg",
       "source": "Hosts",
       "used": true,
       "adv": null,
@@ -3556,9 +3556,9 @@ export const D = {
     },
     {
       "id": "m18",
-      "title": "Porkchop 2.mp4",
+      "title": "Hiker in Rock Cave.mp4",
       "kind": "video",
-      "image": "images/sample/jungle-colors.jpg",
+      "image": "images/hiker-in-rock-cave.jpg",
       "source": "Others",
       "used": false,
       "adv": null,
@@ -3570,9 +3570,9 @@ export const D = {
     },
     {
       "id": "m19",
-      "title": "Salad Cooking widget",
+      "title": "Mirrors of the Wetlands widget",
       "kind": "widget",
-      "image": "images/sample/moonlight-garden.jpg",
+      "image": "images/mirrors-of-the-wetlands.jpg",
       "source": "Widgets",
       "used": true,
       "adv": null,
@@ -3584,9 +3584,9 @@ export const D = {
     },
     {
       "id": "m20",
-      "title": "Astral Grove Library 2.jpg",
+      "title": "Starlit River.jpg",
       "kind": "image",
-      "image": "images/sample/astral-grove-library.jpg",
+      "image": "images/starlit-river.jpg",
       "source": "Channels",
       "used": true,
       "adv": null,
@@ -3598,9 +3598,9 @@ export const D = {
     },
     {
       "id": "m21",
-      "title": "Buy Now Banner 2.jpg",
+      "title": "Comet Meadow 2.jpg",
       "kind": "image",
-      "image": "images/sample/cosmic-pond.jpg",
+      "image": "images/comet-meadow.jpg",
       "source": "Advertisers",
       "used": true,
       "adv": "a21",
@@ -3612,9 +3612,9 @@ export const D = {
     },
     {
       "id": "m22",
-      "title": "Banso Promo 2.jpg",
+      "title": "Astral Grove Library 2.jpg",
       "kind": "image",
-      "image": "images/sample/galactic-forest-gathering.jpg",
+      "image": "images/astral-grove-library.jpg",
       "source": "Hosts",
       "used": true,
       "adv": null,
@@ -3626,9 +3626,9 @@ export const D = {
     },
     {
       "id": "m23",
-      "title": "Advertisement 2.mp4",
+      "title": "Dancing Aurora 2.mp4",
       "kind": "video",
-      "image": "images/sample/celestial-tree-of-life.jpg",
+      "image": "images/dancing-aurora.jpg",
       "source": "Others",
       "used": true,
       "adv": null,
@@ -3640,9 +3640,9 @@ export const D = {
     },
     {
       "id": "m24",
-      "title": "Telescope 2.jpg",
+      "title": "Forest Beneath the Nebula 2.jpg",
       "kind": "image",
-      "image": "images/sample/telescope.jpg",
+      "image": "images/forest-beneath-the-nebula.jpg",
       "source": "Widgets",
       "used": true,
       "adv": null,
@@ -3654,9 +3654,9 @@ export const D = {
     },
     {
       "id": "m25",
-      "title": "StarLens 2.jpg",
+      "title": "Star Garden Observatory 2.jpg",
       "kind": "image",
-      "image": "images/sample/star-garden-observatory.jpg",
+      "image": "images/star-garden-observatory.jpg",
       "source": "Channels",
       "used": false,
       "adv": null,
@@ -3668,9 +3668,9 @@ export const D = {
     },
     {
       "id": "m26",
-      "title": "OrbitWear 2.jpg",
+      "title": "Planet Grove 2.jpg",
       "kind": "image",
-      "image": "images/sample/starlit-river.jpg",
+      "image": "images/planet-grove.jpg",
       "source": "Advertisers",
       "used": true,
       "adv": "a2",
@@ -3682,9 +3682,9 @@ export const D = {
     },
     {
       "id": "m27",
-      "title": "Sizzle Reel 2.mp4",
+      "title": "Starlit River 2.mp4",
       "kind": "video",
-      "image": "images/sample/forest-beneath-the-nebula.jpg",
+      "image": "images/starlit-river.jpg",
       "source": "Hosts",
       "used": true,
       "adv": null,
@@ -3696,9 +3696,9 @@ export const D = {
     },
     {
       "id": "m28",
-      "title": "Lounge Bottle 2.jpg",
+      "title": "Explorer with Map 2.jpg",
       "kind": "image",
-      "image": "images/sample/comet-meadow.jpg",
+      "image": "images/explorer-with-map.jpg",
       "source": "Others",
       "used": true,
       "adv": null,
@@ -3710,9 +3710,9 @@ export const D = {
     },
     {
       "id": "m29",
-      "title": "Shopee Deals 2.mp4",
+      "title": "The Moonlight Garden 2.mp4",
       "kind": "video",
-      "image": "images/sample/planet-grove.jpg",
+      "image": "images/the-moonlight-garden.jpg",
       "source": "Widgets",
       "used": true,
       "adv": null,
@@ -3724,9 +3724,9 @@ export const D = {
     },
     {
       "id": "m30",
-      "title": "Wood Texture 2.jpg",
+      "title": "Hadal Amphipod 2.jpg",
       "kind": "image",
-      "image": "images/sample/whispers-of-the-desert.jpg",
+      "image": "images/hadal-amphipod.jpg",
       "source": "Channels",
       "used": true,
       "adv": null,
@@ -3738,9 +3738,9 @@ export const D = {
     },
     {
       "id": "m31",
-      "title": "Sunbright Oranges 2.jpg",
+      "title": "Celestial Tree of Life 2.jpg",
       "kind": "image",
-      "image": "images/sample/eco-friendly-kitchenware.jpg",
+      "image": "images/celestial-tree-of-life.jpg",
       "source": "Advertisers",
       "used": true,
       "adv": "a7",
@@ -3752,9 +3752,9 @@ export const D = {
     },
     {
       "id": "m32",
-      "title": "Beyond the Blue Clip 2.mp4",
+      "title": "Vast Empty Mountain 2.mp4",
       "kind": "video",
-      "image": "images/sample/beyond-the-blue.jpg",
+      "image": "images/vast-empty-mountain.jpg",
       "source": "Hosts",
       "used": false,
       "adv": null,
@@ -3766,9 +3766,9 @@ export const D = {
     },
     {
       "id": "m33",
-      "title": "Steak 3.jpg",
+      "title": "Mirrors of the Wetlands 2.jpg",
       "kind": "image",
-      "image": "images/sample/generated-image.jpg",
+      "image": "images/mirrors-of-the-wetlands.jpg",
       "source": "Others",
       "used": true,
       "adv": null,
@@ -3780,9 +3780,9 @@ export const D = {
     },
     {
       "id": "m34",
-      "title": "Porkchop 3.mp4",
+      "title": "Blooming Symphony 2.mp4",
       "kind": "video",
-      "image": "images/sample/predators-patience.jpg",
+      "image": "images/blooming-symphony.jpg",
       "source": "Widgets",
       "used": true,
       "adv": null,
@@ -3794,9 +3794,9 @@ export const D = {
     },
     {
       "id": "m35",
-      "title": "Salad Cooking widget",
+      "title": "Celestial Tree of Life widget",
       "kind": "widget",
-      "image": "images/sample/jungle-colors.jpg",
+      "image": "images/celestial-tree-of-life.jpg",
       "source": "Channels",
       "used": true,
       "adv": null,
@@ -3808,9 +3808,9 @@ export const D = {
     },
     {
       "id": "m36",
-      "title": "Astral Grove Library 3.jpg",
+      "title": "Galactic Forest Gathering 2.jpg",
       "kind": "image",
-      "image": "images/sample/astral-grove-library.jpg",
+      "image": "images/galactic-forest-gathering.jpg",
       "source": "Advertisers",
       "used": true,
       "adv": "a12",
@@ -3822,9 +3822,9 @@ export const D = {
     },
     {
       "id": "m37",
-      "title": "Buy Now Banner 3.jpg",
+      "title": "The Moonlight Garden 2.jpg",
       "kind": "image",
-      "image": "images/sample/moonlight-garden.jpg",
+      "image": "images/the-moonlight-garden.jpg",
       "source": "Hosts",
       "used": true,
       "adv": null,
@@ -3836,9 +3836,9 @@ export const D = {
     },
     {
       "id": "m38",
-      "title": "Banso Promo 3.jpg",
+      "title": "Starlit River 2.jpg",
       "kind": "image",
-      "image": "images/sample/cosmic-pond.jpg",
+      "image": "images/starlit-river.jpg",
       "source": "Others",
       "used": true,
       "adv": null,
@@ -3850,9 +3850,9 @@ export const D = {
     },
     {
       "id": "m39",
-      "title": "Advertisement 3.mp4",
+      "title": "Hiker in Rock Cave 2.mp4",
       "kind": "video",
-      "image": "images/sample/galactic-forest-gathering.jpg",
+      "image": "images/hiker-in-rock-cave.jpg",
       "source": "Widgets",
       "used": false,
       "adv": null,
@@ -3864,9 +3864,9 @@ export const D = {
     },
     {
       "id": "m40",
-      "title": "Telescope 3.jpg",
+      "title": "Comet Meadow 3.jpg",
       "kind": "image",
-      "image": "images/sample/telescope.jpg",
+      "image": "images/comet-meadow.jpg",
       "source": "Channels",
       "used": true,
       "adv": null,
@@ -4217,8 +4217,9 @@ export const D = {
     {
       "id": "c1",
       "name": "Aqua Pulse",
-      "image": "images/6adab0ca96b86926f11aad7f0eb7b9f2.jpg",
+      "image": "images/ch-aqua-pulse.jpg",
       "genre": "Documentary",
+      "genres": ["Documentary", "Nature", "Animals"],
       "mins": 20,
       "contents": 19,
       "mine": false
@@ -4226,8 +4227,9 @@ export const D = {
     {
       "id": "c2",
       "name": "Beyond the Blue",
-      "image": "images/90dfb812256e36dad7fc3b34686400c4.jpg",
+      "image": "images/ch-beyond-the-blue.jpg",
       "genre": "Documentary",
+      "genres": ["Documentary", "Nature", "Education", "Animals"],
       "mins": 15,
       "contents": 7,
       "mine": true
@@ -4235,8 +4237,9 @@ export const D = {
     {
       "id": "c3",
       "name": "BioVerse",
-      "image": "images/ac49ae4e81b9c13eb3230fa56905ecb2.jpg",
+      "image": "images/ch-bioverse.jpg",
       "genre": "Education",
+      "genres": ["Education", "Documentary"],
       "mins": 34,
       "contents": 13,
       "mine": false
@@ -4244,8 +4247,9 @@ export const D = {
     {
       "id": "c4",
       "name": "DreamLoom",
-      "image": "images/7ee183964219b9fe530118053af6740e.jpg",
+      "image": "images/ch-dreamloom.jpg",
       "genre": "Education",
+      "genres": ["Education", "Entertainment", "Lifestyle"],
       "mins": 30,
       "contents": 6,
       "mine": false
@@ -4253,8 +4257,9 @@ export const D = {
     {
       "id": "c5",
       "name": "Elemental Earth",
-      "image": "images/71c8a33daa079ffdae1246994804cdca.jpg",
+      "image": "images/ch-elemental-earth.jpg",
       "genre": "Nature",
+      "genres": ["Nature", "Documentary", "Education", "Animals"],
       "mins": 20,
       "contents": 31,
       "mine": true
@@ -4262,8 +4267,9 @@ export const D = {
     {
       "id": "c6",
       "name": "Fit Vibe",
-      "image": "images/a89f7d2c385bc9099871fa80cdf1556f.jpg",
+      "image": "images/ch-fit-vibe.jpg",
       "genre": "Lifestyle",
+      "genres": ["Lifestyle"],
       "mins": 5,
       "contents": 4,
       "mine": true
@@ -4271,8 +4277,9 @@ export const D = {
     {
       "id": "c7",
       "name": "FlavorFrame",
-      "image": "images/0627c2363858277fcaaa53752275874e.jpg",
+      "image": "images/ch-flavorframe.jpg",
       "genre": "Lifestyle",
+      "genres": ["Lifestyle", "Entertainment"],
       "mins": 25,
       "contents": 12,
       "mine": true
@@ -4280,8 +4287,9 @@ export const D = {
     {
       "id": "c8",
       "name": "Fun Central",
-      "image": "images/205de5a990ca3320d5f226e4e75aa37e.jpg",
+      "image": "images/ch-fun-central.jpg",
       "genre": "Education",
+      "genres": ["Education", "Entertainment", "Animals"],
       "mins": 20,
       "contents": 19,
       "mine": false
@@ -4289,8 +4297,9 @@ export const D = {
     {
       "id": "c9",
       "name": "Golden Horizon",
-      "image": "images/bcafa59b489a3c975c169a3430d7397b.jpg",
+      "image": "images/ch-golden-horizon.jpg",
       "genre": "Entertainment",
+      "genres": ["Entertainment", "Lifestyle", "Documentary"],
       "mins": 15,
       "contents": 7,
       "mine": false
@@ -4298,8 +4307,9 @@ export const D = {
     {
       "id": "c10",
       "name": "The Hidden Cove",
-      "image": "images/8aaf5411170b2384e892ffe6786f0091.jpg",
+      "image": "images/ch-the-hidden-cove.jpg",
       "genre": "Nature",
+      "genres": ["Nature", "Animals", "Documentary"],
       "mins": 34,
       "contents": 13,
       "mine": true
@@ -4307,8 +4317,9 @@ export const D = {
     {
       "id": "c11",
       "name": "High Thread",
-      "image": "images/f54e623e36f4e8e92e2308d40c139f1a.jpg",
+      "image": "images/ch-high-thread.jpg",
       "genre": "Fashion",
+      "genres": ["Fashion", "Lifestyle"],
       "mins": 30,
       "contents": 6,
       "mine": false
@@ -4316,8 +4327,9 @@ export const D = {
     {
       "id": "c12",
       "name": "Kingdom Unleashed",
-      "image": "images/4779fa8dbebad332e33feef08f84982f.jpg",
+      "image": "images/ch-kingdom-unleashed.jpg",
       "genre": "Animals",
+      "genres": ["Animals", "Nature", "Documentary", "Education"],
       "mins": 20,
       "contents": 31,
       "mine": false
@@ -4325,8 +4337,9 @@ export const D = {
     {
       "id": "c13",
       "name": "Mind Hub",
-      "image": "images/6bf7d122265d38cd9e9cfebb15ab95b3.jpg",
+      "image": "images/ch-mind-hub.jpg",
       "genre": "Education",
+      "genres": ["Education", "Lifestyle"],
       "mins": 5,
       "contents": 4,
       "mine": true
@@ -4334,8 +4347,9 @@ export const D = {
     {
       "id": "c14",
       "name": "MindSpree",
-      "image": "images/315f0e5abe205ed32ae3ca66d044665a.jpg",
+      "image": "images/ch-mindspree.jpg",
       "genre": "Education",
+      "genres": ["Education"],
       "mins": 25,
       "contents": 12,
       "mine": false
@@ -4343,8 +4357,9 @@ export const D = {
     {
       "id": "c15",
       "name": "NextTGen Car",
-      "image": "images/36a30731a635969584e0501f95b2e369.jpg",
+      "image": "images/ch-nextgen-car.jpg",
       "genre": "Technology",
+      "genres": ["Technology", "Entertainment", "Lifestyle"],
       "mins": 20,
       "contents": 19,
       "mine": false
@@ -4352,8 +4367,9 @@ export const D = {
     {
       "id": "c16",
       "name": "Play Core",
-      "image": "images/02b29c7340204f5ef58d946101ef7179.jpg",
+      "image": "images/ch-play-core.jpg",
       "genre": "Entertainment",
+      "genres": ["Entertainment", "Technology"],
       "mins": 15,
       "contents": 7,
       "mine": false
@@ -4361,8 +4377,9 @@ export const D = {
     {
       "id": "c17",
       "name": "RevLine",
-      "image": "images/079f989423297f488279a6ca14a2b905.jpg",
+      "image": "images/ch-revline.jpg",
       "genre": "Technology",
+      "genres": ["Technology", "Entertainment"],
       "mins": 34,
       "contents": 13,
       "mine": false
@@ -4370,8 +4387,9 @@ export const D = {
     {
       "id": "c18",
       "name": "ShredZone",
-      "image": "images/9993a2afdfc2fe0bb3a4af982819f67d.jpg",
+      "image": "images/ch-shredzone.jpg",
       "genre": "Entertainment",
+      "genres": ["Entertainment", "Lifestyle", "Technology", "Fashion"],
       "mins": 30,
       "contents": 6,
       "mine": false
@@ -4379,8 +4397,9 @@ export const D = {
     {
       "id": "c19",
       "name": "SketchQuest",
-      "image": "images/0454fc2c195f0f36db40016f48589ca7.jpg",
+      "image": "images/ch-sketchquest.jpg",
       "genre": "Entertainment",
+      "genres": ["Entertainment", "Education"],
       "mins": 20,
       "contents": 31,
       "mine": false
@@ -4388,8 +4407,9 @@ export const D = {
     {
       "id": "c20",
       "name": "Strand & Shine",
-      "image": "images/7b0e162a24e32de08e1fdc2c0d66659d.jpg",
+      "image": "images/ch-strand-and-shine.jpg",
       "genre": "Lifestyle",
+      "genres": ["Lifestyle", "Fashion"],
       "mins": 5,
       "contents": 4,
       "mine": false
@@ -4397,8 +4417,9 @@ export const D = {
     {
       "id": "c21",
       "name": "Swamp Echoes",
-      "image": "images/e5502f9b3002e87199c05b0af5ea9327.jpg",
+      "image": "images/ch-swamp-echoes.jpg",
       "genre": "Animals",
+      "genres": ["Animals", "Nature", "Documentary"],
       "mins": 25,
       "contents": 12,
       "mine": false
@@ -4406,8 +4427,9 @@ export const D = {
     {
       "id": "c22",
       "name": "The Vibe Lane",
-      "image": "images/3c685ce959d7b32845912dfa534d39df.jpg",
+      "image": "images/ch-the-vibe-lane.jpg",
       "genre": "Entertainment",
+      "genres": ["Entertainment", "Lifestyle", "Fashion"],
       "mins": 20,
       "contents": 19,
       "mine": false
@@ -4415,8 +4437,9 @@ export const D = {
     {
       "id": "c23",
       "name": "World Beat",
-      "image": "images/d9ee7dda6996f0add6a3253424f111e7.jpg",
+      "image": "images/ch-world-beat.jpg",
       "genre": "Lifestyle",
+      "genres": ["Lifestyle", "Entertainment"],
       "mins": 15,
       "contents": 7,
       "mine": false

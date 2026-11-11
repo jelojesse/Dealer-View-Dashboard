@@ -9,9 +9,11 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
 import { STATUS, addNav, advsForHost, arrived, byId, contains, hostName, navFn, peekNav, plByName, screenName, toast, toastVals, val, D } from '../lib/shared';
 import DateCalendar from '../components/DateCalendar';
 import DealerNav from '../components/DealerNav';
+import FilterBy, { passes } from '../components/FilterBy';
 import PushFlow from '../components/PushFlow';
 import './DealerHostDetail.css';
 
@@ -27,7 +29,7 @@ class Component extends DCLogic {
     if (f.id === 'new') { var n = {}; try { n = JSON.parse(localStorage.getItem('ntvHost') || '{}'); } catch (e) {} h = Object.assign({ id: 'new', category: 'Restaurant', status: 'Active', photo: D.B.steak, hours: 'Open 24 hours', dma: 'Birmingham (Ann & Tusc)', networks: [{ name: 'Retail Vision', on: false }], lat: 33.2, lng: -87.5, lic: [] }, n); }
     else h = byId(D.hosts, f.id) || D.hosts[0];
     var lic = D.licenses.filter(function (l) { return l.host === h.id; }).map(function (l) { return Object.assign({}, l); });
-    this.state = { sel: {}, actionsOpen: false, licQ: '', contentQ: '', h: Object.assign({}, h), lic: lic, tab: 'License', modal: f.edit ? 'edit' : '', edit: null, pending: '', dateFor: '', push: false, toast: null };
+    this.state = { sel: {}, licQ: '', contentQ: '', advQ: '', licF: {}, contentF: {}, advF: {}, assignSel: {}, h: Object.assign({}, h), lic: lic, tab: 'License', modal: f.edit ? 'edit' : '', edit: null, pending: '', dateFor: '', push: false, toast: null };
     if (f.edit) this.state.edit = this.makeEdit(h);
   }
   makeEdit(h) { return { tab: 'details', active: h.status !== 'Inactive', name: h.name, category: h.category, address: h.address, city: h.city, state: h.state, zip: h.zip, closed: { Sunday: h.hours !== 'Open 24 hours' } }; }
@@ -36,6 +38,7 @@ class Component extends DCLogic {
     var self = this, s = this.state, h = s.h;
     var advs = h.id === 'new' ? [] : advsForHost(h.id);
     var content = D.media.filter(function (m) { return m.host === h.id || advs.some(function (a) { return a.id === m.adv; }); });
+    if (content.length < 16) { var hi = parseInt(String(h.id).slice(1), 10) || 0; var rest = D.media.filter(function (m) { return content.indexOf(m) === -1 && m.kind !== 'widget'; }); for (var ci = 0; content.length < 16 && ci < rest.length; ci++) content.push(rest[(hi * 7 + ci) % rest.length]); content = content.filter(function (m, i, a) { return a.indexOf(m) === i; }); }
     var e = s.edit || this.makeEdit(h);
     var setE = function (k) { return function (v) { var o = Object.assign({}, self.state.edit); o[k] = typeof v === 'boolean' ? v : val(v); self.setState({ edit: o }); }; };
     var col = HCOL[h.status] || HCOL.Active;
@@ -43,32 +46,44 @@ class Component extends DCLogic {
     return {
       none: null, i12: 12, i14: 14, w460: 460, w640: 640,
       crumbs: [{ label: 'Hosts', href: 'DealerHosts.dc.html' }, h.name],
-      h: { name: h.name, photo: h.photo, status: h.status, color: col[0], tint: col[1], category: h.category, hours: 'Monday - ' + h.hours, dma: h.dma,
+      h: { name: h.name, photo: h.photo, status: h.status, color: col[0], tint: col[1], category: h.category, hours: 'Monday - ' + h.hours, hoursList: DAYS.map(function (d, i) { return { day: d, text: h.hours === 'Open 24 hours' ? 'Open 24 hours' : (i === 6 ? 'Closed' : '8:00 AM – 10:00 PM'), today: i === 0 }; }), dma: h.dma,
         full: h.address + ', ' + h.city + ', ' + h.state + ' ' + h.zip, coords: Number(h.lat).toFixed(4) + ', ' + Number(h.lng).toFixed(4) },
       licCount: s.lic.length,
       onlineCount: s.lic.filter(function (l) { return l.status === 'online'; }).length,
       offlineCount: s.lic.filter(function (l) { return l.status === 'offline'; }).length,
       advCount: advs.length,
-      tabs: ['License', 'Content', 'Programmatic'].map(function (t) { return { label: t, on: s.tab === t, pick: function () { self.setState({ tab: t }); } }; }),
+      tabs: ['License', 'Content', 'Advertisers'].map(function (t) { return { label: t, on: s.tab === t, pick: function () { self.setState({ tab: t }); } }; }),
       yes: true, i10: 10,
       tags: (D.assign.filter(function (a) { return a.kind === 'Host' && a.ref === h.id; })[0] || { tags: ['t1', 't7'] }).tags.map(function (t) { var tg = byId(D.tags, t); var c = { info: 'var(--info-main)', warning: 'var(--warning-main)', teal: 'var(--teal-main)', success: 'var(--success-400)', purple: 'var(--purple-main)', accent: 'var(--accent-action)', hotpink: 'var(--hot-pink-main)' }; return { name: tg ? tg.name : t, color: c[tg ? tg.color : 'info'] }; }),
       usage: s.lic.filter(function (l) { return l.screen; }).length, newly: Math.min(2, s.lic.length),
-      actionsOpen: s.actionsOpen, toggleActions: function () { self.setState({ actionsOpen: !self.state.actionsOpen }); },
-      selLabel: Object.keys(s.sel).filter(function (k) { return s.sel[k]; }).length ? Object.keys(s.sel).filter(function (k) { return s.sel[k]; }).length + ' selected' : 'Select licenses to take action',
-      actions: [['Reload', 'arrows-rotate', ''], ['Unassign License', 'x', ''], ['Content Update', 'download', ''], ['Screenshot', 'image', ''], ['Reboot Player', 'arrow-rotate-right', ''], ['Reboot Pi', 'power-off', '']].map(function (a) { return { label: a[0], icon: a[1], cls: a[2], run: function () {
-        var ids = Object.keys(self.state.sel).filter(function (k) { return self.state.sel[k]; });
-        self.setState({ actionsOpen: false });
-        if (a[0] === 'Unassign License') { if (ids.length) self.setState({ modal: 'unassign', pending: ids[0] }); else toast(self, 'Select a license first', 'warning'); return; }
-        toast(self, a[0] + ' sent to ' + (ids.length || s.lic.length) + ' license(s)', 'info'); } }; }),
+      selCount: Object.keys(s.sel).filter(function (k) { return s.sel[k]; }).length,
+      selLabel: (function (n) { return n ? n + ' selected' : 'Select licenses to unassign'; })(Object.keys(s.sel).filter(function (k) { return s.sel[k]; }).length),
+      openUnassign: function () { var ids = Object.keys(self.state.sel).filter(function (k) { return self.state.sel[k]; }); if (!ids.length) { toast(self, 'Select a license first', 'warning'); return; } self.setState({ modal: 'unassign', pending: ids }); },
+      openAssign: function () { self.setState({ modal: 'assign', assignSel: {} }); },
+      assignable: D.licenses.filter(function (l) { return !l.host && !s.lic.some(function (x) { return x.id === l.id; }); }).map(function (l) { return { id: l.id, alias: l.alias, key: l.key, type: l.type, checked: !!s.assignSel[l.id], toggle: function () { var o = Object.assign({}, self.state.assignSel); o[l.id] = !o[l.id]; self.setState({ assignSel: o }); } }; }),
+      assignCount: Object.keys(s.assignSel).filter(function (k) { return s.assignSel[k]; }).length,
+      doAssign: function () {
+        var ids = Object.keys(self.state.assignSel).filter(function (k) { return self.state.assignSel[k]; });
+        var add = D.licenses.filter(function (l) { return ids.indexOf(l.id) !== -1; }).map(function (l) { return Object.assign({}, l, { host: h.id, status: 'ready' }); });
+        self.setState({ lic: self.state.lic.concat(add), modal: '', assignSel: {} });
+        toast(self, add.length + ' license(s) assigned to ' + h.name);
+      },
+      licFilterGroups: [
+        { key: 'status', title: 'Status', options: ['Online', 'Offline', 'Pending Install', 'Ready for Pairing', 'Disabled'] },
+        { key: 'type', title: 'Type', options: ['Ad', 'Menu', 'Closed', 'Announcement'] }
+      ],
+      licF: s.licF, setLicF: function (x) { self.setState({ licF: x }); },
+      contentFilterGroups: [{ key: 'kind', title: 'Content Type', options: ['Video', 'Image', 'Widget'] }],
+      contentF: s.contentF, setContentF: function (x) { self.setState({ contentF: x }); },
       licQ: s.licQ, setLicQ: function (v) { self.setState({ licQ: val(v) }); },
       contentQ: s.contentQ, setContentQ: function (v) { self.setState({ contentQ: val(v) }); },
       exportIt: function () { toast(self, 'Exporting licenses to Excel…', 'info'); },
       refresh: function () { toast(self, 'License statuses refreshed', 'info'); },
-      tab: { lic: s.tab === 'License', content: s.tab === 'Content', prog: s.tab === 'Programmatic' },
-      lcols: '40px 46px 80px minmax(260px, 1.6fr) 120px 60px minmax(150px, 1fr) 100px 100px 140px 160px 150px 90px',
-      licRows: s.lic.filter(function (l) { return contains(l.key + ' ' + l.alias, s.licQ); }).map(function (l, i) {
+      tab: { lic: s.tab === 'License', content: s.tab === 'Content', adv: s.tab === 'Advertisers' },
+      lcols: '40px 46px 80px minmax(260px, 1.6fr) 120px 70px minmax(150px, 1fr) 100px 100px 140px 160px 160px 130px 150px',
+      licRows: s.lic.filter(function (l) { return contains(l.key + ' ' + l.alias, s.licQ) && passes(s.licF, 'status', (STATUS[l.status] || {}).label) && passes(s.licF, 'type', l.type); }).map(function (l, i) {
         var st = STATUS[l.status], on = l.status === 'online', sc = l.screen ? byId(D.screens, l.screen) : null, pl = sc ? plByName(sc.zones.Main) : null, mm = pl ? byId(D.media, pl.items[0]) : null, k = parseInt(l.id.slice(1), 10), hx = function (n) { return ('0' + ((k * n) % 256).toString(16)).slice(-2); };
-        return { checked: !!s.sel[l.id], toggle: function () { var o = Object.assign({}, self.state.sel); o[l.id] = !o[l.id]; self.setState({ sel: o }); }, hasShot: on && !!mm, shot: mm ? mm.image : '', quality: on ? 'Good' : '—', mac: 'd8:3a:dd:' + hx(7) + ':' + hx(13) + ':' + hx(29), startup: on ? 'Nov 0' + (1 + k % 9) + ', 2026 9:10 PM' : '—', n: i + 1, alias: l.alias, key: l.key, status: st.label, color: st.color, type: l.type, screen: l.screen ? screenName(l.screen) : '—', net: l.net === 'WiFi' ? 'wlan' : (l.net ? 'eth0' : '—'), install: l.install, dateOpen: s.dateFor === l.id,
+        return { checked: !!s.sel[l.id], toggle: function () { var o = Object.assign({}, self.state.sel); o[l.id] = !o[l.id]; self.setState({ sel: o }); }, hasShot: on && !!mm, shot: mm ? mm.image : '', quality: on ? 'Good' : '—', mac: 'd8:3a:dd:' + hx(7) + ':' + hx(13) + ':' + hx(29), startup: on ? 'Nov 0' + (1 + k % 9) + ', 2026 9:10 PM' : '—', disconnected: l.status === 'offline' ? 'Nov 0' + (1 + k % 9) + ', 2026 11:42 AM' : (on ? 'Oct ' + (10 + k % 18) + ', 2026 6:05 AM' : '—'), request: l.request || '—', n: i + 1, alias: l.alias, key: l.key, status: st.label, color: st.color, type: l.type, screen: l.screen ? screenName(l.screen) : '—', net: l.net === 'WiFi' ? 'wlan' : (l.net ? 'eth0' : '—'), install: l.install, dateOpen: s.dateFor === l.id,
           open: navFn('DealerLicenseDetail.dc.html', { id: l.id }),
           openScreen: navFn('DealerScreenDetail.dc.html', { id: l.screen }),
           openDate: function () { self.setState({ dateFor: self.state.dateFor === l.id ? '' : l.id }); },
@@ -87,16 +102,27 @@ class Component extends DCLogic {
         toast(self, 'Install date set to ' + txt);
       },
       openAllLic: navFn('DealerLicenses.dc.html', { host: h.id, hostName: h.name }),
-      content: content.filter(function (m) { return contains(m.title, s.contentQ); }).map(function (m) { var B = { image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'] }[m.kind] || ['IMAGE', 'var(--info-main)']; return { image: m.image, title: m.title, badge: B[0], badgeColor: B[1] }; }),
+      content: content.filter(function (m) { return contains(m.title, s.contentQ) && passes(s.contentF, 'kind', m.kind.charAt(0).toUpperCase() + m.kind.slice(1)); }).map(function (m) { var B = { image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'] }[m.kind] || ['IMAGE', 'var(--info-main)']; return { image: m.image, title: m.title, badge: B[0], badgeColor: B[1] }; }),
       contentCount: content.length, noContent: content.length === 0,
       openMedia: navFn('DealerMedia.dc.html', { host: h.id, hostName: h.name }),
+      advQ: s.advQ, setAdvQ: function (v) { self.setState({ advQ: val(v) }); },
+      advF: s.advF, setAdvF: function (x) { self.setState({ advF: x }); },
+      advFilterGroups: [
+        { key: 'category', title: 'Category', options: advs.map(function (a) { return a.category; }).filter(function (c, i, arr) { return arr.indexOf(c) === i; }).sort() },
+        { key: 'status', title: 'Status', options: ['Active', 'Inactive'] }
+      ],
+      acols: '50px minmax(220px, 2fr) 1fr 1fr 80px 100px 110px',
+      advRows: advs.filter(function (a) { return contains(a.name + ' ' + a.category + ' ' + a.city, s.advQ) && passes(s.advF, 'category', a.category) && passes(s.advF, 'status', a.status); }).map(function (a, i) {
+        return { n: i + 1, name: a.name, category: a.category, city: a.city, state: a.state, content: D.media.filter(function (m) { return m.adv === a.id; }).length, status: a.status, color: a.status === 'Active' ? 'var(--success-main)' : 'var(--danger-main)', created: a.created, open: navFn('DealerAdvertiserDetail.dc.html', { id: a.id }) };
+      }),
+      noAdv: advs.length === 0,
       networks: (h.networks || []).map(function (n, i) { return { name: n.name, label: n.on ? 'Enabled' : 'Disabled', color: n.on ? 'var(--success-600)' : 'var(--fg-secondary)', tint: n.on ? 'var(--success-050)' : 'var(--primary-100)', slots: n.on ? (6 - i * 2) + ' slots' : '—' }; }),
       pushOpen: s.push,
       pushTargets: s.lic.filter(function (l) { return l.screen; }).map(function (l) { return { alias: l.alias, willFail: l.status !== 'online' }; }),
       openPush: function () { self.setState({ push: true }); },
       closePush: function () { self.setState({ push: false }); },
       pushDone: function () {},
-      m: { edit: s.modal === 'edit', confirmSave: s.modal === 'confirmSave', unassign: s.modal === 'unassign', delete: s.modal === 'delete' },
+      m: { edit: s.modal === 'edit', confirmSave: s.modal === 'confirmSave', unassign: s.modal === 'unassign', assign: s.modal === 'assign', delete: s.modal === 'delete' },
       closeModal: function () { self.setState({ modal: '' }); },
       openEdit: function () { self.setState({ modal: 'edit', edit: self.makeEdit(self.state.h) }); },
       categories: ['Restaurant', 'Cafe', 'Auto Service', 'Gym', 'Pharmacy', 'Dental', 'Salon', 'Grocery', 'Bar', 'Laundry', 'Retail', 'Hotel', 'Veterinary', 'Clinic', 'Bakery'],
@@ -118,12 +144,12 @@ class Component extends DCLogic {
         self.setState({ h: Object.assign({}, self.state.h, { name: x.name, category: x.category, address: x.address, city: x.city, state: x.state, zip: x.zip, status: x.active ? (self.state.h.status === 'Inactive' ? 'Active' : self.state.h.status) : 'Inactive' }), modal: '' });
         toast(self, deact ? 'Host deactivated' : 'Host details updated');
       },
-      pendingAlias: (byId(s.lic, s.pending) || {}).alias || '',
-      doUnassign: function () { var id = self.state.pending, a = byId(self.state.lic, id).alias; self.setState({ lic: self.state.lic.filter(function (l) { return l.id !== id; }), modal: '', pending: '' }); toast(self, a + ' unassigned from ' + h.name); },
+      pendingAlias: (function (ids) { ids = [].concat(ids || []); return ids.length === 1 ? ((byId(s.lic, ids[0]) || {}).alias || '') : ids.length + ' licenses'; })(s.pending),
+      doUnassign: function () { var ids = [].concat(self.state.pending || []), a = ids.length === 1 ? byId(self.state.lic, ids[0]).alias : ids.length + ' licenses'; var sel = Object.assign({}, self.state.sel); ids.forEach(function (id) { delete sel[id]; }); self.setState({ lic: self.state.lic.filter(function (l) { return ids.indexOf(l.id) === -1; }), sel: sel, modal: '', pending: '' }); toast(self, a + ' unassigned from ' + h.name); },
       openDelete: function () { self.setState({ modal: 'delete' }); },
       del: s.lic.length ? { can: false, status: 'error', title: 'Can’t Delete Host', cancel: 'Close', text: h.name + ' still has ' + s.lic.length + ' license(s) assigned. Unassign them in the License tab first, then delete the host.' }
         : { can: true, status: 'warning', title: 'Delete Host?', cancel: 'Cancel', text: 'Delete ' + h.name + '? Its content and history will be removed. This can’t be undone.' },
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
   }
 }
@@ -169,9 +195,19 @@ defineTemplate(Component, (v) => (
                 </div>
                 <div className="dv-kv2">
                   <span>Business Hours</span>
-                  <span className="dv-row" style={{ gap: "4px" }}>
-                    {v.h?.hours}{" "}
-                    <NTV.Icon name="angle-down" size={v.i10} />
+                  <span className="hd-hrs" tabIndex={0}>
+                    <span className="dv-row" style={{ gap: "4px" }}>
+                      {v.h?.hours}{" "}
+                      <NTV.Icon name="angle-down" size={v.i10} />
+                    </span>
+                    <span className="hd-hrs__pop" role="tooltip">
+                      {(v.h?.hoursList || []).map((_d) => (
+                        <span key={_d.day} className={"hd-hrs__row" + (_d.today ? " is-today" : "")}>
+                          <span>{_d.day}</span>
+                          <span>{_d.text}</span>
+                        </span>
+                      ))}
+                    </span>
                   </span>
                 </div>
                 <div className="dv-kv2">
@@ -277,27 +313,15 @@ defineTemplate(Component, (v) => (
           {v.tab?.lic ? (
             <>
               <div className="dv-between">
-              <div className="dv-row" style={{ position: "relative" }}>
-                <NTV.IconButton icon="gear" label="Take action" variant="secondary" size="m" onClick={v.toggleActions} />
-                {v.actionsOpen ? (
-                  <>
-                    <div className="dv-menu" role="menu" style={{ top: "42px", left: "0", minWidth: "200px" }}>
-                    {(v.actions || []).map((_a, $index) => (
-                      <React.Fragment key={$index}>
-                        <button type="button" className={`dv-mi ${s(_a?.cls)}`} onClick={_a?.run}>
-                          <NTV.Icon name={_a?.icon} size={v.i12} />
-                          {_a?.label}
-                        </button>
-                      </React.Fragment>
-                    ))}
-                  </div>
-                  </>
-                ) : null}
+              <div className="dv-row">
+                <FilterBy groups={v.licFilterGroups} value={v.licF} onChange={v.setLicF} />
+                <NTV.Button variant="secondary" size="xl" iconLeft="barcode" onClick={v.openAssign}>Assign License</NTV.Button>
                 <span className="dv-sub">{v.selLabel}</span>
               </div>
               <div className="dv-row">
                 <NTV.Input size="l" placeholder="Search License Key or Alias" iconLeft="magnifying-glass" iconRight="sparkles" label="Search licenses" value={v.licQ} onChange={v.setLicQ} style={{ width: "380px" }} />
                 <NTV.Button variant="secondary" size="xl" iconRight="file-excel" onClick={v.exportIt}>Export</NTV.Button>
+                <NTV.Button variant="secondary" size="xl" iconRight="link-simple-slash" disabled={!v.selCount} onClick={v.openUnassign}>Unassign</NTV.Button>
               </div>
             </div>
               <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -321,7 +345,7 @@ defineTemplate(Component, (v) => (
                 </div>
               </div>
               <div className="dv-table">
-                <div role="table" aria-label="Host licenses" style={{ minWidth: "1650px" }}>
+                <div role="table" aria-label="Host licenses" style={{ minWidth: "1800px" }}>
                   <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: `${s(v.lcols)}` }}>
                     <div />
                     <div style={{ textAlign: "center" }}>#</div>
@@ -334,8 +358,9 @@ defineTemplate(Component, (v) => (
                     <div>Internet Speed</div>
                     <div>MAC Address</div>
                     <div>Last Startup</div>
+                    <div>Last Disconnected</div>
                     <div>Installation Date</div>
-                    <div>Action</div>
+                    <div>Install Request Date</div>
                   </div>
                   {(v.licRows || []).map((_l, $index) => (
                     <React.Fragment key={$index}>
@@ -366,13 +391,12 @@ defineTemplate(Component, (v) => (
                         <div>{_l?.quality}</div>
                         <div>{_l?.mac}</div>
                         <div>{_l?.startup}</div>
+                        <div>{_l?.disconnected}</div>
                         <div className="dv-row" style={{ gap: "4px" }}>
                           {_l?.install}
                           <button type="button" className="dv-ib" style={{ width: "22px", height: "22px", color: "var(--accent-action)" }} aria-label="Edit install date" onClick={_l?.openDate}><NTV.Icon name="pencil" size={v.i10} /></button>
                         </div>
-                        <div>
-                          <button type="button" className="dv-a" onClick={_l?.unassign} style={{ color: "var(--danger-main)", fontSize: "12px" }}>Unassign</button>
-                        </div>
+                        <div>{_l?.request}</div>
                       </div>
                     </React.Fragment>
                   ))}
@@ -389,7 +413,7 @@ defineTemplate(Component, (v) => (
           {v.tab?.content ? (
             <>
               <div className="dv-between">
-              <NTV.Button variant="secondary" size="m" iconLeft="filter" iconRight={v.none} onClick={v.openMedia}>Filter by</NTV.Button>
+              <FilterBy groups={v.contentFilterGroups} value={v.contentF} onChange={v.setContentF} />
               <NTV.Input size="l" placeholder="Search Content Name" iconLeft="magnifying-glass" label="Search content" value={v.contentQ} onChange={v.setContentQ} style={{ width: "380px" }} />
             </div>
               <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
@@ -418,25 +442,51 @@ defineTemplate(Component, (v) => (
             </section>
             </>
           ) : null}
-          {v.tab?.prog ? (
+          {v.tab?.adv ? (
             <>
-              <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div className="dv-between">
-                <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>Programmatic</h2>
-                <span className="dv-row dv-sub" style={{ gap: "6px" }}>
-                  <NTV.Icon name="lock" size={v.i10} />
-                  Managed by NTV360 · read only
-                </span>
+                <FilterBy groups={v.advFilterGroups} value={v.advF} onChange={v.setAdvF} />
+                <NTV.Input size="l" placeholder="Search Advertiser Name, Category or City" iconLeft="magnifying-glass" label="Search advertisers" value={v.advQ} onChange={v.setAdvQ} style={{ width: "380px" }} />
               </div>
-              {(v.networks || []).map((_n, $index) => (
-                <React.Fragment key={$index}>
-                  <div className="dv-row" style={{ padding: "10px 12px", border: "1px solid var(--container-border)", borderRadius: "var(--radius-sm)" }}>
-                    <NTV.Checkbox checked={_n?.on} disabled={v.yes} label={_n?.name} />
-                    <span className="dv-sub" style={{ marginLeft: "auto" }}>{_n?.slots}</span>
+              <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div className="dv-row" style={{ gap: "20px" }}>
+                  <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>
+                    {"Advertisers Data "}
+                    <span className="dv-sub" style={{ display: "inline", fontWeight: "400" }}>({v.advCount})</span>
+                  </h2>
+                  <div className="dv-legend" aria-label="Legend">
+                    <span><span className="dv-dot" style={{ background: "var(--success-main)" }} />Active</span>
+                    <span><span className="dv-dot" style={{ background: "var(--danger-main)" }} />Inactive</span>
                   </div>
-                </React.Fragment>
-              ))}
-            </section>
+                </div>
+                <div className="dv-table">
+                  <div role="table" aria-label="Host advertisers" style={{ minWidth: "900px" }}>
+                    <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: v.acols }}>
+                      <div style={{ textAlign: "center" }}>#</div>
+                      <div>Advertiser Name</div>
+                      <div>Category</div>
+                      <div>City</div>
+                      <div>State</div>
+                      <div>Content</div>
+                      <div>Date Created</div>
+                    </div>
+                    {(v.advRows || []).map((_a) => (
+                      <div key={_a.n} role="row" className="dv-tr" style={{ gridTemplateColumns: v.acols, boxShadow: `inset 4px 0 0 ${_a.color}` }}>
+                        <div style={{ textAlign: "center" }}>{_a.n}</div>
+                        <div><a className="dv-a" style={{ fontWeight: "500", color: "var(--fg-primary)" }} href="DealerAdvertiserDetail.dc.html" onClick={_a.open} data-nav={_a.openNav}>{_a.name}</a></div>
+                        <div>{_a.category}</div>
+                        <div>{_a.city}</div>
+                        <div>{_a.state}</div>
+                        <div>{_a.content}</div>
+                        <div>{_a.created}</div>
+                      </div>
+                    ))}
+                    {!(v.advRows || []).length ? (
+                      <div className="dv-empty" style={{ borderTop: "1px solid var(--container-border)" }}>{v.noAdv ? "No advertisers at this host yet." : "No advertisers match your filters."}</div>
+                    ) : null}
+                  </div>
+                </div>
+              </section>
             </>
           ) : null}
         </main>
@@ -540,6 +590,31 @@ defineTemplate(Component, (v) => (
         </div>
         </>
       ) : null}
+      {v.m?.assign ? (
+        <>
+          <div className="dv-ov">
+          <NTV.Modal title="Assign License" width={v.w640} onClose={v.closeModal}>
+            <p className="dv-sub" style={{ margin: "-8px 0 16px" }}>{"Pick unassigned licenses to add to "}{v.h?.name}</p>
+            <div style={{ display: "flex", flexDirection: "column", border: "1px solid var(--container-border)", borderRadius: "var(--radius-sm)", maxHeight: "300px", overflowY: "auto" }}>
+              {(v.assignable || []).map((_a) => (
+                <label key={_a.id} className="hd-pick">
+                  <NTV.Checkbox checked={_a.checked} onChange={_a.toggle} />
+                  <span style={{ display: "flex", flexDirection: "column", minWidth: "0" }}>
+                    <strong style={{ fontSize: "14px", lineHeight: "20px" }}>{_a.alias}</strong>
+                    <span className="dv-sub" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{_a.key}{" · "}{_a.type}</span>
+                  </span>
+                </label>
+              ))}
+              {!(v.assignable || []).length ? <div className="dv-empty">No unassigned licenses available.</div> : null}
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px" }}>
+              <NTV.Button variant="primary" tone="neutral" size="xl" iconRight={v.none} onClick={v.closeModal}>Cancel</NTV.Button>
+              <NTV.Button variant="primary" size="xl" iconRight={v.none} disabled={!v.assignCount} onClick={v.doAssign}>{"Assign" + (v.assignCount ? " (" + v.assignCount + ")" : "")}</NTV.Button>
+            </div>
+          </NTV.Modal>
+        </div>
+        </>
+      ) : null}
       {v.m?.unassign ? (
         <>
           <div className="dv-ov">
@@ -573,14 +648,7 @@ defineTemplate(Component, (v) => (
         </div>
         </>
       ) : null}
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));
