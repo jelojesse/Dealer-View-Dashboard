@@ -10,7 +10,7 @@ import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
 import Toast from '../components/Toast';
-import DateRangePicker, { fmtDate } from '../components/DateRangePicker';
+import DateRangePicker from '../components/DateRangePicker';
 import { addNav, arrived, byId, contains, go, hostName, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
 import ContentBlock from '../components/ContentBlock';
 import ContentThumb from '../components/ContentThumb';
@@ -21,44 +21,77 @@ import './DealerPlaylistDetail.css';
 
 /* ============================== Logic ============================== */
 
-// Schedule → "Play between dates" range (default Nov 15 – Dec 31, 2026).
-var TODAY = new Date(2026, 10, 11);
-var DEF_RANGE = { start: new Date(2026, 10, 15), end: new Date(2026, 11, 31) };
-function shortRange(r) { var f = function (d) { return fmtDate(d).replace(/, \d{4}$/, ''); }; return f(r.start) + ' – ' + f(r.end || r.start); }
+// Filter by → Content Type options (Figma "Single Page - All Use Cases", node 5596:34236)
+var KINDS = [{ key: 'image', label: 'Image' }, { key: 'video', label: 'Video' }, { key: 'widget', label: 'Widget' }, { key: 'block', label: 'Block' }];
 
-// Grid view: consecutive block members (channel tile + its member images) collapse into ONE
-// group entry spanning the summed columns (capped at the 8-column grid); others stay single tiles.
-function groupBlocks(items) {
-  var out = [], cur = null;
-  (items || []).forEach(function (it) {
-    if (it.inBlk) {
-      if (!cur) { cur = { isGroup: true, isTile: false, tiles: [], cols: 0 }; out.push(cur); }
-      cur.tiles.push(it); cur.cols += it.span;
-    } else { cur = null; out.push({ isGroup: false, isTile: true, tile: it }); }
-  });
-  out.forEach(function (e) { if (e.isGroup) { e.span = Math.min(e.cols, 8); e.inner = 'repeat(' + e.span + ', minmax(0, 1fr))'; } });
-  return out;
-}
+// "Today" for schedule status (the mock data's current date)
+var TODAY = '2026-11-11';
+var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+var fmtDate = function (iso) { var x = (iso || '').split('-'); return x.length === 3 ? MON[+x[1] - 1] + ' ' + (+x[2]) : iso; };
+// Schedule status → caption color (Figma: green playing, orange upcoming, red ended)
+var schedState = function (it) { if (it.always || !it.start || !it.end) return ''; return TODAY < it.start ? 'upcoming' : (TODAY > it.end ? 'expired' : 'active'); };
+var SCHED = { active: ['var(--success-main)', 'Playing now'], upcoming: ['var(--warning-main)', 'Upcoming'], expired: ['var(--danger-main)', 'Ended'] };
+// Block group frame colors, in order of appearance
+var GROUP_COLORS = ['var(--warning-main)', 'var(--danger-main)', 'var(--success-main)', 'var(--primary-400)'];
+var GRID_COLS = 8;
+var GRID_ROWS_STEP = 5;   // grid view shows 5 rows, then 5 more each time you scroll near the end
+var LIST_PAGE_SIZE = 10;  // list view paginates (no reordering there)
+// List view helpers (Figma "Single Page - List", node 5596:34412)
+var MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+var fullDate = function (d) { var x = /^([A-Z][a-z]{2}) (\d+), (\d{4})$/.exec(d || ''); if (!x) return d || '—'; var i = MON.indexOf(x[1]); return i < 0 ? d : MONTHS_FULL[i] + ' ' + x[2] + ', ' + x[3]; };
+var longDur = function (d) { var n = parseInt(d, 10); if (isNaN(n)) return d || '—'; if (n < 60) return n + ' sec'; var m = Math.floor(n / 60), r = n % 60; return m + ' min' + (r ? ' and ' + r + ' sec' : ''); };
+var uploaderOf = function (m) { if (m.adv) { var a = byId(D.advertisers, m.adv); if (a) return a.name; } if (m.host) return hostName(m.host); return 'Dealer Admin'; };
+// Filter by → Content Schedule Status (pick one). Active = playing now or "Always play"; In Queue = upcoming; Inactive = ended
+var SCHED_OPTS = [{ key: '', label: 'All' }, { key: 'active', label: 'Active' }, { key: 'upcoming', label: 'In Queue' }, { key: 'expired', label: 'Inactive' }];
+var PILL_OF = function (k) { return PILL[k] || PILL.image; };
+var schedBucket = function (it) { return schedState(it) || 'active'; };
+// Standalone thumbnail tag pills: [background, text]
+var PILL = { image: ['var(--info-050)', 'var(--info-main)'], video: ['var(--danger-050)', 'var(--danger-main)'], widget: ['var(--teal-050)', 'var(--teal-600)'], block: ['var(--primary-050)', 'var(--fg-secondary)'] };
 
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     var f = arrived('DealerPlaylistDetail.dc.html') || {};
     var p = byId(D.playlists, f.id) || D.playlists[0];
-    var items = p.items.map(function (id, i) { var m = byId(D.media, id); return m ? { key: 'k' + i, blk: !!(p.block && i === 0), inBlk: !!(p.block && p.items.length > 2 && i < 4), m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: true } : null; }).filter(Boolean);
-    this.state = { view: 'grid', kind: '', q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', libQ: '', push: false, ad: null, md: null, info: null, toast: null };
+    // blocks: p.blocks = { itemId: [memberIds] } (any item can be a block); p.blockByIndex = { position: [memberIds] } overrides
+    // members for one occurrence (same channel used twice); legacy: p.block + p.blockMembers = first item
+    var items = p.items.map(function (id, i) { var m = byId(D.media, id); var blk = p.blocks ? !!p.blocks[id] : !!(p.block && i === 0); var sc = (p.schedules || {})[id];
+      return m ? { key: 'k' + i, blk: blk, m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: !sc, start: sc ? sc[0] : '', end: sc ? sc[1] : '',
+        members: blk ? (((p.blockByIndex || {})[i] || (p.blocks ? p.blocks[id] : p.blockMembers)) || []).map(function (mid) { return byId(D.media, mid); }).filter(Boolean) : null } : null; }).filter(Boolean);
+    var gi = 0; items.forEach(function (it) { if (it.blk) it.color = GROUP_COLORS[gi++ % GROUP_COLORS.length]; });
+    this.state = { view: 'grid', kinds: [], sched: '', q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', menuRect: null, hoverGrp: '', rowLimit: GRID_ROWS_STEP, listPage: 1, drag: '', over: '', target: '', mvPos: '1', swQ: '', libQ: '', libLimit: 10, push: false, ad: null, md: null, info: null, toast: null };
   }
-  componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
+  // grid infinite scroll: a sentinel under the grid loads 5 more rows when it scrolls into view
+  sentinelRef(el) {
+    var self = this;
+    if (self._io) { self._io.disconnect(); self._io = null; }
+    if (self._scrollEl) { self._scrollEl.removeEventListener('scroll', self._onScroll); self._scrollEl = null; }
+    if (!el) return;
+    var root = el.closest('.dv-scroll');
+    // add one step per load: ignore repeat triggers until the new rows have rendered
+    var more = function () { var lim = self.state.rowLimit; if (self._lastLim === lim) return; self._lastLim = lim; self.setState({ rowLimit: lim + GRID_ROWS_STEP }); };
+    if (typeof IntersectionObserver !== 'undefined') {
+      self._io = new IntersectionObserver(function (entries) { if (entries[0] && entries[0].isIntersecting) more(); }, { root: root, rootMargin: '0px 0px 240px 0px' });
+      self._io.observe(el);
+    }
+    // backup for browsers/tabs where the observer doesn't run: check on scroll
+    if (root) {
+      self._onScroll = function () { var r = el.getBoundingClientRect(), rr = root.getBoundingClientRect(); if (el.isConnected && r.top <= rr.bottom + 240) more(); };
+      self._scrollEl = root; root.addEventListener('scroll', self._onScroll, { passive: true });
+    }
+  }
+  componentWillUnmount() { if (this._io) this._io.disconnect(); if (this._scrollEl) this._scrollEl.removeEventListener('scroll', this._onScroll); clearTimeout(this._hoverT); if (this._tt) clearTimeout(this._tt); }
   renderVals() {
-    var self = this, s = this.state, p = s.p;
+    var self = this, s = this.state, p = s.p, itemVMs = [], libAll = [], gridRows = 0;
     var secs = function (d) { return parseInt(d, 10) || 15; };
     var loop = s.items.reduce(function (a, it) { return a + secs(it.dur); }, 0);
     var selKeys = Object.keys(s.sel).filter(function (k) { return s.sel[k]; });
+    var markable = s.items.filter(function (it) { return !it.blk; });
     var scs = p.screens.map(function (id) { return byId(D.screens, id); }).filter(Boolean);
     var move = function (i, d) { var a = self.state.items.slice(), j = i + d; if (j < 0 || j >= a.length) return; var t = a[i]; a[i] = a[j]; a[j] = t; self.setState({ items: a }); };
     var inPl = {}; s.items.forEach(function (it) { inPl[it.m.id] = 1; });
     var close = function () { self.setState({ modal: '' }); };
-    var addItems = function (ms) { var base = self.state.items.length; self.setState({ items: self.state.items.concat(ms.map(function (m, i) { return { key: 'n' + Date.now() + i, blk: m.kind === 'block', m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: true }; })) }); };
+    var addItems = function (ms) { var base = self.state.items.length; self.setState({ items: ms.map(function (m, i) { return { key: 'n' + Date.now() + i, blk: m.kind === 'block', m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: true, start: '', end: '', members: m.members || null, color: m.kind === 'block' ? GROUP_COLORS[(self.state.items.filter(function (x) { return x.blk; }).length + i) % GROUP_COLORS.length] : undefined }; }).concat(self.state.items) }); };
     // add content wizard
     var ad = s.ad || { step: 0, kind: 'single', sel: {}, q: '', blockName: '', layout: '2 + 2 grid', dur: '15 sec' };
     var setAd = function (o) { self.setState({ ad: Object.assign({}, self.state.ad, o) }); };
@@ -73,21 +106,36 @@ class Component extends DCLogic {
       none: null, i12: 12, i14: 14, i32: 32, w460: 460, w500: 500, w640: 640, w960: 960,
       crumbs: [{ label: 'Playlist', href: 'DealerPlaylists.dc.html' }, p.name],
       name: p.name, desc: p.desc, count: s.items.length, loop: loop >= 60 ? Math.floor(loop / 60) + 'm ' + (loop % 60) + 's' : loop + 's',
-      tabs: [['Content', 'Content Management'], ['Screens', 'Screens']].map(function (t) { return { label: t[1], on: s.tab === t[0], pick: function () { self.setState({ tab: t[0] }); } }; }),
+      tabItems: [{ value: 'Content', label: 'Content Management' }, { value: 'Screens', label: 'Screens' }], tab: s.tab, setTab: function (x) { self.setState({ tab: x }); },
       i24: 24, i10: 10,
-      kindLabel: s.kind ? 'Filter: ' + s.kind + 's' : 'Filter by', cycleKind: function () { var o = ['', 'image', 'video', 'widget']; self.setState({ kind: o[(o.indexOf(self.state.kind) + 1) % o.length] }); },
+      filterLabel: (s.kinds.length + (s.sched ? 1 : 0)) ? 'Filter by (' + (s.kinds.length + (s.sched ? 1 : 0)) + ')' : 'Filter by',
+      filterGroups: [{ title: 'Content Type', options: KINDS.map(function (k) {
+        return { label: k.label, checked: s.kinds.indexOf(k.key) !== -1, onChange: function (on) {
+          var cur = self.state.kinds; self.setState({ kinds: on ? cur.concat([k.key]) : cur.filter(function (x) { return x !== k.key; }) }); } };
+      }) }, { title: 'Content Schedule Status', single: true, options: SCHED_OPTS.map(function (o) {
+        return { label: o.label, checked: s.sched === o.key, onChange: function () { self.setState({ sched: o.key }); } };
+      }) }],
+      activeChips: KINDS.filter(function (k) { return s.kinds.indexOf(k.key) !== -1; }).map(function (k) { return { key: k.key, label: 'Type', value: k.label, tone: 'info',
+        onRemove: function () { self.setState({ kinds: self.state.kinds.filter(function (x) { return x !== k.key; }) }); } }; }).concat(s.sched ? [{ key: 'sched', label: 'Schedule', value: SCHED_OPTS.filter(function (o) { return o.key === s.sched; })[0].label, tone: 'teal',
+        onRemove: function () { self.setState({ sched: '' }); } }] : []),
+      clearKinds: function () { self.setState({ kinds: [], sched: '' }); },
+      view: s.view, setView: function (x) { if (self.state.reorder) return; self.setState({ view: x, listPage: 1 }); },
       q: s.q, setQ: function (v) { self.setState({ q: val(v) }); },
-      markLabel: s.items.length > 0 && selKeys.length === s.items.length ? 'Unmark All' : 'Mark All',
-      bulkModify: function () { var k = selKeys[0], it = self.state.items.filter(function (x) { return x.key === k; })[0]; if (it) self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, range: it.range || DEF_RANGE, bulk: selKeys } }); },
+      // Mark All only covers standalone contents — blocks are never bulk-selected (they can still be clicked individually)
+      allChecked: markable.length > 0 && markable.every(function (it) { return s.sel[it.key]; }), someChecked: selKeys.length > 0 && !(markable.length > 0 && markable.every(function (it) { return s.sel[it.key]; })),
+      markLabel: markable.length > 0 && markable.every(function (it) { return s.sel[it.key]; }) ? 'Unmark All' : 'Mark All',
+      bulkModify: function () { var k = selKeys[0], it = self.state.items.filter(function (x) { return x.key === k; })[0]; if (it) self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, start: it.start || '2026-11-15', end: it.end || '2026-12-31', bulk: selKeys } }); },
       isGrid: s.view === 'grid', isList: s.view === 'list', toGrid: function () { self.setState({ view: 'grid' }); }, toList: function () { self.setState({ view: 'list' }); },
-      libQ: s.libQ, setLibQ: function (v) { self.setState({ libQ: val(v), folder: val(v) ? '__search' : '' }); },
+      libQ: s.libQ, setLibQ: function (v) { self.setState({ libQ: val(v), folder: val(v) ? '__search' : '', libLimit: 10 }); },
       inFolder: !!s.folder, notInFolder: !s.folder,
-      folderName: s.folder === '__search' ? 'Search results' : (s.folder === '__assigned' ? 'My Contents' : s.folder),
-      backFolders: function () { self.setState({ folder: '', libQ: '' }); },
-      openAssigned: function () { self.setState({ folder: '__assigned' }); },
+      folderName: s.folder === '__search' ? 'Search results' : (s.folder === '__assigned' ? 'My Contents' : (s.folder === '__floating' ? 'Floating Contents' : s.folder)),
+      folderIcon: s.folder === '__assigned' ? 'users' : (s.folder === '__floating' ? 'ghost' : (s.folder === '__search' ? 'magnifying-glass' : '')),
+      isRealFolder: !!s.folder && s.folder.indexOf('__') !== 0,
+      backFolders: function () { self.setState({ folder: '', libQ: '', libLimit: 10 }); },
+      openAssigned: function () { self.setState({ folder: '__assigned', libLimit: 10 }); }, openFloating: function () { self.setState({ folder: '__floating', libLimit: 10 }); },
+      folders: ['Food Assets', 'Promo Videos', 'Brand Logos', 'Seasonal', 'Menus'].map(function (f) { return { name: f, n: D.media.filter(function (m) { return m.folder === f; }).length, open: function () { self.setState({ folder: f, libLimit: 10 }); } }; }),
+      folderCount: 5, folderShown: 5,
       uploadContent: function () { go('DealerMedia.dc.html'); },
-      folders: ['Food Assets', 'Promo Videos', 'Brand Logos', 'Seasonal', 'Menus'].map(function (f) { return { name: f, n: D.media.filter(function (m) { return m.folder === f; }).length, open: function () { self.setState({ folder: f }); } }; }),
-      folderCount: 5,
       hostGroups: (function () { var g = {}; scs.forEach(function (sc) { if (!contains(sc.name + ' ' + hostName(sc.host), s.scQ)) return; (g[sc.host] = g[sc.host] || []).push(sc); }); return Object.keys(g).map(function (hid) { var open = s.openHost === hid || (!s.openHost && hid === Object.keys(g)[0]); return { name: hostName(hid), count: g[hid].length, open: open, icon: open ? 'angle-up' : 'angle-down', toggle: function () { self.setState({ openHost: open ? '-' : hid }); },
         screens: g[hid].map(function (sc) { var z = Object.keys(sc.zones).filter(function (k) { return sc.zones[k] === p.name; }); return { name: sc.name, template: sc.template, zone: z.join(', ') || '—', bg: s.pvScreen === sc.id ? 'var(--accent-30)' : 'transparent', pick: function () { self.setState({ pvScreen: sc.id }); } }; }) }; }); })(),
       scQ: s.scQ, setScQ: function (v) { self.setState({ scQ: val(v) }); },
@@ -96,28 +144,127 @@ class Component extends DCLogic {
       pvZone: (function () { var sc = byId(D.screens, s.pvScreen); if (!sc) return 'main'; var z = Object.keys(sc.zones).filter(function (k) { return sc.zones[k] === p.name; })[0] || 'Main'; return z.toLowerCase(); })(),
       isContent: s.tab === 'Content', isScreens: s.tab === 'Screens',
       allSel: s.items.length > 0 && selKeys.length === s.items.length, someSel: selKeys.length > 0 && selKeys.length < s.items.length, noneSel: selKeys.length === 0, selCount: selKeys.length,
-      toggleAll: function () { var all = selKeys.length === s.items.length, o = {}; if (!all) s.items.forEach(function (it) { o[it.key] = true; }); self.setState({ sel: o }); },
-      reorder: s.reorder, notReorder: !s.reorder, reorderLabel: s.reorder ? 'Done' : 'Reorder', reorderVariant: s.reorder ? 'primary' : 'secondary',
-      toggleReorder: function () { if (self.state.reorder) toast(self, 'Play order saved'); self.setState({ reorder: !self.state.reorder }); },
+      toggleAll: function () { var all = markable.length > 0 && markable.every(function (it) { return s.sel[it.key]; }), o = {}; if (!all) markable.forEach(function (it) { o[it.key] = true; }); self.setState({ sel: o }); },
+      reorder: s.reorder, notReorder: !s.reorder, dragKey: s.drag, overKey: s.over, reorderLabel: s.reorder ? 'Done' : 'Reorder', reorderVariant: s.reorder ? 'primary' : 'secondary',
+      toggleReorder: function () { if (self.state.reorder) toast(self, 'Play order saved'); self.setState({ reorder: !self.state.reorder, drag: '', over: '', menu: '', hoverGrp: '', sel: {} }); },
       askBulk: function () { self.setState({ modal: 'bulk' }); },
       doBulk: function () { var sel = self.state.sel; self.setState({ items: self.state.items.filter(function (it) { return !sel[it.key]; }), sel: {}, modal: '' }); toast(self, selKeys.length + ' item(s) removed'); },
-      items: s.items.filter(function (it) { return (!s.kind || it.m.kind === s.kind) && contains(it.m.title, s.q); }).map(function (it, i) {
+      items: itemVMs = s.items.filter(function (it) { return (!s.kinds.length || s.kinds.indexOf(it.m.kind) !== -1) && (!s.sched || schedBucket(it) === s.sched) && contains(it.m.title, s.q); }).map(function (it, i) {
         var B = it.blk ? ['CHANNEL', 'var(--warning-main)'] : ({ image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'], block: ['BLOCK', 'var(--purple-main)'] }[it.m.kind] || ['IMAGE', 'var(--info-main)']);
         var sel = !!s.sel[it.key], idx = s.items.indexOf(it);
-        return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : 'transparent', capColor: it.blk ? '#fff' : 'var(--fg-primary)', n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)', sched: it.always ? 'Always' : shortRange(it.range || DEF_RANGE),
-          checked: sel, inBlk: !!it.inBlk, cls: sel ? 'sel' : (it.blk && !it.inBlk ? 'blk' : ''),
-          toggle: function () { var o = Object.assign({}, self.state.sel); o[it.key] = !o[it.key]; self.setState({ sel: o }); },
+        return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : (SCHED[schedState(it)] ? SCHED[schedState(it)][0] : 'var(--primary-050)'), capColor: (it.blk || schedState(it)) ? '#fff' : 'var(--fg-primary)', blk: it.blk, members: it.members || [], schedTip: schedState(it) ? SCHED[schedState(it)][1] + ' · ' + fmtDate(it.start) + ' – ' + fmtDate(it.end) : '', n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)',
+          checked: sel, cls: sel ? 'sel' : (it.blk ? 'blk' : ''), key: it.key, blockColor: it.color, typeTag: it.blk ? 'BLOCK' : B[0], longDur: longDur(it.dur), added: fullDate(it.m.uploaded), uploader: it.blk ? 'Dealer Admin' : uploaderOf(it.m), sched: !!schedState(it),
+          menuOpen: s.menu === it.key,
+          openMenu: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); var r = ev && ev.currentTarget && ev.currentTarget.getBoundingClientRect ? ev.currentTarget.getBoundingClientRect() : null; self.setState({ menu: self.state.menu === it.key ? '' : it.key, menuRect: r }); },
+          menuRect: s.menuRect,
+          closeMenu: function () { self.setState({ menu: '' }); },
+          menuItems: [
+            { icon: 'maximize', label: 'Fullscreen', onClick: function () { self.setState({ modal: 'full', target: it.key }); } },
+            { icon: 'retweet', label: 'Quick Move', tone: 'info', onClick: function () { self.setState({ modal: 'move', target: it.key, mvPos: String(idx + 1) }); } },
+            { icon: 'right-left', label: 'Swap Content', tone: 'warning', onClick: function () { self.setState({ modal: 'swap', target: it.key, swQ: '' }); } },
+            { icon: 'gear', label: 'Settings', tone: 'success', onClick: function () { self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, start: it.start || '2026-11-15', end: it.end || '2026-12-31' } }); } },
+            'divider',
+            { icon: 'x', label: 'Remove', tone: 'danger', onClick: function () { self.setState({ modal: 'remove', target: it.key }); } }
+          ],
+          // blocks can never be selected (no click-select, no Mark All, no checkbox)
+          toggle: it.blk ? null : function () { var o = Object.assign({}, self.state.sel); o[it.key] = !o[it.key]; self.setState({ sel: o }); },
           up: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); move(idx, -1); }, down: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); move(idx, 1); },
-          modify: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, range: it.range || DEF_RANGE } }); } };
+          modify: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, start: it.start || '2026-11-15', end: it.end || '2026-12-31' } }); } };
       }),
+      cells: (function (list) {
+        var BADGE = { image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'], block: ['BLOCK', 'var(--purple-main)'] };
+        var cells = [], g = 0;
+        list.forEach(function (it) {
+          if (!it.blk) { cells.push({ it: it, span: 1, head: false, grp: '' }); return; }
+          var color = it.blockColor || GROUP_COLORS[g % GROUP_COLORS.length], gid = 'g' + (++g);
+          cells.push({ it: it, span: 2, head: true, grp: gid, color: color });
+          it.members.forEach(function (m) { cells.push({ it: it, span: 1, head: false, grp: gid, color: color, m: m, badge: (BADGE[m.kind] || BADGE.image) }); });
+        });
+        var col = 0, row = 0;
+        cells.forEach(function (c) {
+          if (c.head && col === GRID_COLS - 1) c.span = 1;          // channel landing on the last column shrinks to one cell
+          if (col + c.span > GRID_COLS) { col = 0; row++; }
+          c.col = col; c.row = row; col += c.span;
+          if (col >= GRID_COLS) { col = 0; row++; }
+        });
+        gridRows = row + (col > 0 ? 1 : 0);
+        // split each block group into per-row segments; the widest segment shows the hover title + menu
+        var segs = {};
+        cells.forEach(function (c, k) {
+          if (!c.grp) return;
+          var prev = cells[k - 1], list = segs[c.grp] = segs[c.grp] || [];
+          if (!(prev && prev.grp === c.grp) || c.col === 0) list.push({ first: k, span: 0 });
+          var sg = list[list.length - 1]; sg.span += c.span; c.seg = sg;
+        });
+        Object.keys(segs).forEach(function (gid) { var list = segs[gid], best = list[0]; list.forEach(function (sg) { if (sg.span > best.span) best = sg; }); best.main = true; });
+        return cells.map(function (c, k) {
+          var prev = cells[k - 1], next = cells[k + 1], it = c.it;
+          var first = !!c.grp && !(prev && prev.grp === c.grp), last = !!c.grp && !(next && next.grp === c.grp);
+          var segStart = !!c.grp && (first || c.col === 0), segEnd = !!c.grp && (last || !next || next.col === 0);
+          var cls = c.grp ? ['grp', segStart ? 'seg-start' : '', segEnd ? 'seg-end' : '', segStart && !first ? 'dash-l' : '', segEnd && !last ? 'dash-r' : ''].join(' ') : '';
+          var member = !!c.m;
+          var std = !c.grp, pill = PILL[it.kind] || PILL.image;
+          var segFirst = !!c.grp && c.seg.first === k, hovered = !!c.grp && s.hoverGrp === c.grp;
+          var grpSecs = c.grp ? (parseInt(it.dur, 10) || 0) + it.members.reduce(function (n, m) { return n + (parseInt(m.duration, 10) || 15); }, 0) : 0;
+          return { key: (c.grp || '') + k, span: c.span, row: c.row, itemKey: it.key, cls: cls + (it.checked ? ' sel' : '') + (std ? ' std' : '') + (std && it.sched ? ' sched' : '') + (std && it.menuOpen ? ' menu-open' : ''), color: c.color || 'transparent', toggle: it.toggle,
+            std: std, checked: it.checked, pillBg: pill[0], pillFg: pill[1], menuOpen: (std || (segFirst && c.seg.main)) && it.menuOpen, openMenu: it.openMenu, closeMenu: it.closeMenu,
+            menuItems: std ? it.menuItems : it.menuItems.filter(function (x) { return x === 'divider' || x.label !== 'Swap Content'; }),
+            grpHover: hovered || (!!c.grp && it.menuOpen), overlay: segFirst && (hovered || it.menuOpen), overlaySpan: segFirst ? c.seg.span : 0, overlayMain: segFirst && !!c.seg.main,
+            grpName: c.grp ? it.title : '', grpInfo: c.grp ? (it.members.length + 1) + ' contents' : '', grpSecs: grpSecs + ' seconds',
+            // hover is debounced: the overlay covers tiles when it appears, which makes the browser report a "leave";
+            // a short delay (cancelled by any enter inside the block) keeps it from blinking
+            enter: c.grp && !s.reorder ? function () { clearTimeout(self._hoverT); if (self.state.hoverGrp !== c.grp) self.setState({ hoverGrp: c.grp }); } : null,
+            leave: c.grp && !s.reorder ? function () { clearTimeout(self._hoverT); self._hoverT = setTimeout(function () { if (self.state.hoverGrp) self.setState({ hoverGrp: '' }); }, 120); } : null,
+            image: member ? c.m.image : it.image, title: member ? c.m.title : it.title, badge: member ? c.badge[0] : it.badge, badgeColor: member ? c.badge[1] : it.badgeColor,
+            n: c.grp ? null : it.n, dur: c.head ? it.dur : null, tip: c.grp ? '' : it.schedTip,
+            capBg: c.head ? c.color : (member ? 'var(--primary-050)' : (it.sched ? it.capBg : 'var(--bg-app)')), capColor: c.head ? '#fff' : (member ? 'var(--fg-primary)' : it.capColor),
+            actions: !member, gear: !!c.head, up: it.up, down: it.down, modify: it.modify };
+        }).filter(function (x) { return x.row < s.rowLimit; });
+      })(itemVMs),
+      hasMoreRows: gridRows > s.rowLimit, sentinelRef: self._sref || (self._sref = function (el) { self.sentinelRef(el); }),
+      // drag & drop reorder (grid, Reorder mode). Dropping on a tile puts the dragged content in its place.
+      dnd: (function () {
+        var moveTo = function (fromKey, toKey) {
+          var a = self.state.items.slice(), from = -1, to = -1;
+          a.forEach(function (x, i) { if (x.key === fromKey) from = i; if (x.key === toKey) to = i; });
+          if (to === -1) to = a.length - 1;
+          if (from < 0 || from === to) { self.setState({ drag: '', over: '' }); return; }
+          var it = a.splice(from, 1)[0]; a.splice(to, 0, it); self.setState({ items: a, drag: '', over: '' });
+        };
+        return {
+          start: function (key, e) { if (e && e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', key); } catch (x) {} } self.setState({ drag: key, menu: '', hoverGrp: '' }); },
+          over: function (key, e) { if (!self.state.drag) return; if (e) e.preventDefault(); if (self.state.over !== key) self.setState({ over: key }); },
+          drop: function (key, e) { if (e) { e.preventDefault(); e.stopPropagation(); } if (self.state.drag) moveTo(self.state.drag, key); },
+          end: function () { if (self.state.drag || self.state.over) self.setState({ drag: '', over: '' }); }
+        };
+      })(),
       empty: s.items.length === 0,
+      listPages: Math.max(1, Math.ceil(itemVMs.length / LIST_PAGE_SIZE)), listPage: Math.min(s.listPage, Math.max(1, Math.ceil(itemVMs.length / LIST_PAGE_SIZE))),
+      listItems: itemVMs.slice((Math.min(s.listPage, Math.max(1, Math.ceil(itemVMs.length / LIST_PAGE_SIZE))) - 1) * LIST_PAGE_SIZE).slice(0, LIST_PAGE_SIZE),
+      listFrom: itemVMs.length ? (Math.min(s.listPage, Math.max(1, Math.ceil(itemVMs.length / LIST_PAGE_SIZE))) - 1) * LIST_PAGE_SIZE + 1 : 0,
+      setListPage: function (n) { self.setState({ listPage: n }); },
       screens: scs.map(function (sc, i) { var z = Object.keys(sc.zones).filter(function (k) { return sc.zones[k] === p.name; }); return { n: i + 1, name: sc.name, host: hostName(sc.host), zone: z.join(', ') || '—', template: sc.template, lic: sc.lic.length, open: navFn('DealerScreenDetail.dc.html', { id: sc.id }) }; }),
       noScreens: scs.length === 0,
-      lib: D.media.filter(function (m, i) { if (s.folder === '__search') return contains(m.title, s.libQ); if (s.folder === '__assigned') return !!m.adv; return m.folder === s.folder; }).map(function (m) { var has = !!inPl[m.id], B = { image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'] }[m.kind] || ['IMAGE', 'var(--info-main)']; return { badge: B[0], badgeColor: B[1], image: m.image, title: m.title, kind: m.kind, dur: m.duration || '15 sec', icon: has ? 'check' : 'plus', add: function () { if (has) { toast(self, m.title + ' is already in this playlist', 'info'); return; } addItems([m]); toast(self, m.title + ' added'); } }; }),
+      lib: (libAll = D.media.filter(function (m, i) { if (s.folder === '__search') return contains(m.title, s.libQ); if (s.folder === '__assigned') return !!m.adv; if (s.folder === '__floating') return !m.used; return m.folder === s.folder; }).map(function (m) { var has = !!inPl[m.id], B = { image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'] }[m.kind] || ['IMAGE', 'var(--info-main)']; var pl = PILL[m.kind] || PILL.image; return { badge: B[0], badgeColor: B[1], pillBg: pl[0], pillFg: pl[1], has: has, image: m.image, title: m.title, kind: m.kind, dur: m.duration || '15 sec', icon: has ? 'check' : 'plus', media: m, add: function () { if (has) { toast(self, m.title + ' is already in this playlist', 'info'); return; } addItems([m]); toast(self, m.title + ' added'); } }; })).slice(0, s.libLimit),
+      libTotal: libAll.length, libShown: Math.min(s.libLimit, libAll.length), libMore: libAll.length > s.libLimit,
+      moreLib: function () { self.setState({ libLimit: self.state.libLimit + 10 }); },
+      addAll: function () { var fresh = libAll.filter(function (x) { return !x.has; }); if (!fresh.length) { toast(self, 'Everything in this folder is already in the playlist', 'info'); return; } addItems(fresh.map(function (x) { return x.media; })); toast(self, fresh.length + ' item(s) added'); },
       pushOpen: s.push,
       pushTargets: (function () { var t = []; scs.forEach(function (sc) { sc.lic.forEach(function (lid) { var l = byId(D.licenses, lid); if (l) t.push({ alias: l.alias, willFail: l.status !== 'online' }); }); }); return t; })(),
       openPush: function () { self.setState({ push: true }); }, closePush: function () { self.setState({ push: false }); }, pushDone: function () {},
-      m: { add: s.modal === 'add', modify: s.modal === 'modify', info: s.modal === 'info', bulk: s.modal === 'bulk' },
+      m: { add: s.modal === 'add', modify: s.modal === 'modify', info: s.modal === 'info', bulk: s.modal === 'bulk', full: s.modal === 'full', move: s.modal === 'move', swap: s.modal === 'swap', remove: s.modal === 'remove' },
+      act: (function () {
+        var it = s.items.filter(function (x) { return x.key === s.target; })[0];
+        if (!it) return {};
+        return { title: it.m.title, image: it.m.image,
+          positions: s.items.map(function (x, i) { return String(i + 1); }), pos: s.mvPos, setPos: function (x) { self.setState({ mvPos: val(x) }); },
+          doMove: function () { var a = self.state.items.slice(), from = a.indexOf(it), to = Math.max(0, Math.min(a.length - 1, parseInt(self.state.mvPos, 10) - 1)); a.splice(from, 1); a.splice(to, 0, it); self.setState({ items: a, modal: '' }); toast(self, '“' + it.m.title + '” moved to position ' + (to + 1)); },
+          swQ: s.swQ, setSwQ: function (x) { self.setState({ swQ: val(x) }); },
+          lib: D.media.filter(function (m) { return m.id !== it.m.id && m.kind !== 'block' && contains(m.title, s.swQ); }).slice(0, 24).map(function (m) { var pl = PILL[m.kind] || PILL.image;
+            return { title: m.title, image: m.image, badge: m.kind.toUpperCase(), pillBg: pl[0], pillFg: pl[1],
+              pick: function () { self.setState({ items: self.state.items.map(function (x) { return x.key === it.key ? Object.assign({}, x, { m: m, dur: m.duration || x.dur }) : x; }), modal: '' }); toast(self, 'Swapped to “' + m.title + '”'); } }; }),
+          doRemove: function () { self.setState({ items: self.state.items.filter(function (x) { return x.key !== it.key; }), modal: '' }); toast(self, '“' + it.m.title + '” removed'); } };
+      })(),
       closeModal: close,
       openAdd: function () { self.setState({ modal: 'add', ad: { step: 0, kind: 'single', sel: {}, q: '', blockName: p.name + ' Block', layout: '2 + 2 grid', dur: '15 sec' } }); },
       ad: {
@@ -138,7 +285,7 @@ class Component extends DCLogic {
         back: function () { if (self.state.ad.step === 0) close(); else setAd({ step: self.state.ad.step - 1 }); },
         next: function () {
           if (stepName !== 'Preview') { setAd({ step: self.state.ad.step + 1 }); return; }
-          if (ad.kind === 'block') { var b = picked[0]; addItems([Object.assign({}, b, { id: 'blk' + Date.now(), title: ad.blockName + ' (' + picked.length + ' assets)', kind: 'block', duration: (picked.length * secs(ad.dur)) + ' sec' })]); }
+          if (ad.kind === 'block') { var b = picked[0]; addItems([Object.assign({}, b, { id: 'blk' + Date.now(), title: ad.blockName || b.title, kind: 'block', members: picked.slice(1), duration: (picked.length * secs(ad.dur)) + ' sec' })]); }
           else addItems(picked);
           self.setState({ modal: '' }); toast(self, (ad.kind === 'block' ? 'Block' : picked.length + ' item(s)') + ' added · push updates to apply');
         }
@@ -152,8 +299,10 @@ class Component extends DCLogic {
         everywhere: md.everywhere, selected: !md.everywhere, setEverywhere: function () { setMd({ everywhere: true }); }, setSelected: function () { setMd({ everywhere: false }); },
         hosts: scs.map(function (sc) { return { name: hostName(sc.host), on: !!md.hosts[sc.host], toggle: function () { var o = Object.assign({}, self.state.md.hosts); o[sc.host] = !o[sc.host]; setMd({ hosts: o }); } }; }),
         always: md.always, ranged: !md.always, setAlways: function () { setMd({ always: true }); }, setRanged: function () { setMd({ always: false }); },
-        range: md.range || DEF_RANGE, setRange: function (r) { setMd({ range: r }); }, today: TODAY,
-        save: function () { var x = self.state.md; self.setState({ items: self.state.items.map(function (it) { return (it.key === x.key || (x.bulk && x.bulk.indexOf(it.key) !== -1)) ? Object.assign({}, it, { dur: x.dur, trans: x.trans, mute: x.mute, everywhere: x.everywhere, hosts: x.hosts, always: x.always, range: x.range || it.range }) : it; }), modal: '', md: null }); toast(self, 'Content settings saved'); }
+        range: { start: new Date(md.start + 'T00:00:00'), end: new Date(md.end + 'T00:00:00') },
+        setRange: function (r) { var iso = function (d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }; setMd({ start: iso(r.start), end: iso(r.end || r.start) }); }, today: new Date(TODAY + 'T00:00:00'),
+        start: md.start, end: md.end, setStart: function (e) { setMd({ start: val(e) }); }, setEnd: function (e) { setMd({ end: val(e) }); },
+        save: function () { var x = self.state.md; self.setState({ items: self.state.items.map(function (it) { return (it.key === x.key || (x.bulk && x.bulk.indexOf(it.key) !== -1)) ? Object.assign({}, it, { dur: x.dur, trans: x.trans, mute: x.mute, everywhere: x.everywhere, hosts: x.hosts, always: x.always, start: x.start, end: x.end }) : it; }), modal: '', md: null }); toast(self, 'Content settings saved'); }
       } : {},
       openInfo: function () { self.setState({ modal: 'info', info: { name: p.name, desc: p.desc } }); },
       info: { name: info.name, desc: info.desc, bad: !info.name.trim(),
@@ -162,7 +311,6 @@ class Component extends DCLogic {
         save: function () { self.setState({ p: Object.assign({}, self.state.p, { name: self.state.info.name.trim(), desc: self.state.info.desc }), modal: '' }); toast(self, 'Playlist info saved'); } },
       toast: toastVals(s.toast, this)
     };
-    R.gridEntries = groupBlocks(R.items);
     return R;
   }
 }
@@ -170,29 +318,6 @@ class Component extends DCLogic {
 ;(function () { var P = 'DealerPlaylistDetail.dc.html'; var C = Component; var R = C.prototype.renderVals; C.prototype.renderVals = function () { var self = this; if (P && !self.__nw) { self.__nw = setInterval(function () { try { if (peekNav(P)) { var n = new C(self.props); self.setState(n.state); } } catch (e) {} }, 250); } return addNav(R.apply(this, arguments)); }; var U = C.prototype.componentWillUnmount; C.prototype.componentWillUnmount = function () { if (this.__nw) clearInterval(this.__nw); if (U) return U.apply(this, arguments); }; })();
 
 /* ============================== Markup ============================== */
-
-// One playlist tile in grid view (used both standalone and inside a block group).
-const renderTile = (v, _it) => (
-  <div className={`pd-tile ${s(_it?.cls)}`} onClick={_it?.toggle} style={{ gridColumn: `span ${s(_it?.span)}` }}>
-    <div className="dv-thumb" style={{ aspectRatio: `${s(_it?.ratio)}`, borderRadius: "0" }}>
-      <img src={_it?.image} alt="" />
-      <span style={{ position: "absolute", left: "6px", top: "6px", padding: "0 6px", borderRadius: "4px", background: "#fff", fontSize: "9px", lineHeight: "16px", fontWeight: "700", color: `${s(_it?.badgeColor)}` }}>{_it?.badge}</span>
-    </div>
-    <div className="dv-row" style={{ gap: "4px", padding: "5px 6px", fontSize: "11px", lineHeight: "16px", background: `${s(_it?.capBg)}`, color: `${s(_it?.capColor)}` }}>
-      <span style={{ flex: "1", minWidth: "0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{_it?.n}{" "}{_it?.title}</span>
-      <span>{_it?.dur}</span>
-      {v.reorder ? (
-        <>
-          <button type="button" className="dv-ib" style={{ width: "18px", height: "18px" }} aria-label="Move earlier" onClick={_it?.up}><NTV.Icon name="angle-up" size={v.i10} /></button>
-          <button type="button" className="dv-ib" style={{ width: "18px", height: "18px" }} aria-label="Move later" onClick={_it?.down}><NTV.Icon name="angle-down" size={v.i10} /></button>
-        </>
-      ) : null}
-      {v.notReorder ? (
-        <button type="button" className="dv-ib" style={{ width: "18px", height: "18px" }} aria-label="Modify" onClick={_it?.modify}><NTV.Icon name="gear" size={v.i10} /></button>
-      ) : null}
-    </div>
-  </div>
-);
 
 defineTemplate(Component, (v) => (
     <div className="pg-playlist-detail" style={{ display: "contents" }}>
@@ -206,104 +331,124 @@ defineTemplate(Component, (v) => (
           <div className="dv-between" style={{ alignItems: "flex-start" }}>
             <div>
               <div className="dv-row" style={{ gap: "8px" }}>
-                <h1 style={{ margin: "0", fontSize: "20px", lineHeight: "30px", fontWeight: "700" }}>{v.name}</h1>
-                <button type="button" className="dv-ib" aria-label="Edit playlist info" onClick={v.openInfo}><NTV.Icon name="pen-to-square" size={v.i14} /></button>
+                <h1 className="pd-title">{v.name}</h1>
+                <button type="button" className="pd-edit" aria-label="Edit playlist info" onClick={v.openInfo}><NTV.Icon name="pen-to-square-solid" size={20} /></button>
               </div>
-              <p className="dv-sub">{v.desc}</p>
+              <p className="pd-desc">{v.desc}</p>
             </div>
-            <div className="dv-row">
+            <div className="dv-row" style={{ gap: "16px" }}>
               <NTV.Button variant="secondary" size="xl" iconRight="arrow-up-from-bracket" disabled={v.noScreens} onClick={v.openPush}>Push Updates</NTV.Button>
               <NTV.Button variant="primary" size="xl" iconRight="plus" onClick={v.openAdd}>Add Content</NTV.Button>
             </div>
           </div>
-          <div className="dv-tabs" role="tablist">
-            {(v.tabs || []).map((_t, $index) => (
-              <React.Fragment key={$index}>
-                <button type="button" role="tab" className="dv-tab" aria-selected={_t?.on} onClick={_t?.pick} style={{ minWidth: "140px" }}>{_t?.label}</button>
-              </React.Fragment>
-            ))}
-          </div>
+          <NTV.Tabs items={v.tabItems} value={v.tab} onChange={v.setTab} />
           {v.isContent ? (
             <>
-              <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 300px", gap: "20px", alignItems: "start" }}>
-              <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "14px", minHeight: "560px" }}>
+              <div className="pd-layout">
+              <div className="pd-main">
+              <section className="dv-card pd-filter">
                 <div className="dv-between">
-                  <h2 className="dv-h3">Media Contents</h2>
-                  <span className="dv-sub">All contents ({v.count}{") · "}{v.loop}{" per loop"}</span>
+                  <h2 className="pd-h2">Media Contents</h2>
+                  <span className="pd-count">All contents ({v.count})</span>
                 </div>
                 <div className="dv-between pd-toolbar">
-                  <div className="dv-row">
-                    <NTV.Button variant="secondary" size="xl" iconLeft="filter" iconRight={v.none} onClick={v.cycleKind}>{v.kindLabel}</NTV.Button>
-                    <NTV.Button variant={v.reorderVariant} size="xl" iconLeft="grip-vertical" iconRight={v.none} onClick={v.toggleReorder}>{v.reorderLabel}</NTV.Button>
+                  <div className="dv-row" style={{ gap: "10px" }}>
+                    <NTV.FilterDropdown label={v.filterLabel} groups={v.filterGroups} />
+                    {v.isGrid ? <NTV.Button variant={v.reorderVariant} size="xl" iconLeft="grip-vertical" iconRight={v.none} onClick={v.toggleReorder}>{v.reorderLabel}</NTV.Button> : null}
                   </div>
-                  <div className="dv-row">
-                    <NTV.Input size="l" placeholder="Search Playlist Content" iconLeft="magnifying-glass" label="Search playlist content" value={v.q} onChange={v.setQ} style={{ width: "230px" }} />
-                    <NTV.Button variant="primary" size="xl" className="pd-mark" iconLeft="check" onClick={v.toggleAll}>{v.markLabel}</NTV.Button>
-                    <NTV.Button variant="primary" size="xl" iconRight="pen-to-square" disabled={v.noneSel} onClick={v.bulkModify}>Bulk Modify</NTV.Button>
-                    <NTV.Button variant="primary" size="xl" iconRight="trash" disabled={v.noneSel} onClick={v.askBulk}>Bulk Delete</NTV.Button>
-                    <div className="dv-vt" role="group" aria-label="View">
-                      <button type="button" aria-label="Grid view" aria-pressed={v.isGrid} onClick={v.toGrid}><NTV.Icon name="grid-2" size={v.i14} /></button>
-                      <button type="button" aria-label="List view" aria-pressed={v.isList} onClick={v.toList}><NTV.Icon name="rectangle-history" size={v.i14} /></button>
-                    </div>
+                  <div className="dv-row" style={{ gap: "10px" }}>
+                    <NTV.Input size="l" placeholder="Search Playlist Content" iconLeft="magnifying-glass" label="Search playlist content" value={v.q} onChange={v.setQ} style={{ width: "300px" }} />
+                    <NTV.Button variant="primary" tone="active" size="xl" iconLeft="check" iconRight={v.none} onClick={v.toggleAll}>{v.markLabel}</NTV.Button>
+                    <NTV.Button variant="primary" size="xl" iconLeft="gear" iconRight={v.none} disabled={v.noneSel} onClick={v.bulkModify}>Bulk Modify</NTV.Button>
+                    <NTV.Button variant="primary" size="xl" iconLeft="trash" iconRight={v.none} disabled={v.noneSel} onClick={v.askBulk}>Bulk Delete</NTV.Button>
+                    <NTV.ToggleView value={v.view} onChange={v.setView} disabled={v.reorder} />
                   </div>
                 </div>
+                <NTV.ActiveFilters chips={v.activeChips} onClear={v.clearKinds} />
+              </section>
+              <section className="dv-card pd-content">
                 {v.isGrid ? (
                   <>
-                    <div className="dv-grid" style={{ gridTemplateColumns: "repeat(8, minmax(0, 1fr))", gap: "10px" }}>
-                    {(v.gridEntries || []).map((_e, $index) => (
-                      <React.Fragment key={$index}>
-                        {_e?.isGroup ? (
-                          <div className="pd-block" role="group" aria-label="Content block" style={{ gridColumn: `span ${s(_e?.span)}`, gridTemplateColumns: `${s(_e?.inner)}` }}>
-                            {(_e?.tiles || []).map((_it, $j) => (
-                              <React.Fragment key={$j}>{renderTile(v, _it)}</React.Fragment>
-                            ))}
+                    <div className={`pd-grid ${v.reorder ? "is-reorder" : ""}`} onDragOver={v.reorder ? (e) => e.preventDefault() : undefined} onDrop={v.reorder ? (e) => v.dnd.drop("", e) : undefined}>
+                    {(v.cells || []).map((_c) => (
+                      <div key={_c.key} className={`pd-cell ${s(_c.cls)} ${_c.grpHover && v.notReorder ? "grp-hover" : ""} ${_c.overlay && v.notReorder ? "has-overlay" : ""} ${v.reorder ? "is-draggable" : ""} ${v.dragKey === _c.itemKey ? "is-dragging" : ""} ${v.overKey === _c.itemKey && v.dragKey !== _c.itemKey ? "is-over" : ""}`}
+                        onClick={v.reorder ? undefined : _c.toggle} onMouseEnter={_c.enter} onMouseLeave={_c.leave} style={{ gridColumn: `span ${s(_c.span)}`, "--g": _c.color }} title={_c.tip || undefined}
+                        draggable={v.reorder} onDragStart={v.reorder ? (e) => v.dnd.start(_c.itemKey, e) : undefined} onDragOver={v.reorder ? (e) => v.dnd.over(_c.itemKey, e) : undefined}
+                        onDrop={v.reorder ? (e) => v.dnd.drop(_c.itemKey, e) : undefined} onDragEnd={v.reorder ? v.dnd.end : undefined}>
+                        <div className="pd-tile__card">
+                          <div className="pd-tile__img">
+                            <img src={_c.image} alt="" />
+                            {_c.std ? (
+                              <>
+                                <span className="pd-pill" style={{ background: _c.pillBg, color: _c.pillFg }}>{_c.badge}</span>
+                                <span className={`pd-check ${_c.checked ? "on" : ""}`} aria-hidden="true">{_c.checked ? <NTV.Icon name="check" size={v.i12} /> : null}</span>
+                                <button type="button" className="pd-more" aria-label="More actions" aria-haspopup="menu" aria-expanded={_c.menuOpen} onClick={_c.openMenu}><NTV.Icon name="ellipsis" size={10} /></button>
+                              </>
+                            ) : (
+                              <span className="pd-tag" style={{ color: `${s(_c.badgeColor)}`, borderColor: `${s(_c.badgeColor)}` }}>{_c.badge}</span>
+                            )}
+                          </div>
+                          <div className="pd-tile__cap" style={{ background: `${s(_c.capBg)}`, color: `${s(_c.capColor)}` }}>
+                            <span className="pd-tile__name">{_c.n ? <span className="pd-num">{_c.n}</span> : null}{_c.title}</span>
+                            {_c.dur ? <span className="pd-dur">{_c.dur}</span> : null}
+                            {_c.actions && v.reorder ? <span className="pd-grip" aria-hidden="true"><NTV.Icon name="grip-vertical" size={v.i12} /></span> : null}
+                          </div>
+                        </div>
+                        {_c.menuOpen && _c.std ? <NTV.ActionMenu items={_c.menuItems} onClose={_c.closeMenu} style={{ top: "38px", right: "10px" }} /> : null}
+                        {_c.overlay && v.notReorder ? (
+                          <div className="pd-grp-overlay" style={{ "--n": _c.overlaySpan }} onClick={_c.toggle} onMouseEnter={_c.enter} onMouseMove={_c.enter}>
+                            {_c.overlayMain ? (
+                              <>
+                                <strong className="pd-grp-overlay__name">{_c.grpName}</strong>
+                                <span className="pd-grp-overlay__info">{_c.grpInfo}<b>·</b>{_c.grpSecs}</span>
+                                <span className="pd-grp-overlay__act">
+                                  <button type="button" className="pd-more pd-more--grp" aria-label="Block actions" aria-haspopup="menu" aria-expanded={_c.menuOpen} onClick={_c.openMenu}><NTV.Icon name="ellipsis" size={10} /></button>
+                                  {_c.menuOpen ? <NTV.ActionMenu items={_c.menuItems} onClose={_c.closeMenu} /> : null}
+                                </span>
+                              </>
+                            ) : null}
                           </div>
                         ) : null}
-                        {_e?.isTile ? renderTile(v, _e?.tile) : null}
-                      </React.Fragment>
+                      </div>
                     ))}
                   </div>
+                  {v.hasMoreRows ? <div ref={v.sentinelRef} className="pd-sentinel" aria-hidden="true"><span className="dv-spinner" /> Loading more contents…</div> : null}
                   </>
                 ) : null}
                 {v.isList ? (
-                  <>
-                    <div className="dv-table">
-                    <div role="table" aria-label="Playlist contents">
-                      <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: "40px 90px 1.6fr 90px 110px 1fr 1fr 70px" }}>
-                        <div />
-                        <div>Thumbnail</div>
-                        <div>File Name</div>
-                        <div>File Type</div>
-                        <div>Duration</div>
-                        <div>Play Where</div>
-                        <div>Schedule</div>
-                        <div>Action</div>
+                  <div className="pd-ltable">
+                    <div role="table" aria-label="Playlist contents" className="pd-ltable__inner">
+                      <div role="row" className="pd-lrow pd-lrow--head">
+                        <div className="pd-lcell pd-lcell--check"><NTV.Checkbox checked={v.allChecked} indeterminate={v.someChecked} onChange={v.toggleAll} ariaLabel="Select all" /></div>
+                        <div className="pd-lcell">Thumbnail</div>
+                        <div className="pd-lcell">File Name</div>
+                        <div className="pd-lcell">File Type</div>
+                        <div className="pd-lcell">Duration</div>
+                        <div className="pd-lcell">Date Added</div>
+                        <div className="pd-lcell">Uploader</div>
+                        <div className="pd-lcell">Actions</div>
                       </div>
-                      {(v.items || []).map((_it, $index) => (
-                        <React.Fragment key={$index}>
-                          <div role="row" className="dv-tr" style={{ gridTemplateColumns: "40px 90px 1.6fr 90px 110px 1fr 1fr 70px", minHeight: "52px" }}>
-                            <div>
-                              <NTV.Checkbox checked={_it?.checked} onChange={_it?.toggle} ariaLabel="Select" />
-                            </div>
-                            <div>
-                              <span className="dv-thumb" style={{ display: "block", width: "56px", height: "34px" }}><img src={_it?.image} alt="" /></span>
-                            </div>
-                            <div>{_it?.n}{" "}{_it?.title}{_it?.inBlk ? <span className="pd-blk-badge">Block</span> : null}</div>
-                            <div>
-                              <span style={{ fontSize: "9px", fontWeight: "700", color: `${s(_it?.badgeColor)}` }}>{_it?.badge}</span>
-                            </div>
-                            <div>{_it?.dur}</div>
-                            <div>{_it?.where}</div>
-                            <div>{_it?.sched}</div>
-                            <div>
-                              <button type="button" className="dv-ib" aria-label="Modify" onClick={_it?.modify}><NTV.Icon name="gear" size={v.i12} /></button>
-                            </div>
+                      {(v.listItems || []).map((_it) => (
+                        <div key={_it.key} role="row" className={`pd-lrow ${_it.checked ? "is-sel" : ""}`}>
+                          <div className="pd-lcell pd-lcell--check">{_it.blk ? null : <NTV.Checkbox checked={_it.checked} onChange={_it.toggle} ariaLabel={`Select ${_it.title}`} />}</div>
+                          <div className="pd-lcell"><span className="pd-lthumb"><img src={_it.image} alt="" /></span></div>
+                          <div className="pd-lcell pd-lcell--name" title={_it.title}>{_it.title}</div>
+                          <div className="pd-lcell"><span className="pd-pill" style={{ background: _it.blk ? "var(--primary-050)" : PILL_OF(_it.kind)[0], color: _it.blk ? "var(--fg-secondary)" : PILL_OF(_it.kind)[1] }}>{_it.typeTag}</span></div>
+                          <div className="pd-lcell">{_it.longDur}</div>
+                          <div className="pd-lcell">{_it.added}</div>
+                          <div className="pd-lcell">{_it.uploader}</div>
+                          <div className="pd-lcell pd-lcell--act">
+                            <span className="pd-lmore-wrap">
+                              <button type="button" className="pd-lmore" aria-label="More actions" aria-haspopup="menu" aria-expanded={_it.menuOpen} onClick={_it.openMenu}>
+                                <span style={{ display: "inline-flex", transform: "rotate(90deg)" }}><NTV.Icon name="ellipsis" size={v.i14} /></span>
+                              </button>
+                              {_it.menuOpen ? <NTV.ActionMenu items={_it.menuItems} anchorRect={_it.menuRect} onClose={_it.closeMenu} /> : null}
+                            </span>
                           </div>
-                        </React.Fragment>
+                        </div>
                       ))}
                     </div>
                   </div>
-                  </>
                 ) : null}
                 {v.empty ? (
                   <>
@@ -318,54 +463,80 @@ defineTemplate(Component, (v) => (
                   <>
                     <div className="dv-note">
                     <NTV.Icon name="circle-info" size={v.i12} />
-                    <span>Use the arrows on each item to change play order, then press Done.</span>
+                    <span>Drag any content or block to a new spot to change the play order, then press Done.</span>
                   </div>
                   </>
                 ) : null}
-                <span className="dv-sub" style={{ fontSize: "11px", marginTop: "auto" }}>{"Showing "}{v.count}{" of "}{v.count}{" items"}</span>
               </section>
-              <aside className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              {v.isList ? (
+                <div className="pd-foot pd-foot--pager">
+                  <span>{"Showing "}{v.listFrom}{"–"}{v.listFrom + (v.listItems || []).length - (v.listItems && v.listItems.length ? 1 : 0)}{" of "}{(v.items || []).length}{" items"}</span>
+                  <NTV.Pagination page={v.listPage} pages={v.listPages} onChange={v.setListPage} />
+                </div>
+              ) : null}
+              </div>
+              <aside className="dv-card pd-side">
                 <NTV.Input size="l" placeholder="Search Content or Folder" iconLeft="magnifying-glass" label="Search content or folder" value={v.libQ} onChange={v.setLibQ} />
                 <NTV.Button variant="secondary" size="xl" className="pd-upload" iconLeft="upload" onClick={v.uploadContent}>Upload Content</NTV.Button>
                 <a data-go="DealerMedia.dc.html" href="DealerMedia.dc.html" hidden tabIndex={-1} aria-hidden="true" />
                 {v.inFolder ? (
-                  <>
-                    <button type="button" className="dv-a" onClick={v.backFolders} style={{ alignSelf: "flex-start", fontSize: "12px" }}>‹ Folders</button>
-                    <strong style={{ fontSize: "13px" }}>{v.folderName}</strong>
-                    {(v.lib || []).map((_m, $index) => (
-                    <React.Fragment key={$index}>
-                      <div className="pd-lib">
-                        <span className="dv-thumb" style={{ width: "64px", height: "36px" }}><img src={_m?.image} alt="" /></span>
-                        <span style={{ minWidth: "0" }}>
-                          <strong style={{ display: "block", fontSize: "12px", lineHeight: "18px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{_m?.title}</strong>
-                          <span className="dv-sub" style={{ fontSize: "10px", color: `${s(_m?.badgeColor)}` }}>{_m?.badge}</span>
-                        </span>
-                        <button type="button" className="dv-ib" aria-label="Add to playlist" onClick={_m?.add}><NTV.Icon name={_m?.icon} size={v.i12} /></button>
-                      </div>
-                    </React.Fragment>
-                  ))}
-                  </>
+                  <div className="pd-sec">
+                    <div className="pd-sec__head">
+                      <button type="button" className="pd-back" onClick={v.backFolders}>
+                        <span className="pd-back__fab" aria-hidden="true"><span style={{ display: "inline-flex", transform: "rotate(180deg)" }}><NTV.Icon name="angle-right" size={10} /></span></span>
+                        {v.folderIcon ? <NTV.Icon name={v.folderIcon} size={20} /> : null}
+                        <span className="pd-sec__name">{v.folderName}</span>
+                        <span className="pd-sec__n">({v.libTotal})</span>
+                      </button>
+                      {v.isRealFolder ? <NTV.Button variant="primary" tone="active" size="m" iconRight="plus" onClick={v.addAll}>Add all</NTV.Button> : null}
+                    </div>
+                    <div className="pd-sec__list pd-sec__list--media">
+                      {(v.lib || []).map((_m, $index) => (
+                        <button key={$index} type="button" className={`pd-media ${_m?.has ? "is-in" : ""}`} onClick={_m?.add} title={_m?.has ? "Already in this playlist" : "Add to playlist"}>
+                          <span className="pd-media__thumb"><img src={_m?.image} alt="" /></span>
+                          <span className="pd-media__info">
+                            <span className="pd-media__name">{_m?.title}</span>
+                            <span className="pd-pill" style={{ background: _m?.pillBg, color: _m?.pillFg }}>{_m?.badge}</span>
+                          </span>
+                          <span className="pd-media__act"><NTV.Icon name={_m?.icon} size={v.i12} /></span>
+                        </button>
+                      ))}
+                      {(v.lib || []).length === 0 ? <span className="pd-n" style={{ padding: "10px 16px" }}>No content found.</span> : null}
+                    </div>
+                    {v.isRealFolder ? null : (
+                      <div className="pd-sidefoot"><span>Showing <strong>{v.libShown}</strong> of {v.libTotal} items</span>{v.libMore ? <button type="button" onClick={v.moreLib}>Show More...</button> : null}</div>
+                    )}
+                  </div>
                 ) : null}
                 {v.notInFolder ? (
                   <>
-                    <button type="button" className="ml-row" onClick={v.openAssigned}>
-                    <NTV.Icon name="users" size={v.i14} />
-                    My Contents
-                  </button>
-                    <span className="dv-row" style={{ gap: "6px", fontSize: "13px", padding: "4px 0" }}>
-                    <NTV.Icon name="angle-down" size={v.i10} />
-                    {"Folders "}
-                    <span className="dv-sub" style={{ display: "inline" }}>({v.folderCount})</span>
-                  </span>
-                    {(v.folders || []).map((_f, $index) => (
-                    <React.Fragment key={$index}>
-                      <button type="button" className="ml-row" onClick={_f?.open} style={{ paddingLeft: "14px" }}>
-                        <NTV.Icon name="folder" size={v.i14} />
-                        {_f?.name}{" "}
-                        <span className="dv-sub" style={{ display: "inline" }}>({_f?.n})</span>
+                    <div className="pd-sec__list">
+                      <button type="button" className="ml-row" onClick={v.openAssigned}>
+                        <NTV.Icon name="users" size={20} />
+                        My Contents
                       </button>
-                    </React.Fragment>
-                  ))}
+                      <button type="button" className="ml-row" onClick={v.openFloating}>
+                        <NTV.Icon name="ghost" size={20} />
+                        Floating Contents
+                      </button>
+                    </div>
+                    <div className="pd-sec">
+                      <span className="pd-folders">
+                        <NTV.Icon name="angle-down" size={v.i14} />
+                        Folders
+                        <span className="pd-sec__n">({v.folderCount})</span>
+                      </span>
+                      <div className="pd-sec__list">
+                        {(v.folders || []).map((_f, $index) => (
+                          <button key={$index} type="button" className="ml-row" onClick={_f?.open}>
+                            <NTV.Icon name="folder" size={20} />
+                            {_f?.name}
+                            <span className="pd-n">({_f?.n})</span>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="pd-sidefoot"><span>Showing <strong>{v.folderShown}</strong> of {v.folderCount} folders</span></div>
+                    </div>
                   </>
                 ) : null}
               </aside>
@@ -645,6 +816,56 @@ defineTemplate(Component, (v) => (
           </NTV.StatusModal>
         </div>
         </>
+      ) : null}
+      {v.m?.full ? (
+        <div className="dv-ov" onClick={v.closeModal}>
+          <div className="pd-full" onClick={(e) => e.stopPropagation()}>
+            <div className="pd-full__head">
+              <strong>{v.act?.title}</strong>
+              <button type="button" className="dv-ib" aria-label="Close" onClick={v.closeModal} style={{ color: "#fff" }}><NTV.Icon name="x" size={v.i14} /></button>
+            </div>
+            <img src={v.act?.image} alt={v.act?.title} />
+          </div>
+        </div>
+      ) : null}
+      {v.m?.move ? (
+        <div className="dv-ov">
+          <NTV.Modal title="Quick Move" width={v.w460} onClose={v.closeModal}>
+            <p className="dv-p" style={{ marginBottom: "12px" }}>Move <strong style={{ color: "var(--fg-primary)" }}>{v.act?.title}</strong> to position:</p>
+            <NTV.Select size="l" options={v.act?.positions} value={v.act?.pos} onChange={v.act?.setPos} />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px" }}>
+              <NTV.Button variant="primary" tone="neutral" size="xl" iconRight={v.none} onClick={v.closeModal}>Cancel</NTV.Button>
+              <NTV.Button variant="primary" size="xl" iconRight={v.none} onClick={v.act?.doMove}>Move</NTV.Button>
+            </div>
+          </NTV.Modal>
+        </div>
+      ) : null}
+      {v.m?.swap ? (
+        <div className="dv-ov">
+          <NTV.Modal title="Swap Content" width={v.w640} onClose={v.closeModal}>
+            <p className="dv-p" style={{ marginBottom: "12px" }}>Replace <strong style={{ color: "var(--fg-primary)" }}>{v.act?.title}</strong> with:</p>
+            <NTV.Input size="l" placeholder="Search Media Library" iconLeft="magnifying-glass" label="Search media library" value={v.act?.swQ} onChange={v.act?.setSwQ} />
+            <div className="pd-swap">
+              {(v.act?.lib || []).map((_m, $i) => (
+                <button key={$i} type="button" className="pd-swap__item" onClick={_m.pick}>
+                  <span className="pd-swap__img"><img src={_m.image} alt="" /><span className="pd-pill" style={{ background: _m.pillBg, color: _m.pillFg }}>{_m.badge}</span></span>
+                  <span className="pd-swap__name">{_m.title}</span>
+                </button>
+              ))}
+            </div>
+          </NTV.Modal>
+        </div>
+      ) : null}
+      {v.m?.remove ? (
+        <div className="dv-ov">
+          <NTV.StatusModal status="warning" title="Remove Content?" width={v.w460}>
+            <p className="dv-p" style={{ textAlign: "center" }}>Remove <strong style={{ color: "var(--fg-primary)" }}>{v.act?.title}</strong> from this playlist? The file stays in your Media Library.</p>
+            <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginTop: "20px" }}>
+              <NTV.Button variant="primary" tone="neutral" size="xl" iconRight={v.none} onClick={v.closeModal}>Cancel</NTV.Button>
+              <button type="button" className="ntv-btn ntv-btn--danger ntv-btn--xl" onClick={v.act?.doRemove}>Remove</button>
+            </div>
+          </NTV.StatusModal>
+        </div>
       ) : null}
       <Toast t={v.toast} />
     </div>

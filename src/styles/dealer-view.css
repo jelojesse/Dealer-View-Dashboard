@@ -12,3 +12,5 @@ body{margin:0;background:var(--bg-app);font-family:var(--font-sans);color:var(--
    (page CSS `.pg-x a{color:accent}` was overriding the bundle). Current crumb stays bold accent. */
 .ntv-crumbs a.ntv-crumbs__item{color:var(--fg-secondary)}
 .ntv-crumbs a.ntv-crumbs__item:hover{color:var(--accent-action)}
+/* Tray: inset container that holds a grid of tiles inside a card (16px padding, app fill, border stroke). */
+.dv-tray{padding:16px;background:var(--bg-app);border:1px solid var(--container-border);border-radius:var(--radius-md);box-sizing:border-box}

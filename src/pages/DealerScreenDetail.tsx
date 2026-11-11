@@ -10,27 +10,37 @@ import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
 import Toast from '../components/Toast';
-import { addNav, arrived, byId, draft, hostName, licsForHost, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
+import { addNav, arrived, byId, draft, hostName, licsForHost, mediaEntries, navFn, peekNav, plByName, toast, toastVals, val, D } from '../lib/shared';
+import { TEMPLATES, layoutOf, tplByTitle, zid } from '../lib/templates';
 import DealerNav from '../components/DealerNav';
 import LicenseTableRow from '../components/LicenseTableRow';
 import PushFlow from '../components/PushFlow';
 import ScreenPreview from '../components/ScreenPreview';
 import TemplateCard from '../components/TemplateCard';
 import ZoneListItem from '../components/ZoneListItem';
+import ZoneArea from '../components/ZoneArea';
+import ContentThumb from '../components/ContentThumb';
+import ContentBlock from '../components/ContentBlock';
 import './DealerScreenDetail.css';
 
 /* ============================== Logic ============================== */
 
-var TEMPLATES = [
-  { id: 'nct-standard', title: 'NCT Standard Template', zones: ['Main', 'Vertical', 'Horizontal', 'Background'] },
-  { id: 'standard-v2', title: 'Standard Template V2', zones: ['Main', 'Vertical', 'Horizontal', 'Logo', 'Background'] },
-  { id: 'fullscreen', title: 'Fullscreen', zones: ['Main', 'Background'] },
-  { id: 'test', title: 'Test Template', zones: ['Main', 'Background'] },
-  { id: 'two-one', title: '2-1 Zone', zones: ['Upper Left', 'Lower Left', 'Main', 'Background'] },
-  { id: 'one-one', title: '1 to 1 Zone', zones: ['Left', 'Middle', 'Right', 'Horizontal', 'Background'] }
-];
-function tplByTitle(t) { for (var i = 0; i < TEMPLATES.length; i++) if (TEMPLATES[i].title === t) return TEMPLATES[i]; return TEMPLATES[1]; }
-function zid(label) { return label.toLowerCase().replace(/\s+/g, '-'); }
+/* Templates, layouts and zid() come from lib/templates.js */
+function plCover(name) { var pl = name ? plByName(name) : null, m = pl ? byId(D.media, pl.items[0]) : null; return m ? m.image : ''; }
+/* Playlist Content Preview values: the selected zone's playlist, else all assigned content, else empty. */
+function previewVals(zones, map, sel) {
+  var label = function (id) { var z = zones.filter(function (x) { return zid(x) === id; })[0]; return z || id; };
+  if (sel && sel !== 'none') {
+    var pl = map[sel] ? plByName(map[sel]) : null;
+    if (pl) return { hasItems: true, isEmpty: false, showPlaylist: true, isAll: false, entries: mediaEntries(pl.items, pl.block), playlistName: pl.name, showing: label(sel), open: navFn('DealerPlaylistDetail.dc.html', { id: pl.id }) };
+    return { hasItems: false, isEmpty: true, showPlaylist: false, isAll: false, entries: [], emptyTarget: label(sel) };
+  }
+  var seen = {}, all = [];
+  zones.forEach(function (z) { var pl = map[zid(z)] ? plByName(map[zid(z)]) : null; if (pl && !seen[pl.id]) { seen[pl.id] = true; all = all.concat(pl.items); } });
+  if (all.length) return { hasItems: true, isEmpty: false, showPlaylist: false, isAll: true, entries: mediaEntries(all, false), showing: 'All Contents' };
+  return { hasItems: false, isEmpty: true, showPlaylist: false, isAll: false, entries: [], emptyTarget: 'any zones' };
+}
+
 class Component extends DCLogic {
   constructor(props) {
     super(props);
@@ -51,7 +61,7 @@ class Component extends DCLogic {
       sc: sc, title: sc.name, desc: sc.desc || ('This screen plays at ' + hostName(sc.host) + '.'), type: sc.type, notes: '', template: tpl.id,
       licenses: sc.demo ? [] : sc.lic.map(lic), spare: sc.demo ? [] : spare.map(lic),
       playlists: pls, zone: '', expanded: '', dirty: false, modal: '', sel: {}, push: false,
-      ct: { step: 0, tpl: tpl.id, map: {} }, clone: { name: '', desc: '', type: '', host: '' }, doneTitle: '', doneText: '', toast: null
+      ct: { step: 0, tpl: tpl.id, map: {}, zone: '', expanded: '' }, clone: { name: '', desc: '', type: '', host: '' }, doneTitle: '', doneText: '', toast: null
     };
   }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
@@ -76,26 +86,37 @@ class Component extends DCLogic {
     // change template wizard
     var ctTpl = TEMPLATES.filter(function (t) { return t.id === s.ct.tpl; })[0];
     var ctAssigned = ctTpl.zones.filter(function (z) { return !!s.ct.map[zid(z)]; }).length;
+    var setCt = function (o) { self.setState({ ct: Object.assign({}, self.state.ct, o) }); };
+    var ctSelect = function (id) { setCt({ zone: id, expanded: id }); };
+    var ctPick = function (id, name) { var m = Object.assign({}, self.state.ct.map); m[id] = name; setCt({ map: m, zone: id, expanded: '' }); };
+    var ctBg = s.ct.map.background || '', ctBgSel = s.ct.zone === 'background';
     var ct = {
       step: s.ct.step, isPick: s.ct.step === 0, isAssign: s.ct.step === 1, name: ctTpl.title,
       steps: [{ label: 'Select Template', state: s.ct.step > 0 ? 'done' : undefined }, { label: 'Assign Playlist to Zones' }],
       assigned: ctAssigned, total: ctTpl.zones.length,
-      zones: ctTpl.zones.map(function (z) { var id = zid(z), v = s.ct.map[id] || ''; return { label: z, value: v, color: v ? 'var(--success-main)' : 'var(--primary-300)', icon: v ? 'circle-check' : 'circle-info',
-        set: function (x) { var m = Object.assign({}, self.state.ct.map); m[id] = val(x); self.setState({ ct: Object.assign({}, self.state.ct, { map: m }) }); } }; }),
-      backLabel: s.ct.step === 0 ? 'Cancel' : 'Back', nextLabel: s.ct.step === 0 ? 'Next' : 'Apply Template',
-      blocked: s.ct.step === 1 && ctAssigned < ctTpl.zones.length,
-      back: function () { if (self.state.ct.step === 0) close(); else self.setState({ ct: Object.assign({}, self.state.ct, { step: 0 }) }); },
+      zoneList: ctTpl.zones.map(function (z) { var id = zid(z); return { label: z, playlistName: s.ct.map[id] || '', expanded: s.ct.expanded === id, selected: s.ct.zone === id,
+        toggle: function () { if (self.state.ct.expanded === id) setCt({ expanded: '' }); else ctSelect(id); },
+        options: plNames.map(function (n) { return { name: n, pick: function () { ctPick(id, n); } }; }) }; }),
+      layout: layoutOf(ctTpl.id),
+      areas: layoutOf(ctTpl.id).zones.map(function (z) { var id = zid(z.zone); return { key: id, label: z.label || z.zone, col: z.col, row: z.row, frames: z.frames || [], image: plCover(s.ct.map[id]), selected: s.ct.zone === id, select: function () { ctSelect(id); } }; }),
+      bg: { selected: ctBgSel, assigned: !!ctBg, image: plCover(ctBg), fill: !ctBg && ctBgSel ? 'var(--accent-action)' : '#b4ccfb', borderStyle: ctBg && ctBgSel ? 'solid' : 'dashed', borderColor: ctBgSel ? 'var(--accent-action)' : '#8ba7e9', select: function () { ctSelect('background'); } },
+      pv: previewVals(ctTpl.zones, s.ct.map, s.ct.zone),
+      reload: function () { toast(self, D.playlists.length + ' playlists loaded', 'info'); },
+      backLabel: s.ct.step === 0 ? 'Cancel' : 'Back', nextLabel: s.ct.step === 0 ? 'Proceed' : 'Apply Template',
+      blocked: s.ct.step === 0 ? s.ct.tpl === s.template : ctAssigned < ctTpl.zones.length,
+      back: function () { if (self.state.ct.step === 0) close(); else setCt({ step: 0, zone: '', expanded: '' }); },
       next: function () {
         if (self.state.ct.step === 0) {
           var t = TEMPLATES.filter(function (x) { return x.id === self.state.ct.tpl; })[0], m = {};
           t.zones.forEach(function (z) { m[zid(z)] = self.state.playlists[zid(z)] || ''; });
-          self.setState({ ct: { step: 1, tpl: t.id, map: m } });
+          self.setState({ ct: { step: 1, tpl: t.id, map: m, zone: '', expanded: '' } });
         } else {
           self.setState({ template: self.state.ct.tpl, playlists: self.state.ct.map, modal: '', zone: '', expanded: '', dirty: true });
           toast(self, 'Template changed to ' + ctTpl.title + '. Save to push it to your licenses.', 'info');
         }
       }
     };
+    var curCovers = {}; tpl.zones.forEach(function (z) { var img = plCover(s.playlists[zid(z)]); if (img) curCovers[z] = img; });
     return {
       none: null, yes: true, iconSm: 12, iconMd: 14, iconLg: 32, w460: 460, w521: 521, w700: 700, w900: 900,
       demo: demo, notDemo: !demo,
@@ -150,10 +171,12 @@ class Component extends DCLogic {
       cl: { name: cl.name, desc: cl.desc, type: cl.type, host: cl.host, blocked: !(cl.name.trim() && cl.type && cl.host),
         setName: setCl('name'), setDesc: setCl('desc'), setType: setCl('type'), setHost: setCl('host') },
       confirmClone: function () { self.setState({ modal: 'done', doneTitle: 'Screen Cloned', doneText: '“' + self.state.clone.name + '” was created for ' + self.state.clone.host + '. Assign licenses to it from its details page.' }); },
-      openTemplate: function () { self.setState({ modal: 'template', ct: { step: 0, tpl: self.state.template, map: {} } }); },
-      templateOptions: TEMPLATES.map(function (t) { return { title: t.title, description: t.zones.length + ' zones: ' + t.zones.join(', '), layout: t.id, selected: s.ct.tpl === t.id, pick: function () { self.setState({ ct: Object.assign({}, self.state.ct, { tpl: t.id }) }); } }; }),
+      openTemplate: function () { self.setState({ modal: 'template', ct: { step: 0, tpl: self.state.template, map: {}, zone: '', expanded: '' } }); },
+      templateOptions: TEMPLATES.map(function (t) { return { title: t.title, description: t.description, layout: t.id, selected: s.ct.tpl === t.id, current: t.id === s.template, images: t.id === s.template ? curCovers : null, pick: function () { self.setState({ ct: Object.assign({}, self.state.ct, { tpl: t.id }) }); } }; }),
       plOptions: plNames,
       ct: ct,
+      pagePv: previewVals(tpl.zones, s.playlists, s.zone),
+      showPagePv: false, /* hidden for now: it stretched the Screen Information card (and Notes). Set true to bring it back. */
       openDelete: function () { self.setState({ modal: 'delete' }); },
       doneTitle: s.doneTitle, doneText: s.doneText,
       toast: toastVals(s.toast, this)
@@ -164,6 +187,46 @@ class Component extends DCLogic {
 ;(function () { var P = 'DealerScreenDetail.dc.html'; var C = Component; var R = C.prototype.renderVals; C.prototype.renderVals = function () { var self = this; if (P && !self.__nw) { self.__nw = setInterval(function () { try { if (peekNav(P)) { var n = new C(self.props); self.setState(n.state); } } catch (e) {} }, 250); } return addNav(R.apply(this, arguments)); }; var U = C.prototype.componentWillUnmount; C.prototype.componentWillUnmount = function () { if (this.__nw) clearInterval(this.__nw); if (U) return U.apply(this, arguments); }; })();
 
 /* ============================== Markup ============================== */
+
+function PlaylistPreview({ pv, compact }) {
+  if (!pv) return null;
+  return (
+    <section className={'dv-card sd-pv' + (compact ? ' sd-pv--compact' : '')} aria-label="Playlist Content Preview">
+      <div className="dv-between">
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", minHeight: "32px" }}>
+          <h2 className={compact ? 'ct-h' : 'dv-h2'} style={{ margin: 0 }}>Playlist Content Preview</h2>
+          {pv.showPlaylist ? (
+            <span className="dv-p" style={{ lineHeight: "20px" }}>
+              {"( "}<a href="DealerPlaylistDetail.dc.html" onClick={pv.open} data-nav={pv.open && pv.open.nav} style={{ textDecoration: "underline", textUnderlineOffset: "2px" }}>{pv.playlistName}</a>{" )"}
+            </span>
+          ) : null}
+          {pv.isAll ? <span className="dv-p" style={{ lineHeight: "20px" }}>(Select a zone to show its playlist)</span> : null}
+        </div>
+        {pv.hasItems ? (
+          <p style={{ margin: "0", display: "flex", gap: "8px", fontSize: "16px", lineHeight: "24px" }}>
+            <span style={{ fontWeight: "600", color: "var(--fg-secondary)" }}>Showing</span>
+            <strong style={{ color: "var(--accent-action)" }}>{pv.showing}</strong>
+          </p>
+        ) : null}
+      </div>
+      {pv.hasItems ? (
+        <div className="sd-pv__row">
+          {pv.entries.map((e, i) => e.isBlock ? (
+            <div key={i} style={{ flex: "none", height: "136px", display: "flex" }}><div style={{ height: "100%" }}><ContentBlock items={e.items} /></div></div>
+          ) : (
+            <div key={i} style={{ flex: "none", width: "161px", height: "136px", display: "flex" }}><div style={{ width: "100%", height: "100%" }}><ContentThumb image={e.image} kind={e.kind} title={e.title} duration={e.duration} /></div></div>
+          ))}
+        </div>
+      ) : null}
+      {pv.isEmpty ? (
+        <div className="dv-empty" style={{ minHeight: "136px", padding: "20px", border: "1px solid var(--container-border)", borderRadius: "var(--radius-sm)" }}>
+          <span style={{ color: "var(--primary-700)" }}><NTV.Icon name="rectangle-history-solid" size={32} /></span>
+          <p style={{ margin: "0" }}>{"No playlist assigned to "}<strong style={{ color: "var(--fg-primary)" }}>{pv.emptyTarget}</strong>{" yet. Pick one from the zone list to see its content here."}</p>
+        </div>
+      ) : null}
+    </section>
+  );
+}
 
 defineTemplate(Component, (v) => (
     <div className="pg-screen-detail" style={{ display: "contents" }}>
@@ -289,6 +352,7 @@ defineTemplate(Component, (v) => (
                 <button type="button" aria-pressed={v.bgSelected} onClick={v.selectBackground} style={{ display: "inline-flex", alignItems: "center", height: "28px", padding: "4px 8px", border: "0", borderRadius: "var(--radius-sm)", background: "#5273c0", color: "var(--white)", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", lineHeight: "20px", fontWeight: "500" }}>Select Background</button>
               </div>
               <ScreenPreview background="wood" withLogo={v.withLogo} selected={v.zone} onSelect={v.selectZone} />
+              {v.showPagePv ? <PlaylistPreview pv={v.pagePv} /> : null}
             </section>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "stretch" }}>
@@ -441,51 +505,71 @@ defineTemplate(Component, (v) => (
       {v.m?.template ? (
         <>
           <div className="dv-ov">
-          <NTV.Modal title="Change Template" width={v.w900} onClose={v.closeModal}>
-            <div style={{ marginBottom: "16px" }}>
-              <NTV.Stepper steps={v.ct?.steps} current={v.ct?.step} style={{ width: "100%" }} />
-            </div>
+          <NTV.Modal title="Change Template" width={1024} onClose={v.closeModal} className="ct-modal">
+            <div className="ct-steps"><NTV.Stepper steps={v.ct?.steps} current={v.ct?.step} style={{ width: "100%" }} /></div>
             {v.ct?.isPick ? (
-              <>
-                <p className="dv-sub" style={{ marginBottom: "12px" }}>Choose the new layout. You’ll assign playlists to its zones next.</p>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "12px", maxHeight: "56vh", overflowY: "auto" }}>
-                {(v.templateOptions || []).map((_t, $index) => (
-                  <React.Fragment key={$index}>
-                    <TemplateCard title={_t?.title} description={_t?.description} layout={_t?.layout} selected={_t?.selected} onSelect={_t?.pick} />
-                  </React.Fragment>
-                ))}
-              </div>
-              </>
-            ) : null}
-            {v.ct?.isAssign ? (
-              <>
-                <div className="dv-between" style={{ marginBottom: "12px" }}>
-                <p className="dv-sub">
-                  {"Assign a playlist to every zone of "}
-                  <strong style={{ color: "var(--fg-primary)" }}>{v.ct?.name}</strong>
-                  . Zones with the same name keep their playlist.
-                </p>
-                <div role="status" style={{ display: "inline-flex", alignItems: "center", gap: "10px", padding: "6px 12px", border: "1px solid var(--container-border)", borderRadius: "var(--radius-sm)" }}>
-                  <span style={{ fontSize: "16px", lineHeight: "24px", fontWeight: "600", color: "var(--accent-action)" }}>{v.ct?.assigned}{" / "}{v.ct?.total}</span>
-                  <span className="dv-p" style={{ lineHeight: "20px" }}>Zones Assigned</span>
+              <div className="ct-grid-wrap">
+                <div className="ct-grid">
+                  {(v.templateOptions || []).map((_t) => (
+                    <TemplateCard key={_t.layout} title={_t.title} description={_t.description} layout={_t.layout} selected={_t.selected} current={_t.current} images={_t.images} onSelect={_t.pick} />
+                  ))}
                 </div>
               </div>
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px", maxHeight: "50vh", overflowY: "auto" }}>
-                {(v.ct?.zones || []).map((_z, $index) => (
-                  <React.Fragment key={$index}>
-                    <div className="ct-zone">
-                      <span style={{ fontSize: "14px", lineHeight: "24px", fontWeight: "700" }}>{_z?.label}</span>
-                      <NTV.Select size="l" placeholder="Select a playlist" options={v.plOptions} value={_z?.value} onChange={_z?.set} />
-                      <span style={{ color: `${s(_z?.color)}`, display: "inline-flex" }}><NTV.Icon name={_z?.icon} size={v.iconMd} /></span>
-                    </div>
-                  </React.Fragment>
-                ))}
-              </div>
-              </>
             ) : null}
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginTop: "20px" }}>
-              <NTV.Button variant="primary" tone="neutral" size="xl" iconRight={v.none} onClick={v.ct?.back}>{v.ct?.backLabel}</NTV.Button>
-              <NTV.Button variant="primary" size="xl" iconRight={v.none} disabled={v.ct?.blocked} onClick={v.ct?.next}>{v.ct?.nextLabel}</NTV.Button>
+            {v.ct?.isAssign ? (
+              <div className="ct-assign">
+                <div className="ct-assign__row">
+                  <section className="ct-card ct-zones" aria-labelledby="ct-zones-title">
+                    <div className="dv-between">
+                      <h3 id="ct-zones-title" className="ct-h">Zones</h3>
+                      <button type="button" className="dv-a" onClick={v.ct?.reload} style={{ display: "inline-flex", alignItems: "center", gap: "8px", fontWeight: "400", fontSize: "14px" }}>
+                        <span>Reload Playlists</span>
+                        <NTV.Icon name="arrow-rotate-right" size={v.iconMd} />
+                      </button>
+                    </div>
+                    <p className="dv-sub" style={{ marginTop: "-8px" }}>Only playlists you own are listed.</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                      {(v.ct?.zoneList || []).map((_z) => (
+                        <ZoneListItem key={_z.label} label={_z.label} playlist={_z.playlistName} expanded={_z.expanded} selected={_z.selected} playlists={_z.options} onToggle={_z.toggle} checkWhenAssigned={v.yes} />
+                      ))}
+                    </div>
+                  </section>
+                  <section className="ct-card ct-screen" aria-labelledby="ct-screen-title">
+                    <div className="dv-between" style={{ alignItems: "flex-start" }}>
+                      <div>
+                        <h3 id="ct-screen-title" className="ct-h">{v.ct?.name}</h3>
+                        <p className="dv-p" style={{ lineHeight: "20px" }}>Click on a Zone to assign a playlist to it or use the Zone list.</p>
+                      </div>
+                      <div role="status" className="ct-count">
+                        <span>{v.ct?.assigned}{" / "}{v.ct?.total}</span>
+                        <span className="dv-p" style={{ lineHeight: "20px" }}>Zones Assigned</span>
+                      </div>
+                    </div>
+                    <div>
+                      <button type="button" className="ct-bgpill" aria-pressed={v.ct?.bg?.selected} onClick={v.ct?.bg?.select}>Background</button>
+                    </div>
+                    <div className="ct-stage">
+                      <button type="button" className="ct-stage__bg" aria-label="Background zone" aria-pressed={v.ct?.bg?.selected} onClick={v.ct?.bg?.select} style={{ border: `2px ${v.ct?.bg?.borderStyle} ${v.ct?.bg?.borderColor}`, background: v.ct?.bg?.fill }}>
+                        {v.ct?.bg?.assigned ? <img src={v.ct?.bg?.image} alt="" /> : null}
+                      </button>
+                      <div className="ct-stage__grid" style={{ gridTemplateColumns: v.ct?.layout?.cols, gridTemplateRows: v.ct?.layout?.rows }}>
+                        {(v.ct?.areas || []).map((_a) => (
+                          <div key={_a.key} className="ct-stage__cell" style={{ gridColumn: _a.col, gridRow: _a.row, padding: _a.frames.length ? (_a.frames.length * 7) + "%" : "0" }}>
+                            <div style={{ width: "100%", height: "100%" }}>
+                              <ZoneArea label={_a.label} image={_a.image} selected={_a.selected} onSelect={_a.select} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </section>
+                </div>
+                <PlaylistPreview pv={v.ct?.pv} compact />
+              </div>
+            ) : null}
+            <div className="ct-foot">
+              <NTV.Button variant="primary" tone="neutral" size="xl" iconRight={v.none} onClick={v.ct?.back} style={{ minWidth: "100px" }}>{v.ct?.backLabel}</NTV.Button>
+              <NTV.Button variant="primary" size="xl" iconRight={v.none} disabled={v.ct?.blocked} onClick={v.ct?.next} style={{ minWidth: "100px" }}>{v.ct?.nextLabel}</NTV.Button>
             </div>
           </NTV.Modal>
         </div>
