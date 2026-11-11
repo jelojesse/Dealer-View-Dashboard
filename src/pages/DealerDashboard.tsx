@@ -141,8 +141,7 @@ class Component extends DCLogic {
       alerts: [
         { icon: 'wifi-slash', title: '6 screens offline for 24h+', sub: 'Not playing ads. Check power or Internet at the Host.', cta: 'View', href: 'DealerLicenses.dc.html', go: to('DealerLicenses.dc.html', { status: 'offline' }) },
         { icon: 'image', title: '64 unused contents', sub: 'Uploaded but not in any playlist.', cta: 'Manage', href: 'DealerMedia.dc.html', go: to('DealerMedia.dc.html', { type: 'Unused' }) },
-        { icon: 'lock', title: '8 disabled licenses', sub: 'Turned off, these licenses can’t play content.', cta: 'Review', href: 'DealerLicenses.dc.html', go: to('DealerLicenses.dc.html', { status: 'disabled' }) },
-        { icon: 'id-card', title: '4 unassigned licenses', sub: 'Paid-for screens not playing yet.', cta: 'Assign', href: 'DealerLicenses.dc.html', go: to('DealerLicenses.dc.html', { status: 'unassigned' }) }
+        { icon: 'lock', title: '8 disabled licenses', sub: 'Turned off, these licenses can’t play content.', cta: 'Review', href: 'DealerLicenses.dc.html', go: to('DealerLicenses.dc.html', { status: 'disabled' }) }
       ]
     };
   }
