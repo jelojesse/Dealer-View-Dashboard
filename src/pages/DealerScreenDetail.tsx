@@ -176,6 +176,7 @@ class Component extends DCLogic {
       plOptions: plNames,
       ct: ct,
       pagePv: previewVals(tpl.zones, s.playlists, s.zone),
+      showPagePv: false, /* hidden for now: it stretched the Screen Information card (and Notes). Set true to bring it back. */
       openDelete: function () { self.setState({ modal: 'delete' }); },
       doneTitle: s.doneTitle, doneText: s.doneText,
       toast: toastVals(s.toast, this)
@@ -351,7 +352,7 @@ defineTemplate(Component, (v) => (
                 <button type="button" aria-pressed={v.bgSelected} onClick={v.selectBackground} style={{ display: "inline-flex", alignItems: "center", height: "28px", padding: "4px 8px", border: "0", borderRadius: "var(--radius-sm)", background: "#5273c0", color: "var(--white)", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", lineHeight: "20px", fontWeight: "500" }}>Select Background</button>
               </div>
               <ScreenPreview background="wood" withLogo={v.withLogo} selected={v.zone} onSelect={v.selectZone} />
-              <PlaylistPreview pv={v.pagePv} />
+              {v.showPagePv ? <PlaylistPreview pv={v.pagePv} /> : null}
             </section>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "stretch" }}>
