@@ -74,7 +74,46 @@
 .pg-tags .dv-kv2{display:flex;flex-direction:column;font-size:12px;line-height:18px}
 .pg-tags .dv-kv2>span:first-child{color:var(--fg-secondary)}
 .pg-tags .dv-kv2>span:last-child{font-weight:600;color:var(--fg-primary)}
-.pg-tags .tg-row{display:grid;grid-template-columns:50px minmax(220px,1.4fr) 140px 120px minmax(240px,2fr) 110px;align-items:center;min-height:52px;border-top:1px solid var(--container-border);font-size:13px;line-height:20px}
-.pg-tags .tg-row>div{padding:0 14px;min-width:0}
 .pg-tags .tg-sw{width:22px;height:22px;border-radius:999px;border:2px solid transparent;cursor:pointer;padding:0}
-.pg-tags .tg-sw[aria-pressed="true"]{border-color:var(--fg-primary)}
+.pg-tags .tg-sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--bg-surface),0 0 0 4px var(--fg-primary)}
+
+/* ---- Layout per Figma "Main Page - Tags" (2357:46275) ---- */
+.pg-tags .tg-main{min-height:100%}
+.pg-tags .tg-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.pg-tags .tg-stat{display:flex;flex-direction:column;justify-content:space-between;gap:16px;min-height:140px;cursor:pointer;font-family:inherit;text-align:left;color:var(--fg-primary)}
+.pg-tags .tg-stat:hover{border-color:var(--accent-action)!important}
+.pg-tags .tg-stat-label{font-size:20px;line-height:32px;font-weight:700}
+.pg-tags .tg-stat-n{font-size:32px;line-height:40px;font-weight:700}
+/* Two panels: Tags Data (fluid) | Tags Management (593px). They fill the rest of the screen and scroll inside. */
+.pg-tags .tg-split{flex:1 1 0;min-height:560px;display:grid;grid-template-columns:minmax(0,1fr) 593px;gap:20px}
+.pg-tags .tg-col{display:flex;flex-direction:column;gap:20px;min-width:0;min-height:0}
+.pg-tags .tg-card{display:flex;flex-direction:column;min-height:0}
+.pg-tags .tg-col .tg-card{flex:1 1 0}
+.pg-tags .tg-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.pg-tags .tg-card-title{margin:0;font-size:14px;line-height:20px;font-weight:700;color:var(--fg-primary)}
+.pg-tags .tg-fab{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;border:1px solid var(--fg-secondary);border-radius:var(--radius-sm);background:var(--bg-surface);color:var(--fg-secondary);cursor:pointer}
+.pg-tags .tg-fab:hover{border-color:var(--accent-action);color:var(--accent-action)}
+.pg-tags .tg-table{flex:1 1 0;min-height:0;overflow:auto;border:1px solid var(--container-border);border-radius:var(--radius-md);background:var(--bg-surface);scrollbar-width:thin}
+.pg-tags .tg-tr{display:grid;align-items:center;min-height:44px;border-bottom:1px solid var(--container-border);font-size:12px;line-height:20px;color:var(--fg-primary)}
+.pg-tags .tg-tr>div{padding:0 16px;min-width:0}
+.pg-tags .tg-tr .tg-c{padding:0;text-align:center;display:flex;align-items:center;justify-content:center}
+.pg-tags .tg-data{grid-template-columns:46px 39px minmax(200px,1fr) minmax(240px,1.07fr) 120px}
+.pg-tags .tg-mgmt{grid-template-columns:39px minmax(0,1fr) minmax(0,1fr) 94px}
+.pg-tags .tg-th{position:sticky;top:0;z-index:1;align-items:stretch;background:var(--bg-app);font-weight:700;line-height:16px;color:var(--fg-secondary)}
+.pg-tags .tg-th>div{display:flex;align-items:center}
+.pg-tags .tg-th>div+div:not(.tg-c){border-left:.5px solid var(--container-border)}
+.pg-tags .tg-tr:not(.tg-th):hover,.pg-tags .tg-tr.tg-sel{background:var(--primary-050)}
+.pg-tags .tg-hbtn{display:inline-flex;align-items:center;gap:12px;padding:0;border:0;background:none;font:inherit;color:inherit;cursor:pointer}
+.pg-tags .tg-hbtn:hover{color:var(--accent-action)}
+.pg-tags .tg-ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-tags .tg-chips{display:flex;flex-wrap:wrap;gap:10px;padding-top:10px!important;padding-bottom:10px!important}
+.pg-tags .tg-pill{display:inline-flex;align-items:center;gap:10px;height:24px;padding:0 12px;border-radius:12px;font-size:12px;line-height:20px;font-weight:600;color:var(--white);white-space:nowrap}
+.pg-tags .tg-pill-x{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;margin-right:-2px;padding:0;border:0;border-radius:50%;background:none;color:inherit;cursor:pointer}
+.pg-tags .tg-pill-x:hover{background:rgba(255,255,255,.25)}
+.pg-tags .dv-ib.tg-edit{color:var(--accent-action)}
+.pg-tags .tg-locked{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--fg-secondary)}
+.pg-tags .tg-foot{margin-top:0}
+.pg-tags .dv-ov .ntv-select{width:100%}
+.pg-tags .tg-pick{display:flex;flex-wrap:wrap;gap:8px;max-height:220px;overflow:auto}
+.pg-tags .tg-pickbtn{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 12px;border:1px solid;border-radius:13px;background:var(--bg-surface);font:600 12px/20px var(--font-sans);cursor:pointer}
+.pg-tags .tg-pickbtn:disabled{opacity:.45;cursor:not-allowed}
