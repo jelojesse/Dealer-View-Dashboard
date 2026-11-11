@@ -52,7 +52,7 @@ class Component extends DCLogic {
     var items = p.items.map(function (id, i) { var m = byId(D.media, id); var blk = !!(p.block && i === 0); var sc = (p.schedules || {})[id];
       return m ? { key: 'k' + i, blk: blk, m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: !sc, start: sc ? sc[0] : '', end: sc ? sc[1] : '',
         members: blk ? (p.blockMembers || []).map(function (mid) { return byId(D.media, mid); }).filter(Boolean) : null } : null; }).filter(Boolean);
-    this.state = { view: 'grid', kinds: [], sched: '', q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', target: '', mvPos: '1', swQ: '', libQ: '', libLimit: 10, push: false, ad: null, md: null, info: null, toast: null };
+    this.state = { view: 'grid', kinds: [], sched: '', q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', menuRect: null, target: '', mvPos: '1', swQ: '', libQ: '', libLimit: 10, push: false, ad: null, md: null, info: null, toast: null };
   }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
@@ -126,7 +126,8 @@ class Component extends DCLogic {
         return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : (SCHED[schedState(it)] ? SCHED[schedState(it)][0] : 'var(--primary-050)'), capColor: (it.blk || schedState(it)) ? '#fff' : 'var(--fg-primary)', blk: it.blk, members: it.members || [], schedTip: schedState(it) ? SCHED[schedState(it)][1] + ' · ' + fmtDate(it.start) + ' – ' + fmtDate(it.end) : '', n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)', sched: schedState(it) ? fmtDate(it.start) + ' – ' + fmtDate(it.end) + ' (' + SCHED[schedState(it)][1] + ')' : 'Always',
           checked: sel, cls: sel ? 'sel' : (it.blk ? 'blk' : ''), key: it.key, typeTag: it.blk ? 'BLOCK' : B[0], longDur: longDur(it.dur), added: fullDate(it.m.uploaded), uploader: it.blk ? 'Dealer Admin' : uploaderOf(it.m), kind: it.m.kind, sched: !!schedState(it),
           menuOpen: s.menu === it.key,
-          openMenu: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.setState({ menu: self.state.menu === it.key ? '' : it.key }); },
+          openMenu: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); var r = ev && ev.currentTarget && ev.currentTarget.getBoundingClientRect ? ev.currentTarget.getBoundingClientRect() : null; self.setState({ menu: self.state.menu === it.key ? '' : it.key, menuRect: r }); },
+          menuRect: s.menuRect,
           closeMenu: function () { self.setState({ menu: '' }); },
           menuItems: [
             { icon: 'maximize', label: 'Fullscreen', onClick: function () { self.setState({ modal: 'full', target: it.key }); } },
@@ -349,10 +350,12 @@ defineTemplate(Component, (v) => (
                           <div className="pd-lcell">{_it.added}</div>
                           <div className="pd-lcell">{_it.uploader}</div>
                           <div className="pd-lcell pd-lcell--act">
-                            <button type="button" className="pd-lmore" aria-label="More actions" aria-haspopup="menu" aria-expanded={_it.menuOpen} onClick={_it.openMenu}>
-                              <span style={{ display: "inline-flex", transform: "rotate(90deg)" }}><NTV.Icon name="ellipsis" size={v.i14} /></span>
-                            </button>
-                            {_it.menuOpen ? <NTV.ActionMenu items={_it.menuItems} align="left" onClose={_it.closeMenu} style={{ top: "54px", left: "8px" }} /> : null}
+                            <span className="pd-lmore-wrap">
+                              <button type="button" className="pd-lmore" aria-label="More actions" aria-haspopup="menu" aria-expanded={_it.menuOpen} onClick={_it.openMenu}>
+                                <span style={{ display: "inline-flex", transform: "rotate(90deg)" }}><NTV.Icon name="ellipsis" size={v.i14} /></span>
+                              </button>
+                              {_it.menuOpen ? <NTV.ActionMenu items={_it.menuItems} anchorRect={_it.menuRect} onClose={_it.closeMenu} /> : null}
+                            </span>
                           </div>
                         </div>
                       ))}

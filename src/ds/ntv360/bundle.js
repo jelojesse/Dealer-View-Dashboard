@@ -224,12 +224,23 @@ function ColumnVisibilityButton(p) {
 /* ActionMenu — popover list of actions (Figma "Action Items", Playlist Page V2 node 5596:36223).
  * items: [{ icon, label, tone, onClick } | 'divider']; tone colors the icon: 'primary' (default) | 'info' |
  * 'warning' | 'success' | 'danger' (danger also colors the label). onClose: called on outside click / after a pick.
- * Place inside a position:relative wrapper; align: 'right' (default) | 'left'. */
+ * Default: place inside a position:relative wrapper; align: 'right' (default, right edges line up) | 'left'.
+ * anchorRect (a button's getBoundingClientRect()): the menu floats above everything (position: fixed), so it is
+ * never clipped by a scrolling table; it opens below the button, or above it when there is no room. Scrolling closes it. */
 function ActionMenu(p) {
   var items = p.items || [];
+  var style = p.style;
+  if (p.anchorRect) {
+    var r = p.anchorRect, n = items.filter(function (it) { return it !== 'divider'; }).length, d = items.length - n;
+    var hgt = 42 + n * 26 + d + (items.length - 1) * 10, w = 185;
+    var below = r.bottom + 4 + hgt <= window.innerHeight - 8;
+    var left = p.align === 'left' ? r.left : r.right - w;
+    style = Object.assign({ position: 'fixed', top: below ? r.bottom + 4 : Math.max(8, r.top - 4 - hgt), left: Math.max(8, left), right: 'auto', zIndex: 200 }, p.style);
+  }
+  var close = function (e) { if (e && e.stopPropagation) e.stopPropagation(); p.onClose && p.onClose(); };
   return h(R.Fragment, null,
-    h('div', { className: 'ntv-actionmenu__backdrop', onClick: function (e) { e.stopPropagation(); p.onClose && p.onClose(); } }),
-    h('div', { className: cx('ntv-actionmenu', p.align === 'left' && 'ntv-actionmenu--left', p.className), role: 'menu', style: p.style, onClick: function (e) { e.stopPropagation(); } },
+    h('div', { className: 'ntv-actionmenu__backdrop', style: p.anchorRect ? { zIndex: 199 } : null, onClick: close, onWheel: p.anchorRect ? close : null }),
+    h('div', { className: cx('ntv-actionmenu', p.align === 'left' && 'ntv-actionmenu--left', p.className), role: 'menu', style: style, onClick: function (e) { e.stopPropagation(); } },
       items.map(function (it, i) {
         if (it === 'divider') return h('div', { key: 'd' + i, className: 'ntv-actionmenu__divider', role: 'separator' });
         return h('button', { key: it.label, type: 'button', role: 'menuitem', className: cx('ntv-actionmenu__item', 'ntv-actionmenu__item--' + (it.tone || 'primary')),
