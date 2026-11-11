@@ -4820,7 +4820,24 @@ export const D = {
       "name": "DNI-Dealer",
       "color": "info",
       "sys": true
-    }
+    },
+    { "id": "t10", "name": "Data_Off", "color": "warning", "sys": false },
+    { "id": "t11", "name": "PC Monitor", "color": "teal", "sys": false },
+    { "id": "t12", "name": "AD", "color": "warning", "sys": false },
+    { "id": "t13", "name": "MB", "color": "purple", "sys": false },
+    { "id": "t14", "name": "CS", "color": "accent", "sys": false },
+    { "id": "t15", "name": "Onn_Vizio", "color": "redorange", "sys": false },
+    { "id": "t16", "name": "Dell", "color": "info", "sys": false },
+    { "id": "t17", "name": "90'", "color": "purple", "sys": false },
+    { "id": "t18", "name": "Ad-Tech", "color": "redorange", "sys": false },
+    { "id": "t19", "name": "ONN_Raku", "color": "success", "sys": false },
+    { "id": "t20", "name": "43'TV", "color": "teal", "sys": false },
+    { "id": "t21", "name": "50'TV", "color": "teal", "sys": false },
+    { "id": "t22", "name": "HostOwnedTV", "color": "warning", "sys": false },
+    { "id": "t23", "name": "LMP", "color": "warning", "sys": false },
+    { "id": "t24", "name": "On Premise", "color": "warning", "sys": false },
+    { "id": "t25", "name": "+Mesh", "color": "warning", "sys": false },
+    { "id": "t26", "name": "Insigniafire", "color": "accent", "sys": false }
   ],
   "assign": [
     {
