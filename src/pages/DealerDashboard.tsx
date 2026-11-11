@@ -16,7 +16,7 @@ import './DealerDashboard.css';
 /* ============================== Logic ============================== */
 
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { range: 'Last 12 months', hover: -1 }; }
+  constructor(props) { super(props); this.state = { range: 'Last 12 months', chartType: 'Line', hover: -1 }; }
   renderVals() {
     var pct = function (v, of) { return (v / of * 100).toFixed(2) + '%'; };
     var R = this.vals0();
@@ -55,6 +55,35 @@ class Component extends DCLogic {
     var hi = this.state.hover >= 0 && this.state.hover < n ? this.state.hover : -1;
     var tip = hi < 0 ? { show: false } : { show: true, x: X(hi), flip: hi > n / 2, month: ms[hi] + (hi === n - 1 ? ' (to date)' : ''),
       rows: series.map(function (sr) { return { key: sr.key, label: sr.label, color: sr.color, v: sr.pts[hi].v, y: sr.pts[hi].y }; }) };
+    // "Line with Annotations" view: notes drawn on top of the same data.
+    var annotated = this.state.chartType === 'Line with Annotations';
+    var labelW = function (t) { return t.length * 6.6 + 14; };
+    var anno = null;
+    if (annotated) {
+      var scr = seriesDef[0].vals;
+      var vis = scr.slice(12 - n);
+      // Y-axis line: average Screens over the selected range.
+      var avg = Math.round(vis.reduce(function (a, b) { return a + b; }, 0) / vis.length);
+      var avgText = 'Avg Screens: ' + avg;
+      // X-axis line: completed month with the biggest Screens gain (vs. the month before it).
+      var best = -1, bestGain = -1;
+      for (var i = 0; i < n - 1; i++) { var gi = 12 - n + i; if (gi > 0 && scr[gi] - scr[gi - 1] > bestGain) { bestGain = scr[gi] - scr[gi - 1]; best = i; } }
+      var jumpText = 'Biggest jump: +' + bestGain + ' Screens';
+      // Range band: the in-progress month.
+      var bandX = n > 1 ? X(n - 2) : X(0);
+      // Point labels: latest value for each series.
+      var pointsA = series.map(function (sr) {
+        var p = sr.pts[sr.pts.length - 1], t = sr.label + ': ' + p.v, w = labelW(t);
+        return { key: sr.key, color: sr.color, x: p.x, y: p.y, text: t, w: w, bx: p.x - w - 12, by: p.y - 11 };
+      });
+      anno = {
+        yLine: { y: Y(avg), text: avgText, w: labelW(avgText), bx: 66, by: Y(avg) - 24 },
+        xLine: best < 0 ? null : (function () { var x = X(best), w = labelW(jumpText), left = x + w + 8 > 1180; return { x: x, text: jumpText, w: w, bx: left ? x - w - 6 : x + 6, by: 24 }; })(),
+        band: { x: bandX, w: X(n - 1) - bandX, text: ms[n - 1] + ' (to date)', tw: labelW(ms[n - 1] + ' (to date)') },
+        jumpPt: best < 0 ? null : { x: X(best), y: series[0].pts[best].y, color: series[0].color },
+        points: pointsA
+      };
+    }
     var to = function (page, filter) { return navFn(page, filter); };
     return {
       i10: 10, i12: 12, i14: 14,
@@ -66,7 +95,10 @@ class Component extends DCLogic {
       rangeOptions: ['Last 3 months', 'Last 6 months', 'Last 12 months'],
       range: this.state.range,
       setRange: function (v) { self.setState({ range: val(v), hover: -1 }); },
-      growth: { series: series, grid: grid, ticks: ticks, step: step },
+      chartTypeOptions: ['Line', 'Line with Annotations'],
+      chartType: this.state.chartType,
+      setChartType: function (v) { self.setState({ chartType: val(v), hover: -1 }); },
+      growth: { series: series, grid: grid, ticks: ticks, step: step, anno: anno },
       tip: tip, clearHover: function () { self.setState({ hover: -1 }); },
       statusRows: [
         { label: 'Online', n: 74, color: 'var(--status-online)', go: to('DealerLicenses.dc.html', { status: 'online' }) },
@@ -176,7 +208,10 @@ defineTemplate(Component, (v) => (
                     </span>
                   ))}
                 </div>
-                <div className="db-range">
+                <div className="db-range" aria-label="Chart type">
+                  <NTV.Select size="l" options={v.chartTypeOptions} value={v.chartType} onChange={v.setChartType} />
+                </div>
+                <div className="db-range" aria-label="Date range">
                   <NTV.Select size="l" options={v.rangeOptions} value={v.range} onChange={v.setRange} />
                 </div>
               </div>
@@ -189,12 +224,46 @@ defineTemplate(Component, (v) => (
                 {(v.growth?.ticks || []).map((_t, $index) => (
                   <line key={'v' + $index} x1={_t?.x} x2={_t?.x} y1="20" y2="260" stroke="var(--container-border)" strokeDasharray="3 4" />
                 ))}
+                {v.growth?.anno ? (
+                  <g className="db-anno-band">
+                    <rect x={v.growth.anno.band.x} y="20" width={v.growth.anno.band.w} height="240" fill="var(--primary-050)" />
+                    <rect x={v.growth.anno.band.x + v.growth.anno.band.w - v.growth.anno.band.tw} y="0" width={v.growth.anno.band.tw} height="18" rx="3" fill="var(--fg-secondary)" />
+                    <text x={v.growth.anno.band.x + v.growth.anno.band.w - v.growth.anno.band.tw / 2} y="13" textAnchor="middle" className="db-anno-text">{v.growth.anno.band.text}</text>
+                  </g>
+                ) : null}
                 {(v.growth?.series || []).map((_s) => (
                   <g key={_s.key}>
                     <path d={_s.line} fill="none" stroke={_s.color} strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" />
                     <path d={_s.live} fill="none" stroke={_s.color} strokeWidth="4" strokeDasharray="2 8" strokeLinecap="round" />
                   </g>
                 ))}
+                {v.growth?.anno ? (
+                  <g className="db-anno" pointerEvents="none">
+                    {/* Y-axis annotation: average Screens */}
+                    <line x1="60" x2="1180" y1={v.growth.anno.yLine.y} y2={v.growth.anno.yLine.y} stroke="var(--accent-action)" strokeWidth="1.5" strokeDasharray="6 4" />
+                    <rect x={v.growth.anno.yLine.bx} y={v.growth.anno.yLine.by} width={v.growth.anno.yLine.w} height="20" rx="3" fill="var(--accent-action)" />
+                    <text x={v.growth.anno.yLine.bx + v.growth.anno.yLine.w / 2} y={v.growth.anno.yLine.by + 14} textAnchor="middle" className="db-anno-text">{v.growth.anno.yLine.text}</text>
+                    {/* X-axis annotation: biggest monthly gain */}
+                    {v.growth.anno.xLine ? (
+                      <>
+                        <line x1={v.growth.anno.xLine.x} x2={v.growth.anno.xLine.x} y1="20" y2="260" stroke="var(--fg-primary)" strokeWidth="1.5" strokeDasharray="6 4" />
+                        <rect x={v.growth.anno.xLine.bx} y={v.growth.anno.xLine.by} width={v.growth.anno.xLine.w} height="20" rx="3" fill="var(--fg-primary)" />
+                        <text x={v.growth.anno.xLine.bx + v.growth.anno.xLine.w / 2} y={v.growth.anno.xLine.by + 14} textAnchor="middle" className="db-anno-text">{v.growth.anno.xLine.text}</text>
+                      </>
+                    ) : null}
+                    {v.growth.anno.jumpPt ? (
+                      <circle cx={v.growth.anno.jumpPt.x} cy={v.growth.anno.jumpPt.y} r="7" fill="var(--bg-surface)" stroke={v.growth.anno.jumpPt.color} strokeWidth="3" />
+                    ) : null}
+                    {/* Point annotations: latest value per series */}
+                    {v.growth.anno.points.map((_p) => (
+                      <g key={_p.key}>
+                        <circle cx={_p.x} cy={_p.y} r="6" fill={_p.color} stroke="var(--bg-surface)" strokeWidth="2" />
+                        <rect x={_p.bx} y={_p.by} width={_p.w} height="22" rx="3" fill={_p.color} />
+                        <text x={_p.bx + _p.w / 2} y={_p.by + 15} textAnchor="middle" className="db-anno-text">{_p.text}</text>
+                      </g>
+                    ))}
+                  </g>
+                ) : null}
                 {v.tip?.show ? (
                   <>
                     <line x1={v.tip.x} x2={v.tip.x} y1="20" y2="260" stroke="var(--fg-faint)" strokeWidth="1" />
