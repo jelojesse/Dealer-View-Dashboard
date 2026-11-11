@@ -81,7 +81,7 @@ defineTemplate(Component, (v) => (
             <div className="dv-row ch-toolbar" style={{ gap: "12px" }}>
               <FilterBy groups={v.filterGroups} value={v.filters} onChange={v.setFilters} />
               <div className="ch-sort" ref={v.sortRef}>
-                <NTV.Button variant="secondary" size="xl" iconLeft="sort-down" className={v.sortOpen ? "is-open" : ""} aria-haspopup="menu" aria-expanded={v.sortOpen} onClick={v.toggleSort}>Sort by</NTV.Button>
+                <NTV.Button variant="secondary" size="xl" iconLeft="bars-filter" className={v.sortOpen ? "is-open" : ""} aria-haspopup="menu" aria-expanded={v.sortOpen} onClick={v.toggleSort}>Sort by</NTV.Button>
                 {v.sortOpen ? (
                   <div className="dv-menu" role="menu" aria-label="Sort by" style={{ top: "48px", left: "0", minWidth: "210px" }}>
                     {(v.sortItems || []).map((_o, $index) => (
@@ -106,7 +106,7 @@ defineTemplate(Component, (v) => (
             <>
               {v.isGrid ? (
               <>
-                <div className="dv-grid" style={{ gridTemplateColumns: "repeat(8, minmax(0, 1fr))", gap: "14px" }}>
+                <div className="dv-tray dv-grid" style={{ gridTemplateColumns: "repeat(8, minmax(0, 1fr))", gap: "14px" }}>
                 {(v.mine || []).map((_c, $index) => (
                   <React.Fragment key={$index}>
                     <a className="ch-card" href="DealerChannelDetail.dc.html" onClick={_c?.open} data-nav={_c?.openNav}>
