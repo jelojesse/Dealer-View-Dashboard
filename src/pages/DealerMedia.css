@@ -221,6 +221,8 @@
 /* Drag target (recording): accent border + accent name on a white tile. */
 .pg-media .ml-folder.drop{border-color:var(--accent-action);background:var(--bg-surface);color:var(--accent-action)}
 .pg-media .ml-fname{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+/* New Folder button: 14/20 text per Figma 7673:130020 (other xl buttons stay 16px). */
+.pg-media .ml-btn-nf.ntv-btn{font-size:14px;line-height:20px}
 .pg-media .ml-fdup{flex:none;display:inline-flex;align-items:center;justify-content:center;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border-radius:999px;background:var(--accent-action);color:var(--white);font-size:10px;line-height:16px;font-weight:700}
 
 /* Bulk delete confirm (recording): centered lead text + red note box. */
