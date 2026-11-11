@@ -9,6 +9,7 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
 import { STATUS, addNav, arrived, byId, contains, go, hostName, navFn, peekNav, plByName, screenName, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import './DealerLicenseDetail.css';
@@ -167,7 +168,7 @@ class Component extends DCLogic {
         set: function (v) { self.setState({ code: val(v) }); },
         blocked: code.length !== 6 || s.linking,
         go: function () { self.setState({ linking: true }); self._x = setTimeout(function () { self.setState({ linking: false, modal: '', l: Object.assign({}, self.state.l, { status: 'online', net: self.state.l.net || 'LAN' }) }); toast(self, 'Device linked · ' + self.state.l.alias + ' is online'); }, 1800); } },
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
   }
 }
@@ -780,14 +781,7 @@ defineTemplate(Component, (v) => (
         </div>
         </>
       ) : null}
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));

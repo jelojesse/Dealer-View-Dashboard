@@ -15,3 +15,23 @@
 .drp__sum{display:flex;gap:16px;font:400 12px/20px var(--font-sans);color:var(--fg-secondary)}
 .drp__sum b{color:var(--fg-primary);font-weight:700}
 .drp__btns{display:flex;gap:12px}
+
+/* Compact variant (Playlist Reports): trigger and one-month panel share the same width. */
+.drp--compact .drp__trigger{width:300px;justify-content:space-between;font:400 14px/24px var(--font-sans);color:var(--fg-secondary)}
+.drp--compact .drp__trigger.has-value{color:var(--fg-primary)}
+.drp--compact .drp__trigger:hover,.drp--compact .drp__trigger.is-open{color:var(--accent-action);border-color:var(--accent-action)}
+.drp--compact .drp__panel{width:300px;padding:16px 14px 12px;border-radius:var(--radius-md)}
+.drp--compact .drp__month{gap:8px}
+.drp--compact .ntv-calendar__head{padding:0 4px}
+.drp--compact .ntv-calendar__head strong{font-size:18px;line-height:28px}
+.drp--compact .ntv-calendar__grid{grid-template-columns:repeat(7,minmax(0,1fr));gap:4px 2px}
+.drp--compact .ntv-calendar__dow{height:32px}
+.drp--compact .ntv-day{height:34px;padding:2px}
+.drp--compact .drp__other{cursor:default}
+/* Same number size for every day (buttons inherited the page font and rendered larger than neighbouring-month days). */
+.drp--compact .ntv-day,.drp--compact .drp__day{font-family:var(--font-sans);font-size:12px;line-height:20px}
+/* Full-width trigger/panel, e.g. inside a modal form. */
+.drp--block{display:block}
+.drp--block .drp__trigger{width:100%}
+.drp--block .drp__panel{width:100%;min-width:300px}
+.drp__hint{margin:8px 0 0;text-align:center;font:400 11px/16px var(--font-sans);color:var(--fg-secondary)}

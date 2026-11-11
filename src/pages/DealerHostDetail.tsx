@@ -9,6 +9,7 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
 import { STATUS, addNav, advsForHost, arrived, byId, contains, hostName, navFn, peekNav, plByName, screenName, toast, toastVals, val, D } from '../lib/shared';
 import DateCalendar from '../components/DateCalendar';
 import DealerNav from '../components/DealerNav';
@@ -148,7 +149,7 @@ class Component extends DCLogic {
       openDelete: function () { self.setState({ modal: 'delete' }); },
       del: s.lic.length ? { can: false, status: 'error', title: 'Can’t Delete Host', cancel: 'Close', text: h.name + ' still has ' + s.lic.length + ' license(s) assigned. Unassign them in the License tab first, then delete the host.' }
         : { can: true, status: 'warning', title: 'Delete Host?', cancel: 'Cancel', text: 'Delete ' + h.name + '? Its content and history will be removed. This can’t be undone.' },
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
   }
 }
@@ -647,14 +648,7 @@ defineTemplate(Component, (v) => (
         </div>
         </>
       ) : null}
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));

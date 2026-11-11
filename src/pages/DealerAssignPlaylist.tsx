@@ -9,6 +9,7 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
 import { addNav, byId, draft, mediaEntries, navFn, peekNav, screenName, toast, toastVals, D } from '../lib/shared';
 import ContentBlock from '../components/ContentBlock';
 import ContentThumb from '../components/ContentThumb';
@@ -59,7 +60,7 @@ class Component extends DCLogic {
       cannotProceed: assignedIds.length < zones.length, canProceed: assignedIds.length >= zones.length,
       reload: function () { toast(self, D.playlists.length + ' playlists loaded', 'info'); },
       save: function () { var z = {}; zones.forEach(function (x) { z[x.label] = byId(D.playlists, s.assign[x.id]).name; }); draft(Object.assign({}, d, { zones: z })); },
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
   }
 }
@@ -224,14 +225,7 @@ defineTemplate(Component, (v) => (
           </div>
         </main>
       </div>
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));

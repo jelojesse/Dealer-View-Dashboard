@@ -11,6 +11,7 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
 import { addNav, arrived, byId, hostName, navFn, peekNav, toast, toastVals, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import DateRangePicker, { fmtDate, fmtRange } from '../components/DateRangePicker';
@@ -95,7 +96,7 @@ class Component extends DCLogic {
       where: where.map(function (sc, i) { return { n: i + 1, screen: sc.name, host: hostName(sc.host), lic: sc.lic.length, type: sc.type, open: navFn('DealerScreenDetail.dc.html', { id: sc.id }), openHost: navFn('DealerHostDetail.dc.html', { id: sc.host }) }; }),
       noWhere: where.length === 0,
       history: history.map(function (h, i) { return { n: i + 1, what: h[0], date: h[1], by: h[2] }; }),
-      toast: toastVals(st.toast)
+      toast: toastVals(st.toast, this)
     };
   }
 }
@@ -164,7 +165,7 @@ defineTemplate(Component, (v) => (
             <div className="dv-between">
               <h2 className="dv-h1">Playlist Reports</h2>
               <div className="dv-row" style={{ gap: "12px" }}>
-                <DateRangePicker value={v.range} onChange={v.setRange} align="right" today={v.today} />
+                <DateRangePicker compact value={v.range} onChange={v.setRange} align="right" today={v.today} />
                 <NTV.Button variant="primary" size="xl" iconRight="file-pdf" onClick={v.generate}>Generate Report</NTV.Button>
               </div>
             </div>
@@ -243,12 +244,7 @@ defineTemplate(Component, (v) => (
           </section>
         </main>
       </div>
-      {v.toast?.show ? (
-        <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));

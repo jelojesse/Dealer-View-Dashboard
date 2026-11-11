@@ -9,6 +9,7 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
 import { STATUS, addNav, arrived, byId, contains, hostName, navFn, peekNav, plByName, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import HostAdvFilter from '../components/HostAdvFilter';
@@ -102,7 +103,7 @@ class Component extends DCLogic {
       applyFilter: function (x) { self.setState({ filterOpen: false, host: x.host, hostName: x.hostName, adv: x.adv || '', limit: 25 }); },
       exportIt: function () { toast(self, 'Exporting ' + matches.length + ' licenses to Excel…', 'info'); },
       refresh: function () { toast(self, 'License statuses refreshed', 'info'); },
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
   }
 }
@@ -198,7 +199,7 @@ defineTemplate(Component, (v) => (
             <div className="dv-row lic-filters" style={{ flexWrap: "wrap", gap: "12px" }}>
               <FilterBy groups={v.filterGroups} value={v.filters} onChange={v.setFilters} />
               <NTV.Button variant="secondary" size="xl" iconRight="user" onClick={v.openFilter}>Filter By User</NTV.Button>
-              <DateRangePicker value={v.range} onChange={v.setRange} today={v.today} />
+              <DateRangePicker compact value={v.range} onChange={v.setRange} today={v.today} />
               {(v.chipsOn || []).map((_c, $index) => (
                 <React.Fragment key={$index}>
                   <button type="button" className="dv-chip" aria-pressed="true" onClick={_c?.clear}>
@@ -317,14 +318,7 @@ defineTemplate(Component, (v) => (
         </main>
       </div>
       <HostAdvFilter open={v.filterOpen} onApply={v.applyFilter} onClose={v.closeFilter} />
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));

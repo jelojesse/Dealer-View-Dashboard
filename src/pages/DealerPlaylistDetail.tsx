@@ -9,6 +9,8 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
+import DateRangePicker, { fmtDate } from '../components/DateRangePicker';
 import { addNav, arrived, byId, contains, go, hostName, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
 import ContentBlock from '../components/ContentBlock';
 import ContentThumb from '../components/ContentThumb';
@@ -18,6 +20,11 @@ import ScreenPreview from '../components/ScreenPreview';
 import './DealerPlaylistDetail.css';
 
 /* ============================== Logic ============================== */
+
+// Schedule → "Play between dates" range (default Nov 15 – Dec 31, 2026).
+var TODAY = new Date(2026, 10, 11);
+var DEF_RANGE = { start: new Date(2026, 10, 15), end: new Date(2026, 11, 31) };
+function shortRange(r) { var f = function (d) { return fmtDate(d).replace(/, \d{4}$/, ''); }; return f(r.start) + ' – ' + f(r.end || r.start); }
 
 // Grid view: consecutive block members (channel tile + its member images) collapse into ONE
 // group entry spanning the summed columns (capped at the 8-column grid); others stay single tiles.
@@ -71,7 +78,7 @@ class Component extends DCLogic {
       kindLabel: s.kind ? 'Filter: ' + s.kind + 's' : 'Filter by', cycleKind: function () { var o = ['', 'image', 'video', 'widget']; self.setState({ kind: o[(o.indexOf(self.state.kind) + 1) % o.length] }); },
       q: s.q, setQ: function (v) { self.setState({ q: val(v) }); },
       markLabel: s.items.length > 0 && selKeys.length === s.items.length ? 'Unmark All' : 'Mark All',
-      bulkModify: function () { var k = selKeys[0], it = self.state.items.filter(function (x) { return x.key === k; })[0]; if (it) self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, bulk: selKeys } }); },
+      bulkModify: function () { var k = selKeys[0], it = self.state.items.filter(function (x) { return x.key === k; })[0]; if (it) self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, range: it.range || DEF_RANGE, bulk: selKeys } }); },
       isGrid: s.view === 'grid', isList: s.view === 'list', toGrid: function () { self.setState({ view: 'grid' }); }, toList: function () { self.setState({ view: 'list' }); },
       libQ: s.libQ, setLibQ: function (v) { self.setState({ libQ: val(v), folder: val(v) ? '__search' : '' }); },
       inFolder: !!s.folder, notInFolder: !s.folder,
@@ -97,11 +104,11 @@ class Component extends DCLogic {
       items: s.items.filter(function (it) { return (!s.kind || it.m.kind === s.kind) && contains(it.m.title, s.q); }).map(function (it, i) {
         var B = it.blk ? ['CHANNEL', 'var(--warning-main)'] : ({ image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'], block: ['BLOCK', 'var(--purple-main)'] }[it.m.kind] || ['IMAGE', 'var(--info-main)']);
         var sel = !!s.sel[it.key], idx = s.items.indexOf(it);
-        return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : 'transparent', capColor: it.blk ? '#fff' : 'var(--fg-primary)', n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)', sched: it.always ? 'Always' : 'Nov 15 – Dec 31',
+        return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : 'transparent', capColor: it.blk ? '#fff' : 'var(--fg-primary)', n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)', sched: it.always ? 'Always' : shortRange(it.range || DEF_RANGE),
           checked: sel, inBlk: !!it.inBlk, cls: sel ? 'sel' : (it.blk && !it.inBlk ? 'blk' : ''),
           toggle: function () { var o = Object.assign({}, self.state.sel); o[it.key] = !o[it.key]; self.setState({ sel: o }); },
           up: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); move(idx, -1); }, down: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); move(idx, 1); },
-          modify: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always } }); } };
+          modify: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, range: it.range || DEF_RANGE } }); } };
       }),
       empty: s.items.length === 0,
       screens: scs.map(function (sc, i) { var z = Object.keys(sc.zones).filter(function (k) { return sc.zones[k] === p.name; }); return { n: i + 1, name: sc.name, host: hostName(sc.host), zone: z.join(', ') || '—', template: sc.template, lic: sc.lic.length, open: navFn('DealerScreenDetail.dc.html', { id: sc.id }) }; }),
@@ -145,14 +152,15 @@ class Component extends DCLogic {
         everywhere: md.everywhere, selected: !md.everywhere, setEverywhere: function () { setMd({ everywhere: true }); }, setSelected: function () { setMd({ everywhere: false }); },
         hosts: scs.map(function (sc) { return { name: hostName(sc.host), on: !!md.hosts[sc.host], toggle: function () { var o = Object.assign({}, self.state.md.hosts); o[sc.host] = !o[sc.host]; setMd({ hosts: o }); } }; }),
         always: md.always, ranged: !md.always, setAlways: function () { setMd({ always: true }); }, setRanged: function () { setMd({ always: false }); },
-        save: function () { var x = self.state.md; self.setState({ items: self.state.items.map(function (it) { return (it.key === x.key || (x.bulk && x.bulk.indexOf(it.key) !== -1)) ? Object.assign({}, it, { dur: x.dur, trans: x.trans, mute: x.mute, everywhere: x.everywhere, hosts: x.hosts, always: x.always }) : it; }), modal: '', md: null }); toast(self, 'Content settings saved'); }
+        range: md.range || DEF_RANGE, setRange: function (r) { setMd({ range: r }); }, today: TODAY,
+        save: function () { var x = self.state.md; self.setState({ items: self.state.items.map(function (it) { return (it.key === x.key || (x.bulk && x.bulk.indexOf(it.key) !== -1)) ? Object.assign({}, it, { dur: x.dur, trans: x.trans, mute: x.mute, everywhere: x.everywhere, hosts: x.hosts, always: x.always, range: x.range || it.range }) : it; }), modal: '', md: null }); toast(self, 'Content settings saved'); }
       } : {},
       openInfo: function () { self.setState({ modal: 'info', info: { name: p.name, desc: p.desc } }); },
       info: { name: info.name, desc: info.desc, bad: !info.name.trim(),
         setName: function (v) { self.setState({ info: Object.assign({}, self.state.info, { name: val(v) }) }); },
         setDesc: function (v) { self.setState({ info: Object.assign({}, self.state.info, { desc: val(v) }) }); },
         save: function () { self.setState({ p: Object.assign({}, self.state.p, { name: self.state.info.name.trim(), desc: self.state.info.desc }), modal: '' }); toast(self, 'Playlist info saved'); } },
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
     R.gridEntries = groupBlocks(R.items);
     return R;
@@ -584,16 +592,10 @@ defineTemplate(Component, (v) => (
                 <NTV.Radio name="sc" checked={v.md?.ranged} label="Play between dates" onChange={v.md?.setRanged} />
                 {v.md?.ranged ? (
                   <>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                     <div>
-                      <label className="dv-label" htmlFor="sd1">Start</label>
-                      <input id="sd1" className="dv-field" type="date" value="2026-11-15" />
+                      <span className="dv-label">Start Date – End Date</span>
+                      <DateRangePicker compact block value={v.md?.range} onChange={v.md?.setRange} today={v.md?.today} />
                     </div>
-                    <div>
-                      <label className="dv-label" htmlFor="sd2">End</label>
-                      <input id="sd2" className="dv-field" type="date" value="2026-12-31" />
-                    </div>
-                  </div>
                   </>
                 ) : null}
               </div>
@@ -644,14 +646,7 @@ defineTemplate(Component, (v) => (
         </div>
         </>
       ) : null}
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));
