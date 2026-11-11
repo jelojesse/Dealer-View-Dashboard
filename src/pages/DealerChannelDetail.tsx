@@ -153,7 +153,7 @@ defineTemplate(Component, (v) => (
                 </div>
                 {v.reorder ? <span className="dv-sub">Drag contents to change their play order, then click Done.</span> : null}
                 {v.isGrid && !v.noContents ? (
-                  <div className="dv-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "10px" }}>
+                  <div className="dv-tray dv-grid" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: "10px" }}>
                     {(v.contents || []).map((_m, $index) => (
                       <div key={_m?.id} role="button" tabIndex={0} className={_m?.cls} onClick={_m?.pick} draggable={v.reorder} onDragStart={_m?.dragStart} onDragOver={_m?.dragOver} onDrop={_m?.drop} onDragEnd={_m?.dragEnd}>
                         <div className="dv-thumb" style={{ aspectRatio: "16 / 10", borderRadius: "0" }}>
