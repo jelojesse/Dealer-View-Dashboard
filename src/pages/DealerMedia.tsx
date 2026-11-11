@@ -46,22 +46,28 @@ function MediaCard(p) {
   );
 }
 
-/* Folder tile with its ⋮ menu (page grid + All Folders modal). Menu state lives on the page (`menu`). */
+/* Folder tile with its ⋮ menu (page grid + All Folders modal). Menu state lives on the page (`menu`).
+   Page grid (recording): single click selects (for Bulk Delete), double click opens the folder preview panel.
+   Keyboard: Space selects, Enter opens. In the All Folders modal (no selection there) a click opens. */
 function FolderTile(p) {
   var f = p.f;
   var stop = function (e) { e.stopPropagation(); };
-  var onKey = function (e) { if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) { e.preventDefault(); f.open(); } };
+  var sel = f.toggleSel;
+  var onKey = function (e) {
+    if (e.target !== e.currentTarget) return;
+    if (e.key === 'Enter') { e.preventDefault(); f.open(); }
+    else if (e.key === ' ') { e.preventDefault(); if (sel) sel(); else f.open(); }
+  };
+  // Ignore clicks that come from the ⋮ button / menu.
+  var fromMenu = function (e) { return !!(e.target.closest && e.target.closest('.ml-fbtn, .ml-fmenu')); };
   return (
-    <div className={'ml-folder ' + (f.cls || '') + (p.big ? ' ml-folder--big' : '')} role="button" tabIndex={0} onClick={f.open} onKeyDown={onKey}
+    <div className={'ml-folder ' + (f.cls || '') + (p.big ? ' ml-folder--big' : '')} role="button" tabIndex={0} aria-pressed={sel ? !!f.checked : undefined}
+      onClick={function (e) { if (fromMenu(e)) return; if (sel) sel(); else f.open(); }}
+      onDoubleClick={sel ? function (e) { if (fromMenu(e)) return; f.open(); } : undefined}
+      onMouseDown={function (e) { if (e.detail > 1) e.preventDefault(); /* no text highlight on double click */ }}
+      onKeyDown={onKey}
       onDragOver={f.dz ? f.dz.over : undefined} onDragLeave={f.dz ? f.dz.leave : undefined} onDrop={f.dz ? f.dz.drop : undefined}>
-      {f.toggleSel ? (
-        // Hover/selected: the folder icon swaps for a checkbox (like thumbnails). Ticking selects for bulk actions;
-        // clicking anywhere else on the tile still opens the folder.
-        <span className="ml-fsel" onClick={stop} onKeyDown={stop}>
-          <span className="ml-fsel-icon"><NTV.Icon name={f.icon} size={16} /></span>
-          <span className="ml-fsel-cb"><NTV.Checkbox checked={!!f.checked} onChange={f.toggleSel} /></span>
-        </span>
-      ) : <NTV.Icon name={f.icon} size={p.big ? 20 : 16} />}
+      <NTV.Icon name={f.icon} size={p.big ? 20 : 16} />
       <span style={{ flex: "1", minWidth: "0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
       <button type="button" className="dv-ib ml-fbtn" aria-label={'Options for ' + f.name} aria-haspopup="menu" aria-expanded={!!f.menuOpen} onClick={f.menu}>
         <NTV.Icon name="ellipsis" size={14} style={{ transform: "rotate(90deg)" }} />
@@ -234,7 +240,7 @@ class Component extends DCLogic {
       var sub = function (o) { if (fromModal) o.ret = 'folders'; return o; };
       var dz = fromModal ? null : zone('folder:' + f.name, function (d) { return !(d.from === 'panel' && f.name === s.panel); }, function (ids) { moveTo(f.name, ids); });
       var picked = !fromModal && !!s.fsel[f.name];
-      return { name: f.name, cls: (on ? 'on' : '') + (picked ? ' picked' : '') + (dz && dz.on ? ' drop' : ''), icon: on ? 'folder-solid' : 'folder', menuOpen: s.menu === key, dz: dz,
+      return { name: f.name, cls: (on ? 'on' : '') + (picked ? ' picked' : '') + (dz && dz.on ? ' drop' : ''), icon: on || picked ? 'folder-solid' : 'folder', menuOpen: s.menu === key, dz: dz,
         checked: picked,
         toggleSel: fromModal ? null : function () { self.setState(function (st) { var o = Object.assign({}, st.fsel); if (o[f.name]) delete o[f.name]; else o[f.name] = true; return { fsel: o }; }); },
         open: fromModal ? function () { self.setState({ modal: '', menu: '', panel: f.name, panelQ: '', panelLimit: PANEL_PAGE }); } : function () { self.setState({ panel: on ? '' : f.name, panelQ: '', panelLimit: PANEL_PAGE }); },
