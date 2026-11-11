@@ -17,11 +17,22 @@ var STATUS = { online: { label: 'Online', color: 'var(--status-online)' }, offli
 function toastVals(t, self) {
   var kind = (t && t.kind) || 'success';
   var c = { success: ['var(--success-main)', 'circle-check'], info: ['var(--info-main)', 'circle-info'], error: ['var(--danger-main)', 'circle-xmark'], warning: ['var(--warning-main)', 'triangle-exclamation'] }[kind];
-  return { show: !!(t && t.text), text: t ? t.text : '', sub: t ? t.sub || '' : '', kind: kind, id: t ? t.id : 0, color: c[0], icon: c[1], size: 16,
-    close: self ? function () { if (self._tt) clearTimeout(self._tt); self.setState({ toast: null }); } : null };
+  var hide = self ? function () { if (self._tt) clearTimeout(self._tt); self.setState({ toast: null }); } : null;
+  var act = t && t.action;
+  return { show: !!(t && t.text), text: t ? t.text : '', sub: t ? t.sub || '' : '', kind: kind, id: t ? t.id : 0, color: c[0], icon: c[1], size: 16, ms: t ? t.ms || 0 : 0,
+    // Optional inline action (e.g. "undo"): runs, then dismisses the toast.
+    action: act ? { label: act.label, run: function () { act.run(); if (hide) hide(); } } : null,
+    close: hide };
 }
 var toastSeq = 0;
-function toast(self, text, kind, sub) { if (self._tt) clearTimeout(self._tt); self.setState({ toast: { text: text, kind: kind || 'success', sub: sub || '', id: ++toastSeq } }); self._tt = setTimeout(function () { self.setState({ toast: null }); }, sub ? 4000 : 2600); }
+// toast(self, text, kind?, sub?, opts?) — opts.action = { label, run } adds an inline button (e.g. undo).
+function toast(self, text, kind, sub, opts) {
+  opts = opts || {};
+  var ms = opts.ms || (opts.action ? 6000 : (sub ? 4000 : 2600));
+  if (self._tt) clearTimeout(self._tt);
+  self.setState({ toast: { text: text, kind: kind || 'success', sub: sub || '', id: ++toastSeq, ms: ms, action: opts.action || null } });
+  self._tt = setTimeout(function () { self.setState({ toast: null }); }, ms);
+}
 function hostName(id) { var h = byId(D.hosts, id); return h ? h.name : '—'; }
 function licsForHost(id) { return D.licenses.filter(function (l) { return l.host === id; }); }
 function screenName(id) { var s = byId(D.screens, id); return s ? s.name : '—'; }

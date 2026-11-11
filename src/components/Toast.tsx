@@ -23,7 +23,10 @@ export default function Toast(p) {
         <p className="dv-toast2-title">{t.text}</p>
         {t.sub ? <p className="dv-toast2-sub">{t.sub}</p> : null}
       </div>
+      {t.action ? <button type="button" className="dv-toast2-act" onClick={t.action.run}>{t.action.label}</button> : null}
       <button type="button" className="dv-toast2-x" aria-label="Dismiss" onClick={close}><NTV.Icon name="x" size={12} /></button>
+      {/* Countdown bar along the bottom edge (recording): shrinks over the toast's lifetime. */}
+      {t.ms ? <span key={t.id} className="dv-toast2-bar" style={{ animationDuration: t.ms + 'ms' }} /> : null}
     </div>
   );
 }

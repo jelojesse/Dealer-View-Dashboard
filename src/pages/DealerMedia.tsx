@@ -68,7 +68,11 @@ function FolderTile(p) {
       onKeyDown={onKey}
       onDragOver={f.dz ? f.dz.over : undefined} onDragLeave={f.dz ? f.dz.leave : undefined} onDrop={f.dz ? f.dz.drop : undefined}>
       <NTV.Icon name={f.icon} size={p.big ? 20 : 16} />
-      <span style={{ flex: "1", minWidth: "0", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+      <span className="ml-fname">
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.name}</span>
+        {/* While dragging: how many of the dragged files are already in this folder (recording). */}
+        {f.dup ? <span className="ml-fdup" title={f.dup + ' of the dragged files already in this folder'}>{f.dup}</span> : null}
+      </span>
       <button type="button" className="dv-ib ml-fbtn" aria-label={'Options for ' + f.name} aria-haspopup="menu" aria-expanded={!!f.menuOpen} onClick={f.menu}>
         <NTV.Icon name="ellipsis" size={14} style={{ transform: "rotate(90deg)" }} />
       </button>
@@ -153,11 +157,20 @@ function folderTime(f) { var t = Date.parse((f.created || '').split(',').slice(0
 var AF_PAGE = 24;
 var PANEL_PAGE = 15;
 var BADGE = { image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'] };
+var MV_PAGE = 24;
+/* A file can sit in several folders (recording: "Add Files" adds, it doesn't move). `fl` = folder names. */
+function inF(m, name) { return (m.fl || []).indexOf(name) !== -1; }
+function withF(m, add, drop) { var fl = (m.fl || []).filter(function (n) { return n !== drop; }); if (add && fl.indexOf(add) === -1) fl = fl.concat([add]); return Object.assign({}, m, { fl: fl }); }
+function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     var f = arrived('DealerMedia.dc.html') || {};
-    var media = D.media.map(function (m, i) { var o = Object.assign({}, m); if (i % 4 === 3) o.folder = FOLDERS[5 + (i % 5)].name; return o; });
+    // Demo folders: every 4th file sits in a folder, and some files are also in a second one.
+    var media = D.media.map(function (m, i) { var o = Object.assign({}, m), fl = m.folder ? [m.folder] : [];
+      if (i % 4 === 3) fl.push(FOLDERS[5 + (i % 5)].name);
+      if (i % 6 === 1) fl.push(FOLDERS[i % 10].name);
+      o.fl = fl.filter(function (n, k) { return fl.indexOf(n) === k; }); return o; });
     this.state = { media: media, folders: FOLDERS.map(function (x) { return Object.assign({}, x); }), type: f.type === 'Unused' ? 'Unused' : '', source: f.source || '', host: f.host || '', hostName: f.hostName || '', adv: '', asc: true, query: '', sel: {}, limit: 30,
       foldersOpen: true, mediaOpen: true, panel: '', panelQ: '', panelLimit: PANEL_PAGE, drag: null, dropTo: '', menu: '', fsel: {}, modal: '', ret: '', af: { q: '', sort: 'az', limit: AF_PAGE }, cf: null, fd: null, ra: null, mv: null, up: null, nf: null, adp: null, okm: null, ucCtx: '', extraAdvs: {}, filterOpen: false, toast: null };
   }
@@ -194,16 +207,24 @@ class Component extends DCLogic {
     var fselNames = s.folders.filter(function (f) { return s.fsel[f.name]; }).map(function (f) { return f.name; });
     // Sub-modals opened from the All Folders modal return to it when they close.
     var close = function () { self.setState({ modal: self.state.ret || '', ret: '', cf: null, fd: null, ra: null, mv: null }); };
-    /* Drag & drop: cards drag from the Media Contents grid ('main') or the folder panel ('panel').
-       Dragging a selected card carries every selected card. Drop targets: a folder tile (move into
-       that folder), the open folder panel (add to it, from 'main'), or the Media Contents grid
-       (remove from the open folder, from 'panel'). */
-    var moveTo = function (folder, ids) {
-      var cur = self.state.media, from = self.state.panel;
-      var n = cur.filter(function (m) { return ids.indexOf(m.id) !== -1 && (m.folder || '') !== folder; }).length;
-      if (!n) { toast(self, folder ? 'Already in “' + folder + '”' : 'Not in a folder', 'info'); return; }
-      self.setState({ media: cur.map(function (m) { return ids.indexOf(m.id) !== -1 ? Object.assign({}, m, { folder: folder }) : m; }), sel: {} });
-      toast(self, folder ? n + (n === 1 ? ' asset' : ' assets') + ' moved to “' + folder + '”' : n + (n === 1 ? ' asset' : ' assets') + ' removed from “' + from + '”');
+    /* Drag & drop (recording): cards drag from the Media Contents grid ('main') or the folder panel ('panel').
+       Dragging a selected card carries every selected card. While dragging, each folder that already holds
+       some of the dragged files shows a red count badge. Dropping on a folder (or the open panel) ADDS the
+       files to it; files already there are skipped ("# duplicate files were found", with undo). Dropping a
+       panel card on the Media Contents grid removes it from the open folder. */
+    var byIdM = {}; s.media.forEach(function (m) { byIdM[m.id] = m; });
+    var addTo = function (folder, ids) {
+      var before = self.state.media, sel = self.state.sel;
+      var fresh = ids.filter(function (id) { return byIdM[id] && !inF(byIdM[id], folder); }), dup = ids.length - fresh.length;
+      if (fresh.length) self.setState({ media: before.map(function (m) { return fresh.indexOf(m.id) !== -1 ? withF(m, folder) : m; }), sel: {} });
+      var undo = { label: 'undo', run: function () { self.setState({ media: before, sel: sel }); } };
+      if (dup) toast(self, plural(dup, 'duplicate file was found.', 'duplicate files were found.'), 'error', fresh.length ? 'Existing files were skipped · ' + plural(fresh.length, 'asset', 'assets') + ' added to “' + folder + '”' : 'Existing files were skipped', fresh.length ? { action: undo } : null);
+      else toast(self, plural(fresh.length, 'asset', 'assets') + ' Added', 'success', 'Added to “' + folder + '”', { action: undo });
+    };
+    var removeFrom = function (folder, ids) {
+      var before = self.state.media;
+      self.setState({ media: before.map(function (m) { return ids.indexOf(m.id) !== -1 ? withF(m, null, folder) : m; }), sel: {} });
+      toast(self, plural(ids.length, 'asset', 'assets') + ' removed from “' + folder + '”', 'success', '', { action: { label: 'undo', run: function () { self.setState({ media: before }); } } });
     };
     var zone = function (key, accept, onDrop) {
       return {
@@ -230,7 +251,7 @@ class Component extends DCLogic {
         menuItems: [
           { label: 'View Details', icon: 'eye', href: 'DealerMediaDetail.dc.html', nav: open.nav, onClick: open },
           { label: 'Rename', icon: 'pencil', onClick: function () { self.setState({ modal: 'folder', fd: { mode: 'file', id: m.id, old: m.title, name: '' } }); } },
-          { label: 'Move to Folder', icon: 'folder', onClick: function () { self.setState({ modal: 'move', mv: { mode: 'bulk', to: m.folder || '', ids: [m.id], title: m.title } }); } },
+          { label: 'Move to Folder', icon: 'folder', onClick: function () { self.setState({ modal: 'move', mv: { ids: [m.id], picked: {}, q: '', view: '', vq: '', limit: MV_PAGE } }); } },
           { label: 'Download', icon: 'download', onClick: function () { toast(self, 'Downloading ' + m.title + '…', 'info'); } },
           { label: 'Delete', icon: 'trash', danger: true, onClick: function () { var n = D.playlists.filter(function (p) { return p.items.indexOf(m.id) !== -1; }).length; self.setState({ modal: 'confirm', cf: { title: 'Delete File?', text: m.used && n ? m.title + ' is in ' + n + ' playlist(s). Deleting removes it from those playlists and the screens playing them.' : 'Delete ' + m.title + '? It isn’t used anywhere. This can’t be undone.', act: 'files', ids: [m.id] } }); } }
         ] };
@@ -238,9 +259,11 @@ class Component extends DCLogic {
     var folderVals = function (f, fromModal) {
       var on = s.panel === f.name, key = (fromModal ? 'af:' : '') + f.name;
       var sub = function (o) { if (fromModal) o.ret = 'folders'; return o; };
-      var dz = fromModal ? null : zone('folder:' + f.name, function (d) { return !(d.from === 'panel' && f.name === s.panel); }, function (ids) { moveTo(f.name, ids); });
+      var dz = fromModal ? null : zone('folder:' + f.name, function (d) { return !(d.from === 'panel' && f.name === s.panel); }, function (ids) { addTo(f.name, ids); });
       var picked = !fromModal && !!s.fsel[f.name];
-      return { name: f.name, cls: (on ? 'on' : '') + (picked ? ' picked' : '') + (dz && dz.on ? ' drop' : ''), icon: on || picked ? 'folder-solid' : 'folder', menuOpen: s.menu === key, dz: dz,
+      // While dragging: how many of the dragged files this folder already has (red badge).
+      var dup = !fromModal && s.drag ? s.drag.ids.filter(function (id) { return byIdM[id] && inF(byIdM[id], f.name); }).length : 0;
+      return { name: f.name, cls: (on ? 'on' : '') + (picked ? ' picked' : '') + (dz && dz.on ? ' drop' : ''), icon: on || picked ? 'folder-solid' : 'folder', menuOpen: s.menu === key, dz: dz, dup: dup,
         checked: picked,
         toggleSel: fromModal ? null : function () { self.setState(function (st) { var o = Object.assign({}, st.fsel); if (o[f.name]) delete o[f.name]; else o[f.name] = true; return { fsel: o }; }); },
         open: fromModal ? function () { self.setState({ modal: '', menu: '', panel: f.name, panelQ: '', panelLimit: PANEL_PAGE }); } : function () { self.setState({ panel: on ? '' : f.name, panelQ: '', panelLimit: PANEL_PAGE }); },
@@ -256,7 +279,7 @@ class Component extends DCLogic {
           self.setState({ menu: '', folders: fs });
           toast(self, '“' + copy.name + '” Created', 'success', 'Added to your folder list.');
         },
-        remove: function () { var n = self.state.media.filter(function (m) { return m.folder === f.name; }).length; self.setState(sub({ menu: '', modal: 'confirm', cf: { title: 'Delete Folder?', text: 'Delete “' + f.name + '”? Its ' + n + ' file(s) stay in your Media Library.', act: 'folder', key: f.name } })); } };
+        remove: function () { var n = self.state.media.filter(function (m) { return inF(m, f.name); }).length; self.setState(sub({ menu: '', modal: 'confirm', cf: { title: 'Delete Folder?', text: 'Delete “' + f.name + '”? Its ' + n + ' file(s) stay in your Media Library.', act: 'folder', key: f.name } })); } };
     };
     var af = s.af;
     var afList = s.folders.filter(function (f) { return contains(f.name, af.q); }).slice().sort(function (a, b) {
@@ -271,7 +294,7 @@ class Component extends DCLogic {
     if (s.adv) chipsOn.push({ label: 'Advertiser: ' + s.adv, clear: function () { self.setState({ adv: '' }); } });
     if (s.source) chipsOn.push({ label: 'Source: ' + s.source, clear: function () { self.setState({ source: '' }); } });
     var pf = s.folders.filter(function (f) { return f.name === s.panel; })[0];
-    var pItems = pf ? s.media.filter(function (m) { return m.folder === pf.name && contains(m.title, s.panelQ); }) : [];
+    var pItems = pf ? s.media.filter(function (m) { return inF(m, pf.name) && contains(m.title, s.panelQ); }) : [];
     // Advertisers for a host: the mock list plus any created here via "Create Ad Profile".
     var advsOf = function (hid) { return hid ? advsForHost(hid).concat(s.extraAdvs[hid] || []) : []; };
     var hostByName = function (n) { return D.hosts.filter(function (h) { return h.name === n; })[0]; };
@@ -287,8 +310,15 @@ class Component extends DCLogic {
     var nfAdvs = nfHost ? advsOf(nfHost.id) : [];
     var adp = s.adp || { logo: '', logoName: '', name: '', website: '', email: '', social: '', colors: [] };
     var foldersShown = s.folders.slice(0, 10);
-    var mv = s.mv || {};
-    var mvIds = mv.ids || selIds;
+    /* "Add Files" modal (Figma 6160:130753 / 130855 / 130957): tick one or more destination folders;
+       › previews a folder's contents (breadcrumb "Folders › Name"). Files are added, duplicates skipped. */
+    var mv = s.mv || { ids: [], picked: {}, q: '', view: '', vq: '', limit: MV_PAGE };
+    var setMv = function (o) { self.setState({ mv: Object.assign({}, self.state.mv, o) }); };
+    var mvList = s.folders.filter(function (f) { return contains(f.name, mv.q); });
+    var mvPicked = s.folders.filter(function (f) { return mv.picked && mv.picked[f.name]; }).map(function (f) { return f.name; });
+    var mvAll = mvList.length > 0 && mvList.every(function (f) { return mv.picked[f.name]; });
+    var mvSrc = s.panel && mv.ids && mv.ids.every(function (id) { return byIdM[id] && inF(byIdM[id], s.panel); }) ? s.panel : 'All assets';
+    var mvView = mv.view ? s.media.filter(function (m) { return inF(m, mv.view) && contains(m.title, mv.vq); }) : [];
     var back = function () { return { modal: self.state.ret || '', ret: '' }; };
     // Upload Media flow: host/advertiser → playlists → pick files (Upload Content modal).
     var toFiles = function () { self.setState({ modal: 'ucm', ucCtx: 'upload' }); };
@@ -325,12 +355,12 @@ class Component extends DCLogic {
       mediaCount: list.length, mediaCols: panelOpen ? 6 : 10,
       items: vis.map(function (m) { return card(m, 'main'); }),
       dragging: !!s.drag,
-      mainDz: zone('main', function (d) { return d.from === 'panel'; }, function (ids) { moveTo('', ids); }),
+      mainDz: zone('main', function (d) { return d.from === 'panel'; }, function (ids) { removeFrom(self.state.panel, ids); }),
       empty: list.length === 0, shown: vis.length, matched: list.length, hasMore: list.length > vis.length,
       more: function () { self.setState({ limit: self.state.limit + 20 }); },
       panel: pf ? { open: true, name: pf.name, host: (byId(D.hosts, pf.host) || {}).name || 'Not assigned', adv: (byId(D.advertisers, pf.adv) || {}).name || 'Not assigned', created: pf.created, modified: pf.modified,
-        count: s.media.filter(function (m) { return m.folder === pf.name; }).length, items: pItems.slice(0, s.panelLimit).map(function (m) { return card(m, 'panel'); }),
-        dz: zone('panel', function (d) { return d.from === 'main'; }, function (ids) { moveTo(pf.name, ids); }), shown: Math.min(s.panelLimit, pItems.length), matched: pItems.length, hasMore: pItems.length > s.panelLimit, empty: pItems.length === 0,
+        count: s.media.filter(function (m) { return inF(m, pf.name); }).length, items: pItems.slice(0, s.panelLimit).map(function (m) { return card(m, 'panel'); }),
+        dz: zone('panel', function (d) { return d.from === 'main'; }, function (ids) { addTo(pf.name, ids); }), shown: Math.min(s.panelLimit, pItems.length), matched: pItems.length, hasMore: pItems.length > s.panelLimit, empty: pItems.length === 0,
         more: function () { self.setState({ panelLimit: self.state.panelLimit + PANEL_PAGE }); } } : { open: false },
       closePanel: function () { self.setState({ panel: '' }); },
       panelQ: s.panelQ, setPanelQ: function (v) { self.setState({ panelQ: val(v) }); },
@@ -346,7 +376,7 @@ class Component extends DCLogic {
         var hostId = fromFolder ? pfo.host || null : (uh ? uh.id : null), advId = fromFolder ? pfo.adv || null : (ua ? ua.id : null);
         var used = !fromFolder && Object.keys(u.pls).some(function (k) { return u.pls[k]; });
         var stamp = Date.now();
-        var add = files.map(function (f, i) { return { id: 'mu' + stamp + i, title: f.name, kind: f.kind, image: f.image || D.B.advert, video: f.video || undefined, source: advId ? 'Advertisers' : (hostId ? 'Hosts' : 'Others'), used: used, adv: advId, host: hostId, folder: pfo.name || '', uploaded: 'Nov 11, 2026', size: f.size, duration: f.kind === 'video' ? '30 sec' : '15 sec', res: f.res }; });
+        var add = files.map(function (f, i) { return { id: 'mu' + stamp + i, title: f.name, kind: f.kind, image: f.image || D.B.advert, video: f.video || undefined, source: advId ? 'Advertisers' : (hostId ? 'Hosts' : 'Others'), used: used, adv: advId, host: hostId, fl: pfo.name ? [pfo.name] : [], uploaded: 'Nov 11, 2026', size: f.size, duration: f.kind === 'video' ? '30 sec' : '15 sec', res: f.res }; });
         var n = add.length;
         self.setState({ media: add.concat(st.media), modal: '', up: null, ucCtx: '' });
         toast(self, n + (n === 1 ? ' asset' : ' assets') + ' Added', 'success', pfo.name ? 'Added to “' + pfo.name + '”' : (ua ? 'Assigned to ' + ua.name : (uh ? 'Assigned to ' + uh.name : 'Added to your library')));
@@ -359,27 +389,34 @@ class Component extends DCLogic {
       applyFilter: function (x) { self.setState({ filterOpen: false, host: x.host, hostName: x.hostName, adv: x.adv || '' }); },
       m: { ucm: s.modal === 'ucm', ok: s.modal === 'ok', nf: s.modal === 'nf', adp: s.modal === 'adp', folders: s.modal === 'folders', confirm: s.modal === 'confirm', folder: s.modal === 'folder', reassign: s.modal === 'reassign', move: s.modal === 'move', upload: s.modal === 'upload' },
       closeModal: close,
+      /* Bulk Delete (recording): "Delete Selected Media" lists the folders the files are in (red note);
+         "Delete Selected Folders?" says the files stay in All Contents. Both end in a success pop-up. */
       askBulkDelete: function () {
-        var used = self.state.media.filter(function (m) { return selIds.indexOf(m.id) !== -1 && m.used; }).length;
-        var nf = fselNames.length, nfi = selIds.length;
-        var parts = []; if (nfi) parts.push(nfi + (nfi === 1 ? ' File' : ' Files')); if (nf) parts.push(nf + (nf === 1 ? ' Folder' : ' Folders'));
-        var txt = [];
-        if (nfi) txt.push(used ? used + ' of the files are used in playlists. Deleting removes them from those playlists and the screens playing them.' : 'The files aren’t used anywhere.');
-        if (nf) txt.push('Files inside the deleted folders stay in your Media Library.');
-        txt.push('This can’t be undone.');
-        self.setState({ modal: 'confirm', cf: { title: 'Delete ' + parts.join(' and ') + '?', text: txt.join(' '), act: 'files', ids: selIds, folders: fselNames } });
+        var nfi = selIds.length, nf = fselNames.length;
+        var fset = []; selIds.forEach(function (id) { (byIdM[id] && byIdM[id].fl || []).forEach(function (n) { if (fset.indexOf(n) === -1) fset.push(n); }); });
+        var inside = s.media.filter(function (m) { return fselNames.some(function (n) { return inF(m, n); }); }).length;
+        var title = nfi && nf ? 'Delete Selected Items?' : (nf ? 'Delete Selected Folders?' : 'Delete Selected Media');
+        self.setState({ modal: 'confirm', cf: { title: title, bulk: true, act: 'files', ids: selIds, folders: fselNames,
+          nFiles: nfi, nFolders: nf, inFolders: fset.length, folderPreview: fset.slice(0, 3).join(', ') + (fset.length > 3 ? ' +' + (fset.length - 3) + ' more' : ''), filesInside: inside } });
       },
       cf: s.cf || { title: '', text: '' },
       cfOk: function () {
         var c = self.state.cf;
-        if (c.act === 'folder') { self.setState(Object.assign(back(), { folders: self.state.folders.filter(function (f) { return f.name !== c.key; }), media: self.state.media.map(function (m) { return m.folder === c.key ? Object.assign({}, m, { folder: '' }) : m; }), panel: self.state.panel === c.key ? '' : self.state.panel, cf: null })); toast(self, 'Folder deleted'); }
+        var dropFl = function (m, names) { return names.some(function (n) { return inF(m, n); }) ? Object.assign({}, m, { fl: m.fl.filter(function (n) { return names.indexOf(n) === -1; }) }) : m; };
+        if (c.act === 'folder') { self.setState(Object.assign(back(), { folders: self.state.folders.filter(function (f) { return f.name !== c.key; }), media: self.state.media.map(function (m) { return dropFl(m, [c.key]); }), panel: self.state.panel === c.key ? '' : self.state.panel, cf: null })); toast(self, 'Folder deleted'); }
         else {
           var sel2 = Object.assign({}, self.state.sel); c.ids.forEach(function (id) { delete sel2[id]; });
           var gone = c.folders || [];
-          var media2 = self.state.media.filter(function (m) { return c.ids.indexOf(m.id) === -1; }).map(function (m) { return gone.indexOf(m.folder) !== -1 ? Object.assign({}, m, { folder: '' }) : m; });
-          self.setState(Object.assign(back(), { media: media2, sel: sel2, fsel: gone.length ? {} : self.state.fsel, folders: self.state.folders.filter(function (f) { return gone.indexOf(f.name) === -1; }), panel: gone.indexOf(self.state.panel) !== -1 ? '' : self.state.panel, cf: null }));
-          var bits = []; if (c.ids.length) bits.push(c.ids.length + (c.ids.length === 1 ? ' file' : ' files')); if (gone.length) bits.push(gone.length + (gone.length === 1 ? ' folder' : ' folders'));
-          toast(self, bits.join(' and ') + ' deleted');
+          var media2 = self.state.media.filter(function (m) { return c.ids.indexOf(m.id) === -1; }).map(function (m) { return dropFl(m, gone); });
+          var next = { media: media2, sel: sel2, fsel: gone.length ? {} : self.state.fsel, folders: self.state.folders.filter(function (f) { return gone.indexOf(f.name) === -1; }), panel: gone.indexOf(self.state.panel) !== -1 ? '' : self.state.panel, cf: null };
+          if (c.bulk) {
+            var okm = c.ids.length && gone.length ? { title: 'Items Deleted', text: 'The selected media files and folders have been deleted successfully.' }
+              : (gone.length ? { title: 'Folders Deleted', text: 'The selected Folders have been deleted successfully.' } : { title: 'Media Deleted', text: 'The selected media files have been deleted successfully.' });
+            self.setState(Object.assign(next, { modal: 'ok', ret: '', okm: Object.assign(okm, { back: '' }) }));
+          } else {
+            self.setState(Object.assign(back(), next));
+            toast(self, plural(c.ids.length, 'file', 'files') + ' deleted');
+          }
         }
       },
       // New Folder (recording): name + Assign Host; then Assign Advertiser, or a notice when the host has none.
@@ -398,7 +435,7 @@ class Component extends DCLogic {
         save: function () { var x = self.state.fd, n = x.name.trim();
           if (x.mode === 'file') { self.setState(Object.assign(back(), { media: self.state.media.map(function (m) { return m.id === x.id ? Object.assign({}, m, { title: n }) : m; }), fd: null })); toast(self, 'File renamed to “' + n + '”'); }
           else if (x.mode === 'new') { self.setState(Object.assign(back(), { folders: [{ name: n, host: '', adv: '', created: 'Nov 10, 2026, 9:55 AM', modified: 'Nov 10, 2026, 9:55 AM' }].concat(self.state.folders), fd: null })); toast(self, 'Folder “' + n + '” Created'); }
-          else { self.setState(Object.assign(back(), { folders: self.state.folders.map(function (f) { return f.name === x.old ? Object.assign({}, f, { name: n, modified: 'Nov 10, 2026, 9:55 AM' }) : f; }), media: self.state.media.map(function (m) { return m.folder === x.old ? Object.assign({}, m, { folder: n }) : m; }), panel: self.state.panel === x.old ? n : self.state.panel, fd: null })); toast(self, 'Folder renamed'); } } } : { title: '', sub: '', label: '', placeholder: '', ok: '', name: '', bad: true },
+          else { self.setState(Object.assign(back(), { folders: self.state.folders.map(function (f) { return f.name === x.old ? Object.assign({}, f, { name: n, modified: 'Nov 10, 2026, 9:55 AM' }) : f; }), media: self.state.media.map(function (m) { return inF(m, x.old) ? Object.assign({}, m, { fl: m.fl.map(function (k) { return k === x.old ? n : k; }) }) : m; }), panel: self.state.panel === x.old ? n : self.state.panel, fd: null })); toast(self, 'Folder renamed'); } } } : { title: '', sub: '', label: '', placeholder: '', ok: '', name: '', bad: true },
       hostOptions: D.hosts.map(function (h) { return h.name; }),
       ra: { name: ra.name, host: ra.host, adv: ra.adv, hostPh: ra.curHost || 'Select Host Name', advPh: (!ra.host && ra.curAdv) || 'Select Advertiser Name',
         noHost: !raHost, advs: raHost ? advsOf(raHost.id).map(function (a) { return a.name; }) : [],
@@ -410,15 +447,32 @@ class Component extends DCLogic {
           var advId = a ? a.id : (r.host ? '' : (D.advertisers.filter(function (x) { return x.name === r.curAdv; })[0] || {}).id || '');
           self.setState({ modal: 'ok', ret: '', okm: { title: 'Folder Reassigned', text: 'The folder has been successfully reassigned to the selected host and Advertiser', back: self.state.ret || '' },
             folders: self.state.folders.map(function (f) { return f.name === r.name ? Object.assign({}, f, { host: h ? h.id : '', adv: advId, modified: 'Nov 11, 2026, 9:55 AM' }) : f; }), ra: null }); } },
-      openMove: function () { self.setState({ modal: 'move', mv: { mode: 'bulk', to: '' } }); },
-      mv: mv.mode === 'pick' ? {
-        title: 'Add Files to ' + mv.to, sub: 'Pick files from your library to add to this folder', ok: 'Add Files', bad: !Object.keys(mv.pick).some(function (k) { return mv.pick[k]; }),
-        options: s.media.filter(function (m) { return m.folder !== mv.to; }).slice(0, 12).map(function (m) { return { name: m.title, cls: mv.pick[m.id] ? 'on' : '', pick: function () { var p = Object.assign({}, self.state.mv.pick); p[m.id] = !p[m.id]; self.setState({ mv: Object.assign({}, self.state.mv, { pick: p }) }); } }; }),
-        go: function () { var ids = Object.keys(self.state.mv.pick).filter(function (k) { return self.state.mv.pick[k]; }), to = self.state.mv.to; self.setState({ media: self.state.media.map(function (m) { return ids.indexOf(m.id) !== -1 ? Object.assign({}, m, { folder: to }) : m; }), modal: '', mv: null }); toast(self, ids.length + (ids.length === 1 ? ' asset' : ' assets') + ' Added'); }
-      } : {
-        title: mv.ids ? 'Move to Folder' : 'Bulk Move', sub: mv.ids ? 'Move “' + mv.title + '” to a folder' : 'Move ' + selIds.length + ' selected file(s) to a folder', ok: mv.ids ? 'Move File' : 'Move Files', bad: !mv.to,
-        options: s.folders.map(function (f) { return { name: f.name, cls: mv.to === f.name ? 'on' : '', pick: function () { self.setState({ mv: Object.assign({}, self.state.mv, { to: f.name }) }); } }; }),
-        go: function () { var to = self.state.mv.to; self.setState({ media: self.state.media.map(function (m) { return mvIds.indexOf(m.id) !== -1 ? Object.assign({}, m, { folder: to }) : m; }), sel: mv.ids ? self.state.sel : {}, modal: '', mv: null }); toast(self, mvIds.length + (mvIds.length === 1 ? ' asset' : ' assets') + ' moved to ' + to); }
+      openMove: function () { self.setState({ modal: 'move', mv: { ids: selIds, picked: {}, q: '', view: '', vq: '', limit: MV_PAGE } }); },
+      mv: {
+        n: (mv.ids || []).length, src: mvSrc, q: mv.q, setQ: function (v) { setMv({ q: val(v) }); },
+        allOn: mvAll, toggleAll: function () { var p = Object.assign({}, self.state.mv.picked); mvList.forEach(function (f) { if (mvAll) delete p[f.name]; else p[f.name] = true; }); setMv({ picked: p }); },
+        rows: mvList.map(function (f) { var on = !!mv.picked[f.name];
+          return { name: f.name, on: on,
+            toggle: function () { var p = Object.assign({}, self.state.mv.picked); if (p[f.name]) delete p[f.name]; else p[f.name] = true; setMv({ picked: p }); },
+            view: function (e) { if (e && e.stopPropagation) e.stopPropagation(); setMv({ view: f.name, vq: '', limit: MV_PAGE }); } }; }),
+        empty: mvList.length === 0,
+        // Folder preview (breadcrumb view)
+        view: mv.view, viewing: !!mv.view, back: function () { setMv({ view: '' }); },
+        vq: mv.vq, setVq: function (v) { setMv({ vq: val(v), limit: MV_PAGE }); },
+        vCount: mv.view ? s.media.filter(function (m) { return inF(m, mv.view); }).length : 0,
+        vItems: mvView.slice(0, mv.limit || MV_PAGE).map(function (m) { var b = BADGE[m.kind] || BADGE.image; return { id: m.id, title: m.title, image: m.image, badge: b[0], badgeColor: b[1], open: navFn('DealerMediaDetail.dc.html', { id: m.id }) }; }),
+        vMore: mvView.length > (mv.limit || MV_PAGE), more: function () { setMv({ limit: (self.state.mv.limit || MV_PAGE) + MV_PAGE }); },
+        vEmpty: mvView.length === 0,
+        bad: mvPicked.length === 0,
+        go: function () {
+          var st = self.state, ids = st.mv.ids, dests = s.folders.filter(function (f) { return st.mv.picked[f.name]; }).map(function (f) { return f.name; });
+          var added = 0, dup = 0;
+          var media2 = st.media.map(function (m) { if (ids.indexOf(m.id) === -1) return m; var o = m; dests.forEach(function (d) { if (inF(o, d)) dup++; else { o = withF(o, d); added++; } }); return o; });
+          self.setState({ media: media2, sel: {}, modal: '', mv: null });
+          var where = dests.length === 1 ? '“' + dests[0] + '”' : dests.length + ' folders';
+          if (!added) toast(self, plural(dup, 'duplicate file was found.', 'duplicate files were found.'), 'error', 'Existing files were skipped');
+          else toast(self, plural(ids.length, 'asset', 'assets') + ' Added', 'success', 'Added to ' + where + (dup ? ' · ' + plural(dup, 'duplicate', 'duplicates') + ' skipped' : ''));
+        }
       },
       openUpload: function () { self.setState({ modal: 'upload', up: { step: 0, host: '', adv: '', pls: {} } }); },
       up: {
@@ -644,7 +698,20 @@ defineTemplate(Component, (v) => (
               <NTV.Button variant="primary" tone="neutral" size="xl" iconRight={v.none} onClick={v.closeModal}>Cancel</NTV.Button>
               <button type="button" className="ntv-btn ntv-btn--danger ntv-btn--xl" onClick={v.cfOk}>Delete</button>
             </>}>
-            {v.cf?.text}
+            {/* StatusModal wraps children in a <p>: use spans (display:block) for the red note. */}
+            {v.cf?.bulk ? (
+              <>
+                {v.cf?.nFiles ? <span className="ml-cfline">Are you sure you want to delete the selected <b>{v.cf?.nFiles}</b> media contents{v.cf?.nFolders ? <> and <b>{v.cf?.nFolders}</b> folders</> : null}?</span> : null}
+                {!v.cf?.nFiles ? <span className="ml-cfline">Are you sure you want to delete these ({v.cf?.nFolders}) folders. This won’t delete any media — the <b>{v.cf?.filesInside} files</b> they contain will remain in All Contents. Only the folders and their organization will be removed.</span> : null}
+                {v.cf?.nFiles ? (
+                  <span className="ml-cfbox">
+                    {v.cf?.inFolders ? <span>These files are in <b>{v.cf?.inFolders} {v.cf?.inFolders === 1 ? "folder" : "folders"}</b> ({v.cf?.folderPreview}). Deleting it will remove it from all of them.</span> : null}
+                    {v.cf?.nFolders ? <span>Files inside the selected folders stay in All Contents.</span> : null}
+                    <b className="ml-cfbox-warn">This action is permanent and cannot be undone</b>
+                  </span>
+                ) : null}
+              </>
+            ) : v.cf?.text}
           </NTV.StatusModal>
         </div>
         </>
@@ -688,21 +755,64 @@ defineTemplate(Component, (v) => (
       {v.m?.move ? (
         <>
           <div className="dv-ov">
-          <NTV.Modal title={v.mv?.title} width={v.w500} onClose={v.closeModal}>
-            <p className="dv-sub" style={{ margin: "-8px 0 12px" }}>{v.mv?.sub}</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "300px", overflowY: "auto" }}>
-              {(v.mv?.options || []).map((_o, $index) => (
-                <React.Fragment key={$index}>
-                  <button type="button" className={`ml-folder ${s(_o?.cls)}`} onClick={_o?.pick} style={{ fontFamily: "inherit", textAlign: "left" }}>
-                    <NTV.Icon name="folder" size={v.i14} />
-                    <span style={{ flex: "1" }}>{_o?.name}</span>
-                  </button>
-                </React.Fragment>
-              ))}
-            </div>
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "20px" }}>
-              <NTV.Button variant="primary" tone="neutral" size="xl" iconRight={v.none} onClick={v.closeModal}>Cancel</NTV.Button>
-              <NTV.Button variant="primary" size="xl" iconRight={v.none} disabled={v.mv?.bad} onClick={v.mv?.go}>{v.mv?.ok}</NTV.Button>
+          {/* "Add Files" (Figma 6160:130753 list · 130855 selected · 130957 folder preview). */}
+          <NTV.Modal title="Add Files" width={750} onClose={v.closeModal} className="ml-fmodal ml-mvmodal">
+            <p className="ml-fsub">Select a folder to show content Destination</p>
+            {v.mv?.viewing ? (
+              <>
+                <nav className="ml-mvcrumbs" aria-label="Breadcrumb">
+                  <button type="button" onClick={v.mv?.back}>Folders</button>
+                  <NTV.Icon name="angle-right" size={v.i12} />
+                  <b>{v.mv?.view}</b>
+                </nav>
+                <div className="ml-mvbox ml-mvprev">
+                  <div className="dv-between" style={{ flexWrap: "nowrap" }}>
+                    <span className="ml-mvprev-t">{"Media Contents "}<span>({v.mv?.vCount})</span></span>
+                    <NTV.Input size="l" placeholder="Search Images, Videos or Widgets" iconLeft="magnifying-glass" iconRight="sparkles" label="Search folder" value={v.mv?.vq} onChange={v.mv?.setVq} style={{ width: "300px" }} />
+                  </div>
+                  <div className="ml-mvgrid">
+                    {(v.mv?.vItems || []).map((_m) => (
+                      <div key={_m.id} className="ml-mvcard">
+                        <div className="ml-mvthumb"><img src={_m.image} alt="" /><span className="ml-badge" style={{ color: _m.badgeColor }}>{_m.badge}</span></div>
+                        <div className="ml-mvcard-row">
+                          <span title={_m.title}>{_m.title}</span>
+                          <a className="dv-ib ml-eye ml-eye--round" href="DealerMediaDetail.dc.html" data-nav={_m.openNav} onClick={_m.open} aria-label={"View details of " + _m.title}><NTV.Icon name="eye" size={10} /></a>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {v.mv?.vEmpty ? <p className="dv-sub" style={{ textAlign: "center", margin: "24px 0" }}>This folder is empty.</p> : null}
+                  {v.mv?.vMore ? <button type="button" className="dv-a ml-mvmore" onClick={v.mv?.more}>Show More...</button> : null}
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="dv-between ml-mvtools" style={{ flexWrap: "nowrap" }}>
+                  <label className="ml-mvall"><NTV.Checkbox checked={v.mv?.allOn} onChange={v.mv?.toggleAll} />Select All</label>
+                  <NTV.Input size="m" placeholder="Search Folders..." iconLeft="magnifying-glass" iconRight="sparkles" label="Search folders" value={v.mv?.q} onChange={v.mv?.setQ} style={{ width: "300px" }} />
+                </div>
+                <div className="ml-mvbox ml-mvlist" role="listbox" aria-multiselectable="true" aria-label="Destination folders">
+                  {(v.mv?.rows || []).map((_r) => (
+                    <div key={_r.name} role="option" aria-selected={_r.on} tabIndex={0} className={"ml-mvrow" + (_r.on ? " on" : "")} onClick={_r.toggle}
+                      onKeyDown={(e) => { if ((e.key === " " || e.key === "Enter") && e.target === e.currentTarget) { e.preventDefault(); _r.toggle(); } }}>
+                      <span className="ml-mvrow-l">
+                        <span onClick={(e) => e.stopPropagation()}><NTV.Checkbox checked={_r.on} onChange={_r.toggle} aria-label={"Select " + _r.name} /></span>
+                        <NTV.Icon name="folder" size={v.i14} />
+                        <span>{_r.name}</span>
+                      </span>
+                      <button type="button" className="ml-mvview" onClick={_r.view} aria-label={"View folder " + _r.name}><span>View Folder</span><NTV.Icon name="angle-right-solid" size={v.i12} /></button>
+                    </div>
+                  ))}
+                  {v.mv?.empty ? <p className="dv-sub" style={{ textAlign: "center", margin: "24px 0" }}>No folders match “{v.mv?.q}”.</p> : null}
+                </div>
+              </>
+            )}
+            <div className="ml-mvfoot">
+              <span className="ml-mvnote"><NTV.Icon name="circle-exclamation" size={v.i14} /><span>You are adding <b>{v.mv?.n}</b> Media {v.mv?.n === 1 ? "File" : "Files"} from <strong>{v.mv?.src}</strong></span></span>
+              <div className="dv-row">
+                <NTV.Button variant="primary" tone="neutral" size="xl" iconRight={v.none} onClick={v.closeModal} style={{ width: "106px" }}>Cancel</NTV.Button>
+                <NTV.Button variant="primary" size="xl" iconRight={v.none} disabled={v.mv?.bad} onClick={v.mv?.go} style={{ width: "100px" }}>Add</NTV.Button>
+              </div>
             </div>
           </NTV.Modal>
         </div>

@@ -1,6 +1,11 @@
 /* Shared toast (components/Toast.tsx): top-right under the 78px nav bar, above the page's first row. */
 .dv-toast2{position:fixed;top:94px;right:20px;z-index:200;display:flex;align-items:center;gap:14px;width:320px;max-width:calc(100vw - 40px);padding:12px 12px 12px 16px;box-sizing:border-box;border:1px solid;border-radius:var(--radius-sm);box-shadow:var(--shadow-card);font-family:var(--font-sans)}
+.dv-toast2{overflow:hidden}
 .dv-toast2-body{flex:1;min-width:0}
+.dv-toast2-act{flex:none;padding:0 4px;border:0;background:none;font:600 13px/20px var(--font-sans);color:inherit;cursor:pointer}
+.dv-toast2-act:hover{text-decoration:underline}
+.dv-toast2-bar{position:absolute;left:0;bottom:0;height:3px;width:100%;background:currentColor;opacity:.6;transform-origin:left;animation:dv-toast2-bar linear forwards}
+@keyframes dv-toast2-bar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .dv-toast2-title{margin:0;font-size:14px;line-height:20px;font-weight:600}
 .dv-toast2-sub{margin:0;font-size:11px;line-height:16px;opacity:.9}
 .dv-toast2-x{display:inline-flex;align-items:center;justify-content:center;flex:none;width:24px;height:24px;padding:0;border:0;border-radius:var(--radius-sm);background:transparent;color:inherit;cursor:pointer}
