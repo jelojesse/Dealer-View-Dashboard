@@ -17,15 +17,38 @@ import './DealerPlaylists.css';
 
 /* ============================== Logic ============================== */
 
+var PAGE = 10; // rows shown at first and added by "Show More..."
+// Playlists table columns ('#' always shown). Toggled from the gear -> NTV.ColumnVisibility.
+var PL_COLS = [
+  { key: 'name', label: 'Playlist Name', w: 'minmax(220px, 1fr)', min: 220 },
+  { key: 'published', label: 'Published Date', w: 'minmax(140px, 1fr)', min: 140 },
+  { key: 'count', label: 'Total Content', w: 'minmax(110px, 1fr)', min: 110 },
+  { key: 'status', label: 'Status', w: 'minmax(110px, 1fr)', min: 110 },
+  { key: 'actions', label: 'Actions', w: '100px', min: 100 }
+];
+var STATUS_OPTS = ['Assigned', 'Unassigned'];
+// Blocks table columns ('#' always shown) — Figma Blocks tab, node 41:45559
+var BLOCK_COLS = [
+  { key: 'name', label: 'Block Name', w: 'minmax(200px, 1fr)', min: 200 },
+  { key: 'pl', label: 'Playlist', w: 'minmax(180px, 1fr)', min: 180 },
+  { key: 'count', label: 'Total Content', w: 'minmax(110px, 1fr)', min: 110 },
+  { key: 'dur', label: 'Total Duration', w: 'minmax(110px, 1fr)', min: 110 },
+  { key: 'actions', label: 'Actions', w: '100px', min: 100 }
+];
+
 class Component extends DCLogic {
-  constructor(props) { super(props); this.state = { pls: D.playlists.map(function (p) { return Object.assign({}, p); }), tab: 'Playlists', status: '', menu: '', query: '', modal: '', fm: null, target: '', toast: null }; }
+  constructor(props) { super(props); this.state = { pls: D.playlists.map(function (p) { return Object.assign({}, p); }), tab: 'Playlists', statuses: [], limit: PAGE, hiddenCols: [], hiddenBlockCols: [], blockLimit: PAGE, menu: '', query: '', modal: '', fm: null, target: '', toast: null }; }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
     var self = this, s = this.state;
     var cover = function (p) { var m = byId(D.media, p.items[0]); return m ? m.image : D.B.zWood; };
-    var rows = s.pls.filter(function (p) { if (s.status === 'Assigned' && !p.screens.length) return false; if (s.status === 'Unassigned' && p.screens.length) return false; return contains(p.name + ' ' + p.desc, s.query); });
+    var matched = s.pls.filter(function (p) { var st = p.screens.length ? 'Assigned' : 'Unassigned'; if (s.statuses.length && s.statuses.indexOf(st) === -1) return false; return contains(p.name + ' ' + p.desc, s.query); });
+    var rows = matched.slice(0, s.limit);
     var allScreens = {}; s.pls.forEach(function (p) { p.screens.forEach(function (x) { allScreens[x] = 1; }); });
     var blocks = s.pls.filter(function (p) { return p.block; });
+    var blockName = function (p) { return p.name.replace(/ Promo| Loop/, '') + ' Block'; };
+    var blocksMatched = blocks.filter(function (p) { return contains(blockName(p) + ' ' + p.name, s.query); });
+    var blocksShown = blocksMatched.slice(0, s.blockLimit);
     var tp = byId(s.pls, s.target);
     var close = function () { self.setState({ modal: '', fm: null }); };
     var fm = s.fm || { name: '', desc: '' };
@@ -33,15 +56,38 @@ class Component extends DCLogic {
       none: null, i14: 14, w460: 460, w500: 500,
       crumbs: ['Content', 'Playlists'],
       total: s.pls.length, blockTotal: blocks.length, screenTotal: Object.keys(allScreens).length,
-      tabs: [['Playlists', 'Playlists (' + s.pls.length + ')'], ['Blocks', 'Blocks (' + blocks.length + ')']].map(function (t) { return { label: t[1], on: s.tab === t[0], pick: function () { self.setState({ tab: t[0] }); } }; }),
+      tabItems: ['Playlists', 'Blocks'], tab: s.tab, setTab: function (x) { self.setState({ tab: x }); },
       assignedCount: s.pls.filter(function (p) { return p.screens.length; }).length, unassignedCount: s.pls.filter(function (p) { return !p.screens.length; }).length,
-      tableTitle: s.tab === 'Playlists' ? 'Playlist Data' : 'Block Data', shown: rows.length,
-      statusOptions: ['All Status', 'Assigned', 'Unassigned'], statusValue: s.status || 'All Status', setStatus: function (v) { var x = val(v); self.setState({ status: x === 'All Status' ? '' : x }); },
+      tableTitle: s.tab === 'Playlists' ? 'Playlist Data' : 'Block Data', shown: rows.length, matched: matched.length, hasMore: matched.length > rows.length,
+      more: function () { self.setState({ limit: self.state.limit + PAGE }); },
+      // Filter by (NTV.FilterDropdown) + chips (NTV.ActiveFilters)
+      filterLabel: s.statuses.length ? 'Filter by (' + s.statuses.length + ')' : 'Filter by',
+      filterGroups: [{ title: 'Status', options: STATUS_OPTS.map(function (o) {
+        return { label: o, checked: s.statuses.indexOf(o) !== -1, onChange: function (on) {
+          var cur = self.state.statuses; self.setState({ limit: PAGE, statuses: on ? cur.concat([o]) : cur.filter(function (k) { return k !== o; }) }); } };
+      }) }],
+      activeChips: s.statuses.map(function (o) { return { key: o, label: 'Status', value: o, tone: 'info', onRemove: function () { self.setState({ limit: PAGE, statuses: self.state.statuses.filter(function (k) { return k !== o; }) }); } }; }),
+      clearFilters: function () { self.setState({ statuses: [], limit: PAGE }); },
+      // Column visibility (gear)
+      show: PL_COLS.reduce(function (o, c) { o[c.key] = s.hiddenCols.indexOf(c.key) === -1; return o; }, {}),
+      bshow: BLOCK_COLS.reduce(function (o, c) { o[c.key] = s.hiddenBlockCols.indexOf(c.key) === -1; return o; }, {}),
+      bcols: ['44px'].concat(BLOCK_COLS.filter(function (c) { return s.hiddenBlockCols.indexOf(c.key) === -1; }).map(function (c) { return c.w; })).join(' '),
+      btableMin: BLOCK_COLS.reduce(function (n, c) { return n + (s.hiddenBlockCols.indexOf(c.key) === -1 ? c.min : 0); }, 44) + 'px',
+      // gear only shows when the table has 5+ columns (rule lives in NTV.ColumnVisibilityButton); +1 for '#'
+      tableColCount: (s.tab === 'Blocks' ? BLOCK_COLS : PL_COLS).length + 1,
+      colColumns: (s.tab === 'Blocks' ? BLOCK_COLS : PL_COLS).map(function (c) { var hid = s.tab === 'Blocks' ? s.hiddenBlockCols : s.hiddenCols; return { key: c.key, label: c.label, visible: hid.indexOf(c.key) === -1 }; }),
+      toggleCol: function (key, on) { var f = self.state.tab === 'Blocks' ? 'hiddenBlockCols' : 'hiddenCols'; var h = self.state[f].filter(function (k) { return k !== key; }); var u = {}; u[f] = on ? h : h.concat([key]); self.setState(u); },
+      resetCols: function () { var u = {}; u[self.state.tab === 'Blocks' ? 'hiddenBlockCols' : 'hiddenCols'] = []; self.setState(u); },
+      tableMin: PL_COLS.reduce(function (n, c) { return n + (s.hiddenCols.indexOf(c.key) === -1 ? c.min : 0); }, 44) + 'px',
       menuOpen: !!s.menu, closeMenu: function () { self.setState({ menu: '' }); },
       exportIt: function () { toast(self, 'Exporting playlists to Excel…', 'info'); },
       isPl: s.tab === 'Playlists', isBlocks: s.tab === 'Blocks',
-      query: s.query, setQuery: function (v) { self.setState({ query: val(v) }); },
-      cols: '50px minmax(260px, 1.8fr) 1fr 1.6fr 110px 120px 90px',
+      query: s.query, setQuery: function (v) { self.setState({ query: val(v), limit: PAGE, blockLimit: PAGE }); },
+      searchPh: s.tab === 'Blocks' ? 'Search Block Name or Playlist Name' : 'Search Playlist Name',
+      bShown: blocksShown.length, bMatched: blocksMatched.length, bHasMore: blocksMatched.length > blocksShown.length,
+      bMore: function () { self.setState({ blockLimit: self.state.blockLimit + PAGE }); },
+      bEmpty: blocksShown.length === 0,
+      cols: ['44px'].concat(PL_COLS.filter(function (c) { return s.hiddenCols.indexOf(c.key) === -1; }).map(function (c) { return c.w; })).join(' '),
       rows: rows.map(function (p, i) {
         var names = p.screens.map(screenName);
         return { n: i + 1, name: p.name, cover: cover(p), desc: p.desc, count: p.items.length, published: p.published, status: p.screens.length ? 'Assigned' : 'Unassigned', stTint: p.screens.length ? 'var(--success-050)' : 'var(--primary-100)', stColor: p.screens.length ? 'var(--success-600)' : 'var(--fg-secondary)', menuOpen: s.menu === p.id, menu: function () { self.setState({ menu: self.state.menu === p.id ? '' : p.id }); },
@@ -52,8 +98,11 @@ class Component extends DCLogic {
           remove: function () { self.setState({ modal: 'del', target: p.id }); } };
       }),
       empty: rows.length === 0,
-      blocks: blocks.map(function (p, i) { var ms = p.items.slice(0, 3).map(function (id) { return byId(D.media, id); }).filter(Boolean); return { n: i + 1, name: p.name.replace(/ Promo| Loop/, '') + ' Block', cover: cover(p), items: ms.length + ' assets', dur: (ms.length * 15 + 135) + ' sec', pl: p.name, open: navFn('DealerPlaylistDetail.dc.html', { id: p.id }) }; }),
-      m: { form: s.modal === 'form', del: s.modal === 'del' },
+      blocks: blocksShown.map(function (p, i) { var ms = p.items.slice(0, 3).map(function (id) { return byId(D.media, id); }).filter(Boolean); return { n: i + 1, name: blockName(p), count: ms.length, dur: (ms.length * 15 + 135), pl: p.name, open: navFn('DealerPlaylistDetail.dc.html', { id: p.id }),
+        remove: function () { self.setState({ modal: 'delBlock', target: p.id }); } }; }),
+      m: { form: s.modal === 'form', del: s.modal === 'del', delBlock: s.modal === 'delBlock' },
+      delBlockText: tp ? 'Delete ' + blockName(tp) + '? It will be removed from ' + tp.name + '. The playlist and its content stay.' : '',
+      doDeleteBlock: function () { var id = self.state.target; self.setState({ pls: self.state.pls.map(function (p) { return p.id === id ? Object.assign({}, p, { block: false }) : p; }), modal: '' }); toast(self, 'Block deleted'); },
       closeModal: close,
       openCreate: function () { self.setState({ modal: 'form', fm: { mode: 'new', name: '', desc: '' } }); },
       fm: { title: fm.mode === 'edit' ? 'Edit Playlist Info' : 'Create Playlist', okLabel: fm.mode === 'edit' ? 'Save' : 'Create', name: fm.name, desc: fm.desc, bad: !fm.name.trim(),
@@ -105,56 +154,49 @@ defineTemplate(Component, (v) => (
               </div>
             </div>
           </section>
-          <div className="dv-tabs" role="tablist" style={{ borderBottom: "0" }}>
-            {(v.tabs || []).map((_t, $index) => (
-              <React.Fragment key={$index}>
-                <button type="button" role="tab" className="dv-tab" aria-selected={_t?.on} onClick={_t?.pick} style={{ minWidth: "110px" }}>{_t?.label}</button>
-              </React.Fragment>
-            ))}
-          </div>
+          <NTV.Tabs items={v.tabItems} value={v.tab} onChange={v.setTab} />
           <div className="dv-between">
-            <div style={{ width: "220px", flex: "none" }}>
-              <NTV.Select size="l" placeholder="Filter by status" options={v.statusOptions} value={v.statusValue} onChange={v.setStatus} />
+            <div style={{ flex: "none" }}>
+              {v.isPl ? <NTV.FilterDropdown label={v.filterLabel} groups={v.filterGroups} /> : null}
             </div>
             <div className="dv-row" style={{ gap: "12px" }}>
-              <NTV.Input size="l" placeholder="Search Playlist Name" iconLeft="magnifying-glass" label="Search playlists" value={v.query} onChange={v.setQuery} style={{ width: "420px" }} />
+              <NTV.Input size="l" placeholder={v.searchPh} iconLeft="magnifying-glass" iconRight={v.isBlocks ? "sparkles" : v.none} label={v.searchPh} value={v.query} onChange={v.setQuery} style={{ width: "500px", maxWidth: "100%" }} />
               <NTV.Button variant="secondary" size="xl" iconRight="file-excel" onClick={v.exportIt}>Export</NTV.Button>
             </div>
           </div>
+          {v.isPl ? <NTV.ActiveFilters chips={v.activeChips} onClear={v.clearFilters} style={{ marginTop: "-10px" }} /> : null}
           <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div className="dv-between">
               <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>{v.tableTitle}</h2>
-              <NTV.IconButton icon="gear" label="Table settings" variant="secondary" size="m" />
+              <NTV.ColumnVisibilityButton key={v.tab} columns={v.colColumns} tableColumns={v.tableColCount} onToggle={v.toggleCol} onReset={v.resetCols} />
             </div>
             {v.isPl ? (
               <>
-                <div className="dv-table">
-                <div role="table" aria-label="Playlists" style={{ minWidth: "1100px" }}>
+                <div className="dv-table ntv-tablescroll">
+                <div role="table" aria-label="Playlists" style={{ minWidth: v.tableMin }}>
                   <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: `${s(v.cols)}` }}>
                     <div style={{ textAlign: "center" }}>#</div>
-                    <div>Playlist Name</div>
-                    <div>Published Date</div>
-                    <div>Assigned To</div>
-                    <div>Total Content</div>
-                    <div>Status</div>
-                    <div>Actions</div>
+                    {v.show.name ? <div>Playlist Name</div> : null}
+                    {v.show.published ? <div>Published Date</div> : null}
+                    {v.show.count ? <div>Total Content</div> : null}
+                    {v.show.status ? <div>Status</div> : null}
+                    {v.show.actions ? <div>Actions</div> : null}
                   </div>
                   {(v.rows || []).map((_r, $index) => (
                     <React.Fragment key={$index}>
                       <div role="row" className="dv-tr" style={{ gridTemplateColumns: `${s(v.cols)}`, overflow: "visible" }}>
                         <div style={{ textAlign: "center" }}>{_r?.n}</div>
-                        <div>
+                        {v.show.name ? <div>
                           <a className="dv-a" style={{ fontWeight: "500", color: "var(--fg-primary)" }} href="DealerPlaylistDetail.dc.html" onClick={_r?.open} data-nav={_r?.openNav}>{_r?.name}</a>
-                        </div>
-                        <div>{_r?.published}</div>
-                        <div><span title={_r?.screenList}>{_r?.assigned}</span></div>
-                        <div>{_r?.count}</div>
-                        <div>
+                        </div> : null}
+                        {v.show.published ? <div>{_r?.published}</div> : null}
+                        {v.show.count ? <div>{_r?.count}</div> : null}
+                        {v.show.status ? <div>
                           <span className="dv-pill" style={{ height: "20px", fontSize: "10px", background: `${s(_r?.stTint)}`, color: `${s(_r?.stColor)}` }}>{_r?.status}</span>
-                        </div>
-                        <div className="dv-row" style={{ gap: "2px", position: "relative", overflow: "visible" }}>
+                        </div> : null}
+                        {v.show.actions ? <div className="dv-row" style={{ gap: "2px", position: "relative", overflow: "visible" }}>
                           <button type="button" className="dv-ib dv-danger" aria-label="Delete" onClick={_r?.remove}><NTV.Icon name="trash" size={v.i14} /></button>
-                          <button type="button" className="dv-ib" aria-label="More actions" onClick={_r?.menu}><NTV.Icon name="ellipsis" size={v.i14} /></button>
+                          <button type="button" className="dv-ib" aria-label="More actions" onClick={_r?.menu}><span style={{ display: "inline-flex", transform: "rotate(90deg)" }}><NTV.Icon name="ellipsis" size={v.i14} /></span></button>
                           {_r?.menuOpen ? (
                             <>
                               <div className="dv-menu" style={{ top: "34px", right: "0", minWidth: "160px" }}>
@@ -169,7 +211,7 @@ defineTemplate(Component, (v) => (
                             </div>
                             </>
                           ) : null}
-                        </div>
+                        </div> : null}
                       </div>
                     </React.Fragment>
                   ))}
@@ -184,39 +226,44 @@ defineTemplate(Component, (v) => (
             ) : null}
             {v.isBlocks ? (
               <>
-                <div className="dv-table">
-                <div role="table" aria-label="Blocks">
-                  <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: "50px 1.6fr 1fr 1fr 1fr" }}>
+                <div className="dv-table ntv-tablescroll">
+                <div role="table" aria-label="Blocks" style={{ minWidth: v.btableMin }}>
+                  <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: `${s(v.bcols)}` }}>
                     <div style={{ textAlign: "center" }}>#</div>
-                    <div>Block Name</div>
-                    <div>Items</div>
-                    <div>Duration</div>
-                    <div>Used In Playlist</div>
+                    {v.bshow.name ? <div>Block Name</div> : null}
+                    {v.bshow.pl ? <div>Playlist</div> : null}
+                    {v.bshow.count ? <div>Total Content</div> : null}
+                    {v.bshow.dur ? <div>Total Duration</div> : null}
+                    {v.bshow.actions ? <div>Actions</div> : null}
                   </div>
                   {(v.blocks || []).map((_b, $index) => (
                     <React.Fragment key={$index}>
-                      <div role="row" className="dv-tr" style={{ gridTemplateColumns: "50px 1.6fr 1fr 1fr 1fr" }}>
+                      <div role="row" className="dv-tr" style={{ gridTemplateColumns: `${s(v.bcols)}` }}>
                         <div style={{ textAlign: "center" }}>{_b?.n}</div>
-                        <div className="dv-row" style={{ gap: "10px" }}>
-                          <span className="dv-thumb" style={{ width: "48px", height: "28px", flex: "none" }}><img src={_b?.cover} alt="" /></span>
-                          <strong>{_b?.name}</strong>
-                        </div>
-                        <div>{_b?.items}</div>
-                        <div>{_b?.dur}</div>
-                        <div>
-                          <a className="dv-a" href="DealerPlaylistDetail.dc.html" onClick={_b?.open} data-nav={_b?.openNav}>{_b?.pl}</a>
-                        </div>
+                        {v.bshow.name ? <div>{_b?.name}</div> : null}
+                        {v.bshow.pl ? <div>
+                          <a className="dv-a" style={{ fontWeight: "400", color: "var(--fg-primary)" }} href="DealerPlaylistDetail.dc.html" onClick={_b?.open} data-nav={_b?.openNav}>{_b?.pl}</a>
+                        </div> : null}
+                        {v.bshow.count ? <div>{_b?.count}</div> : null}
+                        {v.bshow.dur ? <div>{_b?.dur}</div> : null}
+                        {v.bshow.actions ? <div className="dv-row" style={{ gap: "2px" }}>
+                          <button type="button" className="dv-ib dv-danger" aria-label="Delete block" onClick={_b?.remove}><NTV.Icon name="trash" size={v.i14} /></button>
+                        </div> : null}
                       </div>
                     </React.Fragment>
                   ))}
+                  {v.bEmpty ? (
+                    <div className="dv-empty" style={{ borderTop: "1px solid var(--container-border)" }}>No blocks match your search.</div>
+                  ) : null}
                 </div>
               </div>
               </>
             ) : null}
           </section>
           <div className="dv-foot">
-            <span>{"Showing "}{v.shown}{" of "}{v.total}{" items"}</span>
-            <button type="button">Show More...</button>
+            <span>{"Showing "}{v.isPl ? v.shown : v.bShown}{" of "}{v.isPl ? v.matched : v.bMatched}{" items"}</span>
+            {v.isPl && v.hasMore ? <button type="button" onClick={v.more}>Show More...</button> : null}
+            {v.isBlocks && v.bHasMore ? <button type="button" onClick={v.bMore}>Show More...</button> : null}
           </div>
         </main>
       </div>
@@ -263,6 +310,17 @@ defineTemplate(Component, (v) => (
           </NTV.StatusModal>
         </div>
         </>
+      ) : null}
+      {v.m?.delBlock ? (
+        <div className="dv-ov">
+          <NTV.StatusModal status="warning" title="Delete Block?" width={v.w460}>
+            <p className="dv-p" style={{ textAlign: "center" }}>{v.delBlockText}</p>
+            <div style={{ display: "flex", justifyContent: "center", gap: "12px", marginTop: "20px" }}>
+              <NTV.Button variant="primary" tone="neutral" size="xl" iconRight={v.none} onClick={v.closeModal}>Cancel</NTV.Button>
+              <button type="button" className="ntv-btn ntv-btn--danger ntv-btn--xl" onClick={v.doDeleteBlock}>Delete</button>
+            </div>
+          </NTV.StatusModal>
+        </div>
       ) : null}
       <Toast t={v.toast} />
     </div>

@@ -40,11 +40,6 @@
 .pg-playlists .dv-chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--container-border);background:var(--bg-surface);color:var(--fg-primary);font-family:inherit;font-size:12px;line-height:20px;font-weight:600;cursor:pointer}
 .pg-playlists .dv-chip:hover{border-color:var(--accent-action)}
 .pg-playlists .dv-chip[aria-pressed="true"]{border-color:var(--accent-action);background:var(--accent-30);color:var(--accent-action)}
-.pg-playlists .dv-tabs{display:flex;gap:4px;border-bottom:1px solid var(--container-border)}
-.pg-playlists .dv-tab{position:relative;padding:10px 16px;border:0;background:transparent;font-family:inherit;font-size:14px;line-height:24px;font-weight:600;color:var(--fg-secondary);cursor:pointer}
-.pg-playlists .dv-tab:hover{color:var(--accent-action)}
-.pg-playlists .dv-tab[aria-selected="true"]{color:var(--accent-action)}
-.pg-playlists .dv-tab[aria-selected="true"]::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:3px;border-radius:3px 3px 0 0;background:var(--accent-action)}
 .pg-playlists .dv-ov{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(9,22,53,.45)}
 .pg-playlists .dv-menu{position:absolute;z-index:40;min-width:200px;background:var(--list-bg);border:1px solid var(--container-border);border-radius:var(--radius-sm);box-shadow:var(--shadow-card);padding:4px 0}
 .pg-playlists .dv-mi{display:flex;align-items:center;gap:10px;width:100%;padding:8px 14px;border:0;background:transparent;text-align:left;font-family:inherit;font-size:14px;line-height:20px;color:var(--fg-primary);cursor:pointer}
