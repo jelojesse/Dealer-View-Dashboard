@@ -52,7 +52,7 @@ class Component extends DCLogic {
     var items = p.items.map(function (id, i) { var m = byId(D.media, id); var blk = !!(p.block && i === 0); var sc = (p.schedules || {})[id];
       return m ? { key: 'k' + i, blk: blk, m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: !sc, start: sc ? sc[0] : '', end: sc ? sc[1] : '',
         members: blk ? (p.blockMembers || []).map(function (mid) { return byId(D.media, mid); }).filter(Boolean) : null } : null; }).filter(Boolean);
-    this.state = { view: 'grid', kinds: [], sched: '', q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', menuRect: null, target: '', mvPos: '1', swQ: '', libQ: '', libLimit: 10, push: false, ad: null, md: null, info: null, toast: null };
+    this.state = { view: 'grid', kinds: [], sched: '', q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', menuRect: null, hoverGrp: '', target: '', mvPos: '1', swQ: '', libQ: '', libLimit: 10, push: false, ad: null, md: null, info: null, toast: null };
   }
   componentWillUnmount() { if (this._tt) clearTimeout(this._tt); }
   renderVals() {
@@ -152,6 +152,15 @@ class Component extends DCLogic {
         });
         var col = 0;
         cells.forEach(function (c) { if (col + c.span > GRID_COLS) col = 0; c.col = col; col += c.span; if (col >= GRID_COLS) col = 0; });
+        // split each block group into per-row segments; the widest segment shows the hover title + menu
+        var segs = {};
+        cells.forEach(function (c, k) {
+          if (!c.grp) return;
+          var prev = cells[k - 1], list = segs[c.grp] = segs[c.grp] || [];
+          if (!(prev && prev.grp === c.grp) || c.col === 0) list.push({ first: k, span: 0 });
+          var sg = list[list.length - 1]; sg.span += c.span; c.seg = sg;
+        });
+        Object.keys(segs).forEach(function (gid) { var list = segs[gid], best = list[0]; list.forEach(function (sg) { if (sg.span > best.span) best = sg; }); best.main = true; });
         return cells.map(function (c, k) {
           var prev = cells[k - 1], next = cells[k + 1], it = c.it;
           var first = !!c.grp && !(prev && prev.grp === c.grp), last = !!c.grp && !(next && next.grp === c.grp);
@@ -159,8 +168,15 @@ class Component extends DCLogic {
           var cls = c.grp ? ['grp', segStart ? 'seg-start' : '', segEnd ? 'seg-end' : '', segStart && !first ? 'dash-l' : '', segEnd && !last ? 'dash-r' : ''].join(' ') : '';
           var member = !!c.m;
           var std = !c.grp, pill = PILL[it.kind] || PILL.image;
+          var segFirst = !!c.grp && c.seg.first === k, hovered = !!c.grp && s.hoverGrp === c.grp;
+          var grpSecs = c.grp ? (parseInt(it.dur, 10) || 0) + it.members.reduce(function (n, m) { return n + (parseInt(m.duration, 10) || 15); }, 0) : 0;
           return { key: (c.grp || '') + k, span: c.span, cls: cls + (it.checked ? ' sel' : '') + (std ? ' std' : '') + (std && it.sched ? ' sched' : '') + (std && it.menuOpen ? ' menu-open' : ''), color: c.color || 'transparent', toggle: it.toggle,
-            std: std, checked: it.checked, pillBg: pill[0], pillFg: pill[1], menuOpen: std && it.menuOpen, openMenu: it.openMenu, closeMenu: it.closeMenu, menuItems: it.menuItems,
+            std: std, checked: it.checked, pillBg: pill[0], pillFg: pill[1], menuOpen: (std || (segFirst && c.seg.main)) && it.menuOpen, openMenu: it.openMenu, closeMenu: it.closeMenu,
+            menuItems: std ? it.menuItems : it.menuItems.filter(function (x) { return x === 'divider' || x.label !== 'Swap Content'; }),
+            grpHover: hovered || (!!c.grp && it.menuOpen), overlay: segFirst && (hovered || it.menuOpen), overlaySpan: segFirst ? c.seg.span : 0, overlayMain: segFirst && !!c.seg.main,
+            grpName: c.grp ? it.title : '', grpInfo: c.grp ? (it.members.length + 1) + ' contents' : '', grpSecs: grpSecs + ' seconds',
+            enter: c.grp ? function () { if (self.state.hoverGrp !== c.grp) self.setState({ hoverGrp: c.grp }); } : null,
+            leave: c.grp ? function () { self.setState({ hoverGrp: '' }); } : null,
             image: member ? c.m.image : it.image, title: member ? c.m.title : it.title, badge: member ? c.badge[0] : it.badge, badgeColor: member ? c.badge[1] : it.badgeColor,
             n: c.grp ? null : it.n, dur: c.head ? it.dur : null, tip: c.grp ? '' : it.schedTip,
             capBg: c.head ? c.color : (member ? 'var(--primary-050)' : (it.sched ? it.capBg : 'var(--bg-app)')), capColor: c.head ? '#fff' : (member ? 'var(--fg-primary)' : it.capColor),
@@ -293,7 +309,7 @@ defineTemplate(Component, (v) => (
                   <>
                     <div className="pd-grid">
                     {(v.cells || []).map((_c) => (
-                      <div key={_c.key} className={`pd-cell ${s(_c.cls)}`} onClick={_c.toggle} style={{ gridColumn: `span ${s(_c.span)}`, "--g": _c.color }} title={_c.tip || undefined}>
+                      <div key={_c.key} className={`pd-cell ${s(_c.cls)} ${_c.grpHover ? "grp-hover" : ""} ${_c.overlay ? "has-overlay" : ""}`} onClick={_c.toggle} onMouseEnter={_c.enter} onMouseLeave={_c.leave} style={{ gridColumn: `span ${s(_c.span)}`, "--g": _c.color }} title={_c.tip || undefined}>
                         <div className="pd-tile__card">
                           <div className="pd-tile__img">
                             <img src={_c.image} alt="" />
@@ -321,7 +337,21 @@ defineTemplate(Component, (v) => (
                             ) : null}
                           </div>
                         </div>
-                        {_c.menuOpen ? <NTV.ActionMenu items={_c.menuItems} onClose={_c.closeMenu} style={{ top: "38px", right: "10px" }} /> : null}
+                        {_c.menuOpen && _c.std ? <NTV.ActionMenu items={_c.menuItems} onClose={_c.closeMenu} style={{ top: "38px", right: "10px" }} /> : null}
+                        {_c.overlay ? (
+                          <div className="pd-grp-overlay" style={{ "--n": _c.overlaySpan }} onClick={_c.toggle}>
+                            {_c.overlayMain ? (
+                              <>
+                                <strong className="pd-grp-overlay__name">{_c.grpName}</strong>
+                                <span className="pd-grp-overlay__info">{_c.grpInfo}<b>·</b>{_c.grpSecs}</span>
+                                <span className="pd-grp-overlay__act">
+                                  <button type="button" className="pd-more pd-more--grp" aria-label="Block actions" aria-haspopup="menu" aria-expanded={_c.menuOpen} onClick={_c.openMenu}><NTV.Icon name="ellipsis" size={10} /></button>
+                                  {_c.menuOpen ? <NTV.ActionMenu items={_c.menuItems} onClose={_c.closeMenu} /> : null}
+                                </span>
+                              </>
+                            ) : null}
+                          </div>
+                        ) : null}
                       </div>
                     ))}
                   </div>
