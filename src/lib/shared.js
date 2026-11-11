@@ -12,8 +12,16 @@ function val(v) { return v && v.target ? v.target.value : v; }
 function byId(list, id) { for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i]; return null; }
 function advsForHost(hid) { var i = parseInt(hid.slice(1), 10) - 1; if (i % 5 === 4) return []; return [0, 1, 2, 3, 4].map(function (k) { return D.advertisers[(i * 2 + k) % 24]; }); }
 var STATUS = { online: { label: 'Online', color: 'var(--status-online)' }, offline: { label: 'Offline', color: 'var(--status-offline)' }, pending: { label: 'Pending Install', color: 'var(--info-main)' }, ready: { label: 'Ready for Pairing', color: 'var(--status-pending)' }, disabled: { label: 'Disabled', color: 'var(--status-inactive)' }, unassigned: { label: 'Unassigned', color: 'var(--status-unassigned)' } };
-function toastVals(t) { var c = { success: ['var(--success-main)', 'circle-check'], info: ['var(--info-main)', 'circle-info'], error: ['var(--danger-main)', 'circle-xmark'], warning: ['var(--warning-main)', 'triangle-exclamation'] }[(t && t.kind) || 'success']; return { show: !!(t && t.text), text: t ? t.text : '', color: c[0], icon: c[1], size: 16 }; }
-function toast(self, text, kind) { if (self._tt) clearTimeout(self._tt); self.setState({ toast: { text: text, kind: kind || 'success' } }); self._tt = setTimeout(function () { self.setState({ toast: null }); }, 2600); }
+/* Toasts: pages call toast(self, text, kind?, sub?) and render <Toast t={v.toast} /> (components/Toast.tsx),
+   which shows top-right under the nav. `close` dismisses early. */
+function toastVals(t, self) {
+  var kind = (t && t.kind) || 'success';
+  var c = { success: ['var(--success-main)', 'circle-check'], info: ['var(--info-main)', 'circle-info'], error: ['var(--danger-main)', 'circle-xmark'], warning: ['var(--warning-main)', 'triangle-exclamation'] }[kind];
+  return { show: !!(t && t.text), text: t ? t.text : '', sub: t ? t.sub || '' : '', kind: kind, id: t ? t.id : 0, color: c[0], icon: c[1], size: 16,
+    close: self ? function () { if (self._tt) clearTimeout(self._tt); self.setState({ toast: null }); } : null };
+}
+var toastSeq = 0;
+function toast(self, text, kind, sub) { if (self._tt) clearTimeout(self._tt); self.setState({ toast: { text: text, kind: kind || 'success', sub: sub || '', id: ++toastSeq } }); self._tt = setTimeout(function () { self.setState({ toast: null }); }, sub ? 4000 : 2600); }
 function hostName(id) { var h = byId(D.hosts, id); return h ? h.name : '—'; }
 function licsForHost(id) { return D.licenses.filter(function (l) { return l.host === id; }); }
 function screenName(id) { var s = byId(D.screens, id); return s ? s.name : '—'; }

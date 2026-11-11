@@ -9,6 +9,7 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
 import { addNav, contains, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import FilterBy, { passes } from '../components/FilterBy';
@@ -56,7 +57,7 @@ class Component extends DCLogic {
         return { name: c.name, image: c.image, genre: c.genre, mins: c.mins, contents: c.contents, added: added, label: added ? 'In My Channels' : 'Add to My Channels', icon: added ? 'check' : 'plus', variant: added ? 'secondary' : 'primary',
           add: function () { var ids = self.state.mine.concat([c.id]); saveMine(ids); self.setState({ mine: ids }); toast(self, c.name + ' added to My Channels'); } };
       }),
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
   }
 }
@@ -215,14 +216,7 @@ defineTemplate(Component, (v) => (
         </div>
         </>
       ) : null}
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));

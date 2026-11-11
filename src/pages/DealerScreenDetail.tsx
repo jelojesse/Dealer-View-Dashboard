@@ -9,6 +9,7 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
 import { addNav, arrived, byId, draft, hostName, licsForHost, mediaEntries, navFn, peekNav, plByName, toast, toastVals, val, D } from '../lib/shared';
 import { TEMPLATES, layoutOf, tplByTitle, zid } from '../lib/templates';
 import DealerNav from '../components/DealerNav';
@@ -175,9 +176,10 @@ class Component extends DCLogic {
       plOptions: plNames,
       ct: ct,
       pagePv: previewVals(tpl.zones, s.playlists, s.zone),
+      showPagePv: false, /* hidden for now: it stretched the Screen Information card (and Notes). Set true to bring it back. */
       openDelete: function () { self.setState({ modal: 'delete' }); },
       doneTitle: s.doneTitle, doneText: s.doneText,
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
   }
 }
@@ -350,7 +352,7 @@ defineTemplate(Component, (v) => (
                 <button type="button" aria-pressed={v.bgSelected} onClick={v.selectBackground} style={{ display: "inline-flex", alignItems: "center", height: "28px", padding: "4px 8px", border: "0", borderRadius: "var(--radius-sm)", background: "#5273c0", color: "var(--white)", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", lineHeight: "20px", fontWeight: "500" }}>Select Background</button>
               </div>
               <ScreenPreview background="wood" withLogo={v.withLogo} selected={v.zone} onSelect={v.selectZone} />
-              <PlaylistPreview pv={v.pagePv} />
+              {v.showPagePv ? <PlaylistPreview pv={v.pagePv} /> : null}
             </section>
           </div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "20px", alignItems: "stretch" }}>
@@ -602,14 +604,7 @@ defineTemplate(Component, (v) => (
         </div>
         </>
       ) : null}
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));

@@ -10,6 +10,9 @@
  *  - onChange: ({ start, end }) => void   (called on Apply)
  *  - align:    'left' | 'right'           (which edge the panel lines up with)
  *  - today:    Date                        (optional, highlights today)
+ *  - compact:  boolean                     (single-month dropdown that applies on the 2nd click;
+ *                                            used everywhere a start–end range is picked)
+ *  - block:    boolean                     (compact only: trigger and panel fill the container width)
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { NTV } from '../ds/ntv360';
@@ -29,7 +32,13 @@ function Month(p) {
   var cells = [];
   for (var i = 0; i < 42; i++) {
     var d = i - first + 1;
-    if (d < 1 || d > days) { cells.push(<span key={i} className="ntv-day is-other drp__blank" />); continue; }
+    if (d < 1 || d > days) {
+      // Compact variant shows the neighbouring months' days, faded; the classic one leaves them blank.
+      cells.push(p.showOther
+        ? <span key={i} className="ntv-day is-other drp__other" aria-hidden="true"><span className="ntv-day__num">{new Date(y, m, d).getDate()}</span></span>
+        : <span key={i} className="ntv-day is-other drp__blank" />);
+      continue;
+    }
     var n = new Date(y, m, d).getTime();
     var inR = s != null && n >= s && n <= e, isS = n === s, isE = n === e;
     var band = inR && s !== e ? (isS ? 'is-start' : isE ? 'is-end' : 'is-mid') : '';
@@ -93,6 +102,32 @@ export default function DateRangePicker(p) {
     setOpen(false);
   };
   var next = new Date(view.y, view.m + 1, 1);
+
+  /* Compact variant (Playlist Reports): one month, ‹ Month Year › header, neighbouring days faded,
+     no footer — the second click completes the range, applies it and closes. */
+  if (p.compact) {
+    var pickC = function (d) {
+      if (!draft.start || draft.end) { setDraft({ start: d, end: null }); return; }
+      var r = dayNum(d) < dayNum(draft.start) ? { start: d, end: draft.start } : { start: draft.start, end: d };
+      setDraft(r);
+      p.onChange && p.onChange(r);
+      setTimeout(function () { setOpen(false); }, 180);
+    };
+    return (
+      <div className={'drp drp--compact' + (p.align === 'right' ? ' drp--right' : '') + (p.block ? ' drp--block' : '')} ref={ref}>
+        <button type="button" className={'drp__trigger' + (open ? ' is-open' : '') + (value.start ? ' has-value' : '')} aria-haspopup="dialog" aria-expanded={open} onClick={toggle}>
+          <span>{value.start ? fmtRange(value) : 'Start Date - End Date'}</span>
+          <NTV.Icon name={open ? 'angle-up' : 'angle-down'} size={14} />
+        </button>
+        {open ? (
+          <div className="drp__panel" role="dialog" aria-label="Choose date range">
+            <Month year={view.y} month={view.m} start={draft.start} end={draft.end} today={p.today} onPick={pickC} onPrev={shift(-1)} onNext={shift(1)} showOther />
+            <p className="drp__hint" aria-live="polite">{draft.start && !draft.end ? 'Select an end date' : 'Select a start date'}</p>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className={'drp' + (p.align === 'right' ? ' drp--right' : '')} ref={ref}>

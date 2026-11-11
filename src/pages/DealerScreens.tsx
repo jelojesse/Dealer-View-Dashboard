@@ -9,6 +9,7 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
 import { addNav, arrived, byId, contains, hostName, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import DemoTag from '../components/DemoTag';
@@ -72,7 +73,7 @@ class Component extends DCLogic {
       },
       exportIt: function () { toast(self, 'Exporting ' + rows0.length + ' screens to Excel…', 'info'); },
       refresh: function () { toast(self, 'Screen list refreshed', 'info'); },
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
   }
 }
@@ -228,14 +229,7 @@ defineTemplate(Component, (v) => (
         </div>
         </>
       ) : null}
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));

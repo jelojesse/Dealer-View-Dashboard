@@ -1,0 +1,73 @@
+/* Upload Content modal (components/UploadContentModal.tsx). All classes are uc-* prefixed. */
+.uc-ov{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(9,22,53,.45)}
+.uc-pv-ov{z-index:110}
+.uc-sub{margin:-12px 0 16px;font-size:12px;line-height:20px;color:var(--fg-secondary)}
+
+/* Drop zone */
+.uc-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:144px;padding:20px;box-sizing:border-box;border:1px dashed var(--container-border);border-radius:var(--radius-md);background:var(--bg-app);cursor:pointer;text-align:center;color:var(--fg-primary)}
+.uc-drop:hover,.uc-drop:focus-visible,.uc-drop.is-over{border-color:var(--accent-action);outline:none}
+.uc-drop.is-over{background:var(--accent-30)}
+.uc-drop-icon{display:flex;align-items:center;justify-content:center;width:36px;height:36px;margin-bottom:12px;border-radius:999px;background:var(--primary-100);color:var(--fg-primary)}
+.uc-drop strong{font-size:12px;line-height:20px;font-weight:700}
+.uc-drop-hint{font-size:10px;line-height:16px;color:var(--fg-secondary)}
+.uc-err{margin-top:12px}
+
+/* Selected files header + view toggle */
+.uc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:20px 0 12px}
+.uc-head-title{font-size:12px;line-height:20px;font-weight:700;color:var(--fg-primary)}
+.uc-head-tools{display:flex;align-items:center;gap:12px}
+.uc-link{border:0;background:none;padding:0;font:inherit;font-size:12px;font-weight:600;color:var(--danger-main);cursor:pointer}
+.uc-link:hover{text-decoration:underline}
+.uc-vt{display:inline-flex;gap:2px;padding:2px;border-radius:var(--radius-sm);background:var(--accent-30)}
+.uc-vt button{display:flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:0;border-radius:4px;background:transparent;color:var(--accent-action);cursor:pointer}
+.uc-vt button[aria-pressed="true"]{background:var(--fg-primary);color:var(--white)}
+
+/* Grid of file cards (5 per row) */
+.uc-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;max-height:300px;overflow-y:auto;padding:1px}
+.uc-card{position:relative;border-radius:var(--radius-md);background:var(--bg-surface);box-shadow:0 0 0 1px var(--container-border);min-width:0}
+.uc-card:hover,.uc-card.is-menu{box-shadow:0 0 0 1px var(--accent-action)}
+.uc-card.is-checked{box-shadow:0 0 0 2px var(--accent-action)}
+.uc-thumb{position:relative;aspect-ratio:16/11;overflow:hidden;border-radius:var(--radius-md) var(--radius-md) 0 0;background:var(--primary-100)}
+.uc-thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.uc-thumb-ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--fg-secondary)}
+.uc-pills{display:inline-flex;align-items:center;gap:4px}
+.uc-thumb .uc-pills{position:absolute;left:6px;top:6px}
+.uc-pill{display:inline-flex;align-items:center;height:14px;padding:0 6px;border-radius:10px;font-size:8px;line-height:12px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.uc-pill--image{background:var(--info-050);color:var(--info-600)}
+.uc-pill--video{background:var(--danger-050);color:var(--danger-600)}
+.uc-pill--res{background:var(--warning-050);color:var(--warning-500)}
+.uc-name{display:flex;align-items:center;gap:4px;padding:6px 6px 6px 8px}
+.uc-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px;line-height:18px;color:var(--fg-primary)}
+.uc-card:hover .uc-title,.uc-card:focus-within .uc-title,.uc-card.is-menu .uc-title{color:var(--accent-action)}
+.uc-eye{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;padding:0;border:0;border-radius:999px;background:var(--primary-100);color:var(--fg-secondary);cursor:pointer;flex:none}
+.uc-eye:hover{color:var(--accent-action)}
+/* Hover: pills hide; checkbox (top-left), play (center, videos) and ⋯ (top-right) appear. */
+.uc-cb{position:absolute;left:6px;top:6px;z-index:2;display:flex;opacity:0}
+.uc-cb .ntv-check__box{background:var(--white)}
+.uc-cb .ntv-check__box.is-on{background:var(--accent-action)}
+.uc-play{position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;display:flex;align-items:center;justify-content:center;padding:0 0 0 2px;border:0;border-radius:999px;background:rgba(9,22,53,.55);color:var(--white);cursor:pointer;opacity:0}
+.uc-more{position:absolute;right:6px;top:6px;z-index:3;opacity:0}
+.uc-card:hover .uc-thumb .uc-pills,.uc-card:focus-within .uc-thumb .uc-pills,.uc-card.is-menu .uc-thumb .uc-pills,.uc-card.is-checked .uc-thumb .uc-pills{visibility:hidden}
+.uc-card:hover .uc-cb,.uc-card:focus-within .uc-cb,.uc-card.is-menu .uc-cb,.uc-card.is-checked .uc-cb,
+.uc-card:hover .uc-play,.uc-card:focus-within .uc-play,
+.uc-card:hover .uc-more,.uc-card:focus-within .uc-more,.uc-card.is-menu .uc-more{opacity:1}
+.uc-card.is-menu{z-index:5}
+
+/* List view */
+.uc-list{display:flex;flex-direction:column;max-height:300px;overflow-y:auto;border:1px solid var(--container-border);border-radius:var(--radius-md)}
+.uc-row{display:flex;align-items:center;gap:12px;min-height:52px;padding:6px 12px;border-top:1px solid var(--container-border)}
+.uc-row:first-child{border-top:0}
+.uc-row:hover,.uc-row.is-checked{background:var(--primary-050)}
+.uc-row .uc-title{font-size:12px}
+.uc-row-thumb{position:relative;flex:none;width:64px;height:40px;padding:0;border:0;border-radius:var(--radius-sm);overflow:hidden;background:var(--primary-100);cursor:pointer}
+.uc-row-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.uc-row-size{flex:none;width:64px;text-align:right;font-size:12px;line-height:20px;color:var(--fg-secondary)}
+.uc-row .dv-ib{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:0;border-radius:var(--radius-sm);background:transparent;color:var(--fg-primary);cursor:pointer}
+.uc-row .dv-ib:hover{background:var(--primary-050);color:var(--accent-action)}
+.uc-row .dv-ib.dv-danger{color:var(--danger-main)}
+
+.uc-foot{display:flex;justify-content:flex-end;gap:12px;margin-top:20px}
+
+/* Preview */
+.uc-pv{display:flex;align-items:center;justify-content:center;background:#000;border-radius:var(--radius-md);overflow:hidden;max-height:70vh}
+.uc-pv img,.uc-pv video{display:block;max-width:100%;max-height:70vh}

@@ -9,6 +9,7 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
 import { addNav, advsForHost, arrived, byId, contains, go, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import './DealerAdvertiserDetail.css';
@@ -113,7 +114,7 @@ class Component extends DCLogic {
         } },
       renameVal: s.rename, setRename: function (v) { self.setState({ rename: val(v) }); },
       doRename: function () { var id = self.state.target, n = self.state.rename; self.setState({ content: self.state.content.map(function (m) { return m.id === id ? Object.assign({}, m, { title: n }) : m; }), modal: '' }); toast(self, 'Renamed to ' + n); },
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
   }
 }
@@ -426,14 +427,7 @@ defineTemplate(Component, (v) => (
         </div>
         </>
       ) : null}
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));

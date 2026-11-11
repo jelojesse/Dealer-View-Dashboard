@@ -9,6 +9,7 @@
 import React from 'react';
 import { DCLogic, defineTemplate, s } from '../lib/dc';
 import { NTV } from '../ds/ntv360';
+import Toast from '../components/Toast';
 import { addNav, byId, contains, go, navFn, peekNav, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import './DealerTags.css';
@@ -56,7 +57,7 @@ class Component extends DCLogic {
           else { self.setState({ tags: self.state.tags.concat([{ id: 't' + Date.now(), name: x.name.trim(), color: x.color, sys: false }]), modal: '' }); toast(self, 'Tag “' + x.name.trim() + '” created'); } } },
       delText: tg ? (function () { var n = s.assign.filter(function (a) { return a.tags.indexOf(tg.id) !== -1; }).length; return n ? 'Delete “' + tg.name + '”? It will be removed from ' + n + ' item(s) it’s assigned to.' : 'Delete “' + tg.name + '”? It isn’t assigned to anything.'; })() : '',
       doDelete: function () { var id = self.state.target; self.setState({ tags: self.state.tags.filter(function (t) { return t.id !== id; }), assign: self.state.assign.map(function (a) { return Object.assign({}, a, { tags: a.tags.filter(function (x) { return x !== id; }) }); }), modal: '' }); toast(self, 'Tag deleted'); },
-      toast: toastVals(s.toast)
+      toast: toastVals(s.toast, this)
     };
   }
 }
@@ -221,14 +222,7 @@ defineTemplate(Component, (v) => (
         </div>
         </>
       ) : null}
-      {v.toast?.show ? (
-        <>
-          <div className="dv-toast" role="status" style={{ borderLeftColor: `${s(v.toast?.color)}` }}>
-          <NTV.Icon name={v.toast?.icon} size={v.toast?.size} />
-          <span>{v.toast?.text}</span>
-        </div>
-        </>
-      ) : null}
+      <Toast t={v.toast} />
     </div>
     </div>
 ));
