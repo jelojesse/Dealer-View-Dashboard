@@ -181,3 +181,20 @@
 .pg-playlist-detail .pd-sidefoot strong{font-weight:700}
 .pg-playlist-detail .pd-sidefoot button{padding:0;border:0;background:none;font:700 10px/12px var(--font-sans);color:var(--fg-primary);cursor:pointer}
 .pg-playlist-detail .pd-upload{width:100%;flex:none;justify-content:center;text-decoration:none}
+/* List view — Figma "Single Page - List" (node 5596:34412): checkbox 100px, six 210px-style columns, actions 100px;
+   44px header, 80px rows, 15px cell padding, 100x50 thumbnails */
+.pg-playlist-detail .pd-ltable{max-height:574px;overflow:auto;border:1px solid var(--container-border);border-radius:var(--radius-md);background:var(--bg-surface)}
+.pg-playlist-detail .pd-ltable__inner{min-width:1000px}
+.pg-playlist-detail .pd-lrow{display:grid;grid-template-columns:100px 1fr 1fr 1fr 1fr 1fr 1fr 100px;align-items:center;min-height:80px;border-top:1px solid var(--container-border);font-size:12px;line-height:16px;color:var(--fg-primary)}
+.pg-playlist-detail .pd-lrow.is-sel{background:var(--accent-30)}
+.pg-playlist-detail .pd-lrow--head{position:sticky;top:0;z-index:2;min-height:44px;border-top:0;background:var(--bg-app);font-weight:600;color:var(--fg-secondary);align-items:stretch}
+.pg-playlist-detail .pd-lrow--head .pd-lcell{display:flex;align-items:center}
+.pg-playlist-detail .pd-lrow--head .pd-lcell+.pd-lcell{border-left:1px solid var(--container-border)}
+.pg-playlist-detail .pd-lcell{min-width:0;padding:0 15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-playlist-detail .pd-lcell--check{display:flex;justify-content:center}
+.pg-playlist-detail .pd-lrow--head .pd-lcell--check{justify-content:center}
+.pg-playlist-detail .pd-lcell--act{position:relative;overflow:visible}
+.pg-playlist-detail .pd-lthumb{position:relative;display:block;width:100px;height:50px;overflow:hidden;border-radius:var(--radius-md);background:#000}
+.pg-playlist-detail .pd-lthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pg-playlist-detail .pd-lmore{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;margin-left:-5px;padding:0;border:0;border-radius:var(--radius-sm);background:none;color:var(--fg-primary);cursor:pointer}
+.pg-playlist-detail .pd-lmore:hover{background:var(--primary-050);color:var(--accent-action)}

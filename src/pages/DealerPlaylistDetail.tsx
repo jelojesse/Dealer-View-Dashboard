@@ -32,11 +32,17 @@ var SCHED = { active: ['var(--success-main)', 'Playing now'], upcoming: ['var(--
 // Block group frame colors, in order of appearance
 var GROUP_COLORS = ['var(--warning-main)', 'var(--danger-main)', 'var(--success-main)', 'var(--primary-400)'];
 var GRID_COLS = 8;
+// List view helpers (Figma "Single Page - List", node 5596:34412)
+var MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+var fullDate = function (d) { var x = /^([A-Z][a-z]{2}) (\d+), (\d{4})$/.exec(d || ''); if (!x) return d || '—'; var i = MON.indexOf(x[1]); return i < 0 ? d : MONTHS_FULL[i] + ' ' + x[2] + ', ' + x[3]; };
+var longDur = function (d) { var n = parseInt(d, 10); if (isNaN(n)) return d || '—'; if (n < 60) return n + ' sec'; var m = Math.floor(n / 60), r = n % 60; return m + ' min' + (r ? ' and ' + r + ' sec' : ''); };
+var uploaderOf = function (m) { if (m.adv) { var a = byId(D.advertisers, m.adv); if (a) return a.name; } if (m.host) return hostName(m.host); return 'Dealer Admin'; };
 // Filter by → Content Schedule Status (pick one). Active = playing now or "Always play"; In Queue = upcoming; Inactive = ended
 var SCHED_OPTS = [{ key: '', label: 'All' }, { key: 'active', label: 'Active' }, { key: 'upcoming', label: 'In Queue' }, { key: 'expired', label: 'Inactive' }];
+var PILL_OF = function (k) { return PILL[k] || PILL.image; };
 var schedBucket = function (it) { return schedState(it) || 'active'; };
 // Standalone thumbnail tag pills: [background, text]
-var PILL = { image: ['var(--info-050)', 'var(--info-main)'], video: ['var(--danger-050)', 'var(--danger-main)'], widget: ['var(--teal-050)', 'var(--teal-600)'], block: ['var(--purple-050)', 'var(--purple-main)'] };
+var PILL = { image: ['var(--info-050)', 'var(--info-main)'], video: ['var(--danger-050)', 'var(--danger-main)'], widget: ['var(--teal-050)', 'var(--teal-600)'], block: ['var(--primary-050)', 'var(--fg-secondary)'] };
 
 class Component extends DCLogic {
   constructor(props) {
@@ -86,8 +92,9 @@ class Component extends DCLogic {
         onRemove: function () { self.setState({ kinds: self.state.kinds.filter(function (x) { return x !== k.key; }) }); } }; }).concat(s.sched ? [{ key: 'sched', label: 'Schedule', value: SCHED_OPTS.filter(function (o) { return o.key === s.sched; })[0].label, tone: 'teal',
         onRemove: function () { self.setState({ sched: '' }); } }] : []),
       clearKinds: function () { self.setState({ kinds: [], sched: '' }); },
-      view: s.view, setView: function (x) { self.setState({ view: x }); },
+      view: s.view, setView: function (x) { self.setState({ view: x, reorder: x === 'list' ? false : self.state.reorder }); },
       q: s.q, setQ: function (v) { self.setState({ q: val(v) }); },
+      allChecked: s.items.length > 0 && selKeys.length === s.items.length, someChecked: selKeys.length > 0 && selKeys.length < s.items.length,
       markLabel: s.items.length > 0 && selKeys.length === s.items.length ? 'Unmark All' : 'Mark All',
       bulkModify: function () { var k = selKeys[0], it = self.state.items.filter(function (x) { return x.key === k; })[0]; if (it) self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, start: it.start || '2026-11-15', end: it.end || '2026-12-31', bulk: selKeys } }); },
       isGrid: s.view === 'grid', isList: s.view === 'list', toGrid: function () { self.setState({ view: 'grid' }); }, toList: function () { self.setState({ view: 'list' }); },
@@ -117,7 +124,7 @@ class Component extends DCLogic {
         var B = it.blk ? ['CHANNEL', 'var(--warning-main)'] : ({ image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'], block: ['BLOCK', 'var(--purple-main)'] }[it.m.kind] || ['IMAGE', 'var(--info-main)']);
         var sel = !!s.sel[it.key], idx = s.items.indexOf(it);
         return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : (SCHED[schedState(it)] ? SCHED[schedState(it)][0] : 'var(--primary-050)'), capColor: (it.blk || schedState(it)) ? '#fff' : 'var(--fg-primary)', blk: it.blk, members: it.members || [], schedTip: schedState(it) ? SCHED[schedState(it)][1] + ' · ' + fmtDate(it.start) + ' – ' + fmtDate(it.end) : '', n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)', sched: schedState(it) ? fmtDate(it.start) + ' – ' + fmtDate(it.end) + ' (' + SCHED[schedState(it)][1] + ')' : 'Always',
-          checked: sel, cls: sel ? 'sel' : (it.blk ? 'blk' : ''), key: it.key, kind: it.m.kind, sched: !!schedState(it),
+          checked: sel, cls: sel ? 'sel' : (it.blk ? 'blk' : ''), key: it.key, typeTag: it.blk ? 'BLOCK' : B[0], longDur: longDur(it.dur), added: fullDate(it.m.uploaded), uploader: it.blk ? 'Dealer Admin' : uploaderOf(it.m), kind: it.m.kind, sched: !!schedState(it),
           menuOpen: s.menu === it.key,
           openMenu: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.setState({ menu: self.state.menu === it.key ? '' : it.key }); },
           closeMenu: function () { self.setState({ menu: '' }); },
@@ -268,7 +275,7 @@ defineTemplate(Component, (v) => (
                 <div className="dv-between">
                   <div className="dv-row" style={{ gap: "10px" }}>
                     <NTV.FilterDropdown label={v.filterLabel} groups={v.filterGroups} />
-                    <NTV.Button variant={v.reorderVariant} size="xl" iconLeft="grip-vertical" iconRight={v.none} onClick={v.toggleReorder}>{v.reorderLabel}</NTV.Button>
+                    {v.isGrid ? <NTV.Button variant={v.reorderVariant} size="xl" iconLeft="grip-vertical" iconRight={v.none} onClick={v.toggleReorder}>{v.reorderLabel}</NTV.Button> : null}
                   </div>
                   <div className="dv-row" style={{ gap: "10px" }}>
                     <NTV.Input size="l" placeholder="Search Playlist Content" iconLeft="magnifying-glass" label="Search playlist content" value={v.q} onChange={v.setQ} style={{ width: "300px" }} />
@@ -320,44 +327,37 @@ defineTemplate(Component, (v) => (
                   </>
                 ) : null}
                 {v.isList ? (
-                  <>
-                    <div className="dv-table">
-                    <div role="table" aria-label="Playlist contents">
-                      <div role="row" className="dv-tr dv-th" style={{ gridTemplateColumns: "40px 90px 1.6fr 90px 110px 1fr 1fr 70px" }}>
-                        <div />
-                        <div>Thumbnail</div>
-                        <div>File Name</div>
-                        <div>File Type</div>
-                        <div>Duration</div>
-                        <div>Play Where</div>
-                        <div>Schedule</div>
-                        <div>Action</div>
+                  <div className="pd-ltable">
+                    <div role="table" aria-label="Playlist contents" className="pd-ltable__inner">
+                      <div role="row" className="pd-lrow pd-lrow--head">
+                        <div className="pd-lcell pd-lcell--check"><NTV.Checkbox checked={v.allChecked} indeterminate={v.someChecked} onChange={v.toggleAll} ariaLabel="Select all" /></div>
+                        <div className="pd-lcell">Thumbnail</div>
+                        <div className="pd-lcell">File Name</div>
+                        <div className="pd-lcell">File Type</div>
+                        <div className="pd-lcell">Duration</div>
+                        <div className="pd-lcell">Date Added</div>
+                        <div className="pd-lcell">Uploader</div>
+                        <div className="pd-lcell">Actions</div>
                       </div>
-                      {(v.items || []).map((_it, $index) => (
-                        <React.Fragment key={$index}>
-                          <div role="row" className="dv-tr" style={{ gridTemplateColumns: "40px 90px 1.6fr 90px 110px 1fr 1fr 70px", minHeight: "52px" }}>
-                            <div>
-                              <NTV.Checkbox checked={_it?.checked} onChange={_it?.toggle} ariaLabel="Select" />
-                            </div>
-                            <div>
-                              <span className="dv-thumb" style={{ display: "block", width: "56px", height: "34px" }}><img src={_it?.image} alt="" /></span>
-                            </div>
-                            <div>{_it?.n}{" "}{_it?.title}</div>
-                            <div>
-                              <span style={{ fontSize: "9px", fontWeight: "700", color: `${s(_it?.badgeColor)}` }}>{_it?.badge}</span>
-                            </div>
-                            <div>{_it?.dur}</div>
-                            <div>{_it?.where}</div>
-                            <div>{_it?.sched}</div>
-                            <div>
-                              <button type="button" className="dv-ib" aria-label="Modify" onClick={_it?.modify}><NTV.Icon name="gear" size={v.i12} /></button>
-                            </div>
+                      {(v.items || []).map((_it) => (
+                        <div key={_it.key} role="row" className={`pd-lrow ${_it.checked ? "is-sel" : ""}`}>
+                          <div className="pd-lcell pd-lcell--check"><NTV.Checkbox checked={_it.checked} onChange={_it.toggle} ariaLabel={`Select ${_it.title}`} /></div>
+                          <div className="pd-lcell"><span className="pd-lthumb"><img src={_it.image} alt="" /></span></div>
+                          <div className="pd-lcell pd-lcell--name" title={_it.title}>{_it.title}</div>
+                          <div className="pd-lcell"><span className="pd-pill" style={{ background: _it.blk ? "var(--primary-050)" : PILL_OF(_it.kind)[0], color: _it.blk ? "var(--fg-secondary)" : PILL_OF(_it.kind)[1] }}>{_it.typeTag}</span></div>
+                          <div className="pd-lcell">{_it.longDur}</div>
+                          <div className="pd-lcell">{_it.added}</div>
+                          <div className="pd-lcell">{_it.uploader}</div>
+                          <div className="pd-lcell pd-lcell--act">
+                            <button type="button" className="pd-lmore" aria-label="More actions" aria-haspopup="menu" aria-expanded={_it.menuOpen} onClick={_it.openMenu}>
+                              <span style={{ display: "inline-flex", transform: "rotate(90deg)" }}><NTV.Icon name="ellipsis" size={v.i14} /></span>
+                            </button>
+                            {_it.menuOpen ? <NTV.ActionMenu items={_it.menuItems} align="left" onClose={_it.closeMenu} style={{ top: "54px", left: "8px" }} /> : null}
                           </div>
-                        </React.Fragment>
+                        </div>
                       ))}
                     </div>
                   </div>
-                  </>
                 ) : null}
                 {v.empty ? (
                   <>
