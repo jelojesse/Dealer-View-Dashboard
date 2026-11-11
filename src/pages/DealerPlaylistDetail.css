@@ -216,3 +216,16 @@
 .pg-playlist-detail .pd-grp-overlay__info b{font-weight:700}
 .pg-playlist-detail .pd-grp-overlay__act{position:absolute;top:10px;right:11px;display:inline-flex}
 .pg-playlist-detail .pd-more--grp{display:inline-flex;background:var(--bg-app)}
+/* Infinite scroll sentinel (grid) */
+.pg-playlist-detail .pd-sentinel{display:flex;align-items:center;justify-content:center;gap:8px;padding:14px 0 4px;font-size:12px;line-height:16px;color:var(--fg-secondary)}
+/* Drag & drop reorder (grid, Reorder mode) */
+.pg-playlist-detail .pd-cell.is-draggable{cursor:grab}
+.pg-playlist-detail .pd-cell.is-draggable:active{cursor:grabbing}
+.pg-playlist-detail .pd-cell.is-dragging{opacity:.35}
+.pg-playlist-detail .pd-cell.is-over .pd-tile__card{box-shadow:0 0 0 2px var(--accent-action),0 0 0 6px color-mix(in srgb,var(--accent-action) 18%,transparent)}
+.pg-playlist-detail .pd-grid.is-reorder .pd-more,.pg-playlist-detail .pd-grid.is-reorder .pd-check{display:none !important}
+.pg-playlist-detail .pd-grid.is-reorder .pd-pill{display:inline-flex !important}
+.pg-playlist-detail .pd-grip{display:inline-flex;flex:none;opacity:.8}
+/* List view pagination footer */
+.pg-playlist-detail .pd-foot--pager{display:flex;align-items:center;justify-content:space-between;margin-top:-10px}
+.pg-playlist-detail .pd-ltable{max-height:none}

@@ -32,6 +32,8 @@ var SCHED = { active: ['var(--success-main)', 'Playing now'], upcoming: ['var(--
 // Block group frame colors, in order of appearance
 var GROUP_COLORS = ['var(--warning-main)', 'var(--danger-main)', 'var(--success-main)', 'var(--primary-400)'];
 var GRID_COLS = 8;
+var GRID_ROWS_STEP = 5;   // grid view shows 5 rows, then 5 more each time you scroll near the end
+var LIST_PAGE_SIZE = 10;  // list view paginates (no reordering there)
 // List view helpers (Figma "Single Page - List", node 5596:34412)
 var MONTHS_FULL = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 var fullDate = function (d) { var x = /^([A-Z][a-z]{2}) (\d+), (\d{4})$/.exec(d || ''); if (!x) return d || '—'; var i = MON.indexOf(x[1]); return i < 0 ? d : MONTHS_FULL[i] + ' ' + x[2] + ', ' + x[3]; };
@@ -54,11 +56,31 @@ class Component extends DCLogic {
     var items = p.items.map(function (id, i) { var m = byId(D.media, id); var blk = p.blocks ? !!p.blocks[id] : !!(p.block && i === 0); var sc = (p.schedules || {})[id];
       return m ? { key: 'k' + i, blk: blk, m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: !sc, start: sc ? sc[0] : '', end: sc ? sc[1] : '',
         members: blk ? (((p.blockByIndex || {})[i] || (p.blocks ? p.blocks[id] : p.blockMembers)) || []).map(function (mid) { return byId(D.media, mid); }).filter(Boolean) : null } : null; }).filter(Boolean);
-    this.state = { view: 'grid', kinds: [], sched: '', q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', menuRect: null, hoverGrp: '', target: '', mvPos: '1', swQ: '', libQ: '', libLimit: 10, push: false, ad: null, md: null, info: null, toast: null };
+    var gi = 0; items.forEach(function (it) { if (it.blk) it.color = GROUP_COLORS[gi++ % GROUP_COLORS.length]; });
+    this.state = { view: 'grid', kinds: [], sched: '', q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', menuRect: null, hoverGrp: '', rowLimit: GRID_ROWS_STEP, listPage: 1, drag: '', over: '', target: '', mvPos: '1', swQ: '', libQ: '', libLimit: 10, push: false, ad: null, md: null, info: null, toast: null };
   }
-  componentWillUnmount() { clearTimeout(this._hoverT); if (this._tt) clearTimeout(this._tt); }
+  // grid infinite scroll: a sentinel under the grid loads 5 more rows when it scrolls into view
+  sentinelRef(el) {
+    var self = this;
+    if (self._io) { self._io.disconnect(); self._io = null; }
+    if (self._scrollEl) { self._scrollEl.removeEventListener('scroll', self._onScroll); self._scrollEl = null; }
+    if (!el) return;
+    var root = el.closest('.dv-scroll');
+    // add one step per load: ignore repeat triggers until the new rows have rendered
+    var more = function () { var lim = self.state.rowLimit; if (self._lastLim === lim) return; self._lastLim = lim; self.setState({ rowLimit: lim + GRID_ROWS_STEP }); };
+    if (typeof IntersectionObserver !== 'undefined') {
+      self._io = new IntersectionObserver(function (entries) { if (entries[0] && entries[0].isIntersecting) more(); }, { root: root, rootMargin: '0px 0px 240px 0px' });
+      self._io.observe(el);
+    }
+    // backup for browsers/tabs where the observer doesn't run: check on scroll
+    if (root) {
+      self._onScroll = function () { var r = el.getBoundingClientRect(), rr = root.getBoundingClientRect(); if (el.isConnected && r.top <= rr.bottom + 240) more(); };
+      self._scrollEl = root; root.addEventListener('scroll', self._onScroll, { passive: true });
+    }
+  }
+  componentWillUnmount() { if (this._io) this._io.disconnect(); if (this._scrollEl) this._scrollEl.removeEventListener('scroll', this._onScroll); clearTimeout(this._hoverT); if (this._tt) clearTimeout(this._tt); }
   renderVals() {
-    var self = this, s = this.state, p = s.p, itemVMs = [], libAll = [];
+    var self = this, s = this.state, p = s.p, itemVMs = [], libAll = [], gridRows = 0;
     var secs = function (d) { return parseInt(d, 10) || 15; };
     var loop = s.items.reduce(function (a, it) { return a + secs(it.dur); }, 0);
     var selKeys = Object.keys(s.sel).filter(function (k) { return s.sel[k]; });
@@ -67,7 +89,7 @@ class Component extends DCLogic {
     var move = function (i, d) { var a = self.state.items.slice(), j = i + d; if (j < 0 || j >= a.length) return; var t = a[i]; a[i] = a[j]; a[j] = t; self.setState({ items: a }); };
     var inPl = {}; s.items.forEach(function (it) { inPl[it.m.id] = 1; });
     var close = function () { self.setState({ modal: '' }); };
-    var addItems = function (ms) { var base = self.state.items.length; self.setState({ items: ms.map(function (m, i) { return { key: 'n' + Date.now() + i, blk: m.kind === 'block', m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: true, start: '', end: '', members: m.members || null }; }).concat(self.state.items) }); };
+    var addItems = function (ms) { var base = self.state.items.length; self.setState({ items: ms.map(function (m, i) { return { key: 'n' + Date.now() + i, blk: m.kind === 'block', m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: true, start: '', end: '', members: m.members || null, color: m.kind === 'block' ? GROUP_COLORS[(self.state.items.filter(function (x) { return x.blk; }).length + i) % GROUP_COLORS.length] : undefined }; }).concat(self.state.items) }); };
     // add content wizard
     var ad = s.ad || { step: 0, kind: 'single', sel: {}, q: '', blockName: '', layout: '2 + 2 grid', dur: '15 sec' };
     var setAd = function (o) { self.setState({ ad: Object.assign({}, self.state.ad, o) }); };
@@ -95,7 +117,7 @@ class Component extends DCLogic {
         onRemove: function () { self.setState({ kinds: self.state.kinds.filter(function (x) { return x !== k.key; }) }); } }; }).concat(s.sched ? [{ key: 'sched', label: 'Schedule', value: SCHED_OPTS.filter(function (o) { return o.key === s.sched; })[0].label, tone: 'teal',
         onRemove: function () { self.setState({ sched: '' }); } }] : []),
       clearKinds: function () { self.setState({ kinds: [], sched: '' }); },
-      view: s.view, setView: function (x) { self.setState({ view: x, reorder: x === 'list' ? false : self.state.reorder }); },
+      view: s.view, setView: function (x) { if (self.state.reorder) return; self.setState({ view: x, listPage: 1 }); },
       q: s.q, setQ: function (v) { self.setState({ q: val(v) }); },
       // Mark All only covers standalone contents — blocks are never bulk-selected (they can still be clicked individually)
       allChecked: markable.length > 0 && markable.every(function (it) { return s.sel[it.key]; }), someChecked: selKeys.length > 0 && !(markable.length > 0 && markable.every(function (it) { return s.sel[it.key]; })),
@@ -120,15 +142,15 @@ class Component extends DCLogic {
       isContent: s.tab === 'Content', isScreens: s.tab === 'Screens',
       allSel: s.items.length > 0 && selKeys.length === s.items.length, someSel: selKeys.length > 0 && selKeys.length < s.items.length, noneSel: selKeys.length === 0, selCount: selKeys.length,
       toggleAll: function () { var all = markable.length > 0 && markable.every(function (it) { return s.sel[it.key]; }), o = {}; if (!all) markable.forEach(function (it) { o[it.key] = true; }); self.setState({ sel: o }); },
-      reorder: s.reorder, notReorder: !s.reorder, reorderLabel: s.reorder ? 'Done' : 'Reorder', reorderVariant: s.reorder ? 'primary' : 'secondary',
-      toggleReorder: function () { if (self.state.reorder) toast(self, 'Play order saved'); self.setState({ reorder: !self.state.reorder }); },
+      reorder: s.reorder, notReorder: !s.reorder, dragKey: s.drag, overKey: s.over, reorderLabel: s.reorder ? 'Done' : 'Reorder', reorderVariant: s.reorder ? 'primary' : 'secondary',
+      toggleReorder: function () { if (self.state.reorder) toast(self, 'Play order saved'); self.setState({ reorder: !self.state.reorder, drag: '', over: '', menu: '', hoverGrp: '', sel: {} }); },
       askBulk: function () { self.setState({ modal: 'bulk' }); },
       doBulk: function () { var sel = self.state.sel; self.setState({ items: self.state.items.filter(function (it) { return !sel[it.key]; }), sel: {}, modal: '' }); toast(self, selKeys.length + ' item(s) removed'); },
       items: itemVMs = s.items.filter(function (it) { return (!s.kinds.length || s.kinds.indexOf(it.m.kind) !== -1) && (!s.sched || schedBucket(it) === s.sched) && contains(it.m.title, s.q); }).map(function (it, i) {
         var B = it.blk ? ['CHANNEL', 'var(--warning-main)'] : ({ image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'], block: ['BLOCK', 'var(--purple-main)'] }[it.m.kind] || ['IMAGE', 'var(--info-main)']);
         var sel = !!s.sel[it.key], idx = s.items.indexOf(it);
         return { badge: B[0], badgeColor: B[1], span: it.blk ? 2 : 1, ratio: it.blk ? '32 / 10' : '16 / 10', capBg: it.blk ? 'var(--warning-main)' : (SCHED[schedState(it)] ? SCHED[schedState(it)][0] : 'var(--primary-050)'), capColor: (it.blk || schedState(it)) ? '#fff' : 'var(--fg-primary)', blk: it.blk, members: it.members || [], schedTip: schedState(it) ? SCHED[schedState(it)][1] + ' · ' + fmtDate(it.start) + ' – ' + fmtDate(it.end) : '', n: idx + 1, image: it.m.image, title: it.m.title, kind: it.m.kind, dur: it.dur, where: it.everywhere ? 'All screens' : Object.keys(it.hosts).filter(function (k) { return it.hosts[k]; }).length + ' host(s)', sched: schedState(it) ? fmtDate(it.start) + ' – ' + fmtDate(it.end) + ' (' + SCHED[schedState(it)][1] + ')' : 'Always',
-          checked: sel, cls: sel ? 'sel' : (it.blk ? 'blk' : ''), key: it.key, typeTag: it.blk ? 'BLOCK' : B[0], longDur: longDur(it.dur), added: fullDate(it.m.uploaded), uploader: it.blk ? 'Dealer Admin' : uploaderOf(it.m), kind: it.m.kind, sched: !!schedState(it),
+          checked: sel, cls: sel ? 'sel' : (it.blk ? 'blk' : ''), key: it.key, blockColor: it.color, typeTag: it.blk ? 'BLOCK' : B[0], longDur: longDur(it.dur), added: fullDate(it.m.uploaded), uploader: it.blk ? 'Dealer Admin' : uploaderOf(it.m), kind: it.m.kind, sched: !!schedState(it),
           menuOpen: s.menu === it.key,
           openMenu: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); var r = ev && ev.currentTarget && ev.currentTarget.getBoundingClientRect ? ev.currentTarget.getBoundingClientRect() : null; self.setState({ menu: self.state.menu === it.key ? '' : it.key, menuRect: r }); },
           menuRect: s.menuRect,
@@ -151,12 +173,18 @@ class Component extends DCLogic {
         var cells = [], g = 0;
         list.forEach(function (it) {
           if (!it.blk) { cells.push({ it: it, span: 1, head: false, grp: '' }); return; }
-          var color = GROUP_COLORS[g++ % GROUP_COLORS.length], gid = 'g' + g;
+          var color = it.blockColor || GROUP_COLORS[g % GROUP_COLORS.length], gid = 'g' + (++g);
           cells.push({ it: it, span: 2, head: true, grp: gid, color: color });
           it.members.forEach(function (m) { cells.push({ it: it, span: 1, head: false, grp: gid, color: color, m: m, badge: (BADGE[m.kind] || BADGE.image) }); });
         });
-        var col = 0;
-        cells.forEach(function (c) { if (col + c.span > GRID_COLS) col = 0; c.col = col; col += c.span; if (col >= GRID_COLS) col = 0; });
+        var col = 0, row = 0;
+        cells.forEach(function (c) {
+          if (c.head && col === GRID_COLS - 1) c.span = 1;          // channel landing on the last column shrinks to one cell
+          if (col + c.span > GRID_COLS) { col = 0; row++; }
+          c.col = col; c.row = row; col += c.span;
+          if (col >= GRID_COLS) { col = 0; row++; }
+        });
+        gridRows = row + (col > 0 ? 1 : 0);
         // split each block group into per-row segments; the widest segment shows the hover title + menu
         var segs = {};
         cells.forEach(function (c, k) {
@@ -175,22 +203,43 @@ class Component extends DCLogic {
           var std = !c.grp, pill = PILL[it.kind] || PILL.image;
           var segFirst = !!c.grp && c.seg.first === k, hovered = !!c.grp && s.hoverGrp === c.grp;
           var grpSecs = c.grp ? (parseInt(it.dur, 10) || 0) + it.members.reduce(function (n, m) { return n + (parseInt(m.duration, 10) || 15); }, 0) : 0;
-          return { key: (c.grp || '') + k, span: c.span, cls: cls + (it.checked ? ' sel' : '') + (std ? ' std' : '') + (std && it.sched ? ' sched' : '') + (std && it.menuOpen ? ' menu-open' : ''), color: c.color || 'transparent', toggle: it.toggle,
+          return { key: (c.grp || '') + k, span: c.span, row: c.row, itemKey: it.key, cls: cls + (it.checked ? ' sel' : '') + (std ? ' std' : '') + (std && it.sched ? ' sched' : '') + (std && it.menuOpen ? ' menu-open' : ''), color: c.color || 'transparent', toggle: it.toggle,
             std: std, checked: it.checked, pillBg: pill[0], pillFg: pill[1], menuOpen: (std || (segFirst && c.seg.main)) && it.menuOpen, openMenu: it.openMenu, closeMenu: it.closeMenu,
             menuItems: std ? it.menuItems : it.menuItems.filter(function (x) { return x === 'divider' || x.label !== 'Swap Content'; }),
             grpHover: hovered || (!!c.grp && it.menuOpen), overlay: segFirst && (hovered || it.menuOpen), overlaySpan: segFirst ? c.seg.span : 0, overlayMain: segFirst && !!c.seg.main,
             grpName: c.grp ? it.title : '', grpInfo: c.grp ? (it.members.length + 1) + ' contents' : '', grpSecs: grpSecs + ' seconds',
             // hover is debounced: the overlay covers tiles when it appears, which makes the browser report a "leave";
             // a short delay (cancelled by any enter inside the block) keeps it from blinking
-            enter: c.grp ? function () { clearTimeout(self._hoverT); if (self.state.hoverGrp !== c.grp) self.setState({ hoverGrp: c.grp }); } : null,
-            leave: c.grp ? function () { clearTimeout(self._hoverT); self._hoverT = setTimeout(function () { if (self.state.hoverGrp) self.setState({ hoverGrp: '' }); }, 120); } : null,
+            enter: c.grp && !s.reorder ? function () { clearTimeout(self._hoverT); if (self.state.hoverGrp !== c.grp) self.setState({ hoverGrp: c.grp }); } : null,
+            leave: c.grp && !s.reorder ? function () { clearTimeout(self._hoverT); self._hoverT = setTimeout(function () { if (self.state.hoverGrp) self.setState({ hoverGrp: '' }); }, 120); } : null,
             image: member ? c.m.image : it.image, title: member ? c.m.title : it.title, badge: member ? c.badge[0] : it.badge, badgeColor: member ? c.badge[1] : it.badgeColor,
             n: c.grp ? null : it.n, dur: c.head ? it.dur : null, tip: c.grp ? '' : it.schedTip,
             capBg: c.head ? c.color : (member ? 'var(--primary-050)' : (it.sched ? it.capBg : 'var(--bg-app)')), capColor: c.head ? '#fff' : (member ? 'var(--fg-primary)' : it.capColor),
             actions: !member, gear: !!c.head, up: it.up, down: it.down, modify: it.modify };
-        });
+        }).filter(function (x) { return x.row < s.rowLimit; });
       })(itemVMs),
+      hasMoreRows: gridRows > s.rowLimit, sentinelRef: self._sref || (self._sref = function (el) { self.sentinelRef(el); }),
+      // drag & drop reorder (grid, Reorder mode). Dropping on a tile puts the dragged content in its place.
+      dnd: (function () {
+        var moveTo = function (fromKey, toKey) {
+          var a = self.state.items.slice(), from = -1, to = -1;
+          a.forEach(function (x, i) { if (x.key === fromKey) from = i; if (x.key === toKey) to = i; });
+          if (to === -1) to = a.length - 1;
+          if (from < 0 || from === to) { self.setState({ drag: '', over: '' }); return; }
+          var it = a.splice(from, 1)[0]; a.splice(to, 0, it); self.setState({ items: a, drag: '', over: '' });
+        };
+        return {
+          start: function (key, e) { if (e && e.dataTransfer) { e.dataTransfer.effectAllowed = 'move'; try { e.dataTransfer.setData('text/plain', key); } catch (x) {} } self.setState({ drag: key, menu: '', hoverGrp: '' }); },
+          over: function (key, e) { if (!self.state.drag) return; if (e) e.preventDefault(); if (self.state.over !== key) self.setState({ over: key }); },
+          drop: function (key, e) { if (e) { e.preventDefault(); e.stopPropagation(); } if (self.state.drag) moveTo(self.state.drag, key); },
+          end: function () { if (self.state.drag || self.state.over) self.setState({ drag: '', over: '' }); }
+        };
+      })(),
       empty: s.items.length === 0,
+      listPages: Math.max(1, Math.ceil(itemVMs.length / LIST_PAGE_SIZE)), listPage: Math.min(s.listPage, Math.max(1, Math.ceil(itemVMs.length / LIST_PAGE_SIZE))),
+      listItems: itemVMs.slice((Math.min(s.listPage, Math.max(1, Math.ceil(itemVMs.length / LIST_PAGE_SIZE))) - 1) * LIST_PAGE_SIZE).slice(0, LIST_PAGE_SIZE),
+      listFrom: itemVMs.length ? (Math.min(s.listPage, Math.max(1, Math.ceil(itemVMs.length / LIST_PAGE_SIZE))) - 1) * LIST_PAGE_SIZE + 1 : 0,
+      setListPage: function (n) { self.setState({ listPage: n }); },
       screens: scs.map(function (sc, i) { var z = Object.keys(sc.zones).filter(function (k) { return sc.zones[k] === p.name; }); return { n: i + 1, name: sc.name, host: hostName(sc.host), zone: z.join(', ') || '—', template: sc.template, lic: sc.lic.length, open: navFn('DealerScreenDetail.dc.html', { id: sc.id }) }; }),
       noScreens: scs.length === 0,
       lib: (libAll = D.media.filter(function (m, i) { if (s.folder === '__search') return contains(m.title, s.libQ); if (s.folder === '__assigned') return !!m.adv; if (s.folder === '__floating') return !m.used; return m.folder === s.folder; }).map(function (m) { var has = !!inPl[m.id], B = { image: ['IMAGE', 'var(--info-main)'], video: ['VIDEO', 'var(--danger-main)'], widget: ['WIDGET', 'var(--success-400)'] }[m.kind] || ['IMAGE', 'var(--info-main)']; var pl = PILL[m.kind] || PILL.image; return { badge: B[0], badgeColor: B[1], pillBg: pl[0], pillFg: pl[1], has: has, image: m.image, title: m.title, kind: m.kind, dur: m.duration || '15 sec', icon: has ? 'check' : 'plus', media: m, add: function () { if (has) { toast(self, m.title + ' is already in this playlist', 'info'); return; } addItems([m]); toast(self, m.title + ' added'); } }; })).slice(0, s.libLimit),
@@ -306,7 +355,7 @@ defineTemplate(Component, (v) => (
                     <NTV.Button variant="primary" tone="active" size="xl" iconLeft="check" iconRight={v.none} onClick={v.toggleAll}>{v.markLabel}</NTV.Button>
                     <NTV.Button variant="primary" size="xl" iconLeft="gear" iconRight={v.none} disabled={v.noneSel} onClick={v.bulkModify}>Bulk Modify</NTV.Button>
                     <NTV.Button variant="primary" size="xl" iconLeft="trash" iconRight={v.none} disabled={v.noneSel} onClick={v.askBulk}>Bulk Delete</NTV.Button>
-                    <NTV.ToggleView value={v.view} onChange={v.setView} />
+                    <NTV.ToggleView value={v.view} onChange={v.setView} disabled={v.reorder} />
                   </div>
                 </div>
                 <NTV.ActiveFilters chips={v.activeChips} onClear={v.clearKinds} />
@@ -314,9 +363,12 @@ defineTemplate(Component, (v) => (
               <section className="dv-card pd-content">
                 {v.isGrid ? (
                   <>
-                    <div className="pd-grid">
+                    <div className={`pd-grid ${v.reorder ? "is-reorder" : ""}`} onDragOver={v.reorder ? (e) => e.preventDefault() : undefined} onDrop={v.reorder ? (e) => v.dnd.drop("", e) : undefined}>
                     {(v.cells || []).map((_c) => (
-                      <div key={_c.key} className={`pd-cell ${s(_c.cls)} ${_c.grpHover ? "grp-hover" : ""} ${_c.overlay ? "has-overlay" : ""}`} onClick={_c.toggle} onMouseEnter={_c.enter} onMouseLeave={_c.leave} style={{ gridColumn: `span ${s(_c.span)}`, "--g": _c.color }} title={_c.tip || undefined}>
+                      <div key={_c.key} className={`pd-cell ${s(_c.cls)} ${_c.grpHover && v.notReorder ? "grp-hover" : ""} ${_c.overlay && v.notReorder ? "has-overlay" : ""} ${v.reorder ? "is-draggable" : ""} ${v.dragKey === _c.itemKey ? "is-dragging" : ""} ${v.overKey === _c.itemKey && v.dragKey !== _c.itemKey ? "is-over" : ""}`}
+                        onClick={v.reorder ? undefined : _c.toggle} onMouseEnter={_c.enter} onMouseLeave={_c.leave} style={{ gridColumn: `span ${s(_c.span)}`, "--g": _c.color }} title={_c.tip || undefined}
+                        draggable={v.reorder} onDragStart={v.reorder ? (e) => v.dnd.start(_c.itemKey, e) : undefined} onDragOver={v.reorder ? (e) => v.dnd.over(_c.itemKey, e) : undefined}
+                        onDrop={v.reorder ? (e) => v.dnd.drop(_c.itemKey, e) : undefined} onDragEnd={v.reorder ? v.dnd.end : undefined}>
                         <div className="pd-tile__card">
                           <div className="pd-tile__img">
                             <img src={_c.image} alt="" />
@@ -333,16 +385,11 @@ defineTemplate(Component, (v) => (
                           <div className="pd-tile__cap" style={{ background: `${s(_c.capBg)}`, color: `${s(_c.capColor)}` }}>
                             <span className="pd-tile__name">{_c.n ? <span className="pd-num">{_c.n}</span> : null}{_c.title}</span>
                             {_c.dur ? <span className="pd-dur">{_c.dur}</span> : null}
-                            {_c.actions && v.reorder ? (
-                              <>
-                                <button type="button" className="dv-ib pd-capbtn" aria-label="Move earlier" onClick={_c.up}><NTV.Icon name="angle-up" size={v.i10} /></button>
-                                <button type="button" className="dv-ib pd-capbtn" aria-label="Move later" onClick={_c.down}><NTV.Icon name="angle-down" size={v.i10} /></button>
-                              </>
-                            ) : null}
+                            {_c.actions && v.reorder ? <span className="pd-grip" aria-hidden="true"><NTV.Icon name="grip-vertical" size={v.i12} /></span> : null}
                           </div>
                         </div>
                         {_c.menuOpen && _c.std ? <NTV.ActionMenu items={_c.menuItems} onClose={_c.closeMenu} style={{ top: "38px", right: "10px" }} /> : null}
-                        {_c.overlay ? (
+                        {_c.overlay && v.notReorder ? (
                           <div className="pd-grp-overlay" style={{ "--n": _c.overlaySpan }} onClick={_c.toggle} onMouseEnter={_c.enter} onMouseMove={_c.enter}>
                             {_c.overlayMain ? (
                               <>
@@ -359,6 +406,7 @@ defineTemplate(Component, (v) => (
                       </div>
                     ))}
                   </div>
+                  {v.hasMoreRows ? <div ref={v.sentinelRef} className="pd-sentinel" aria-hidden="true"><span className="dv-spinner" /> Loading more contents…</div> : null}
                   </>
                 ) : null}
                 {v.isList ? (
@@ -374,7 +422,7 @@ defineTemplate(Component, (v) => (
                         <div className="pd-lcell">Uploader</div>
                         <div className="pd-lcell">Actions</div>
                       </div>
-                      {(v.items || []).map((_it) => (
+                      {(v.listItems || []).map((_it) => (
                         <div key={_it.key} role="row" className={`pd-lrow ${_it.checked ? "is-sel" : ""}`}>
                           <div className="pd-lcell pd-lcell--check">{_it.blk ? null : <NTV.Checkbox checked={_it.checked} onChange={_it.toggle} ariaLabel={`Select ${_it.title}`} />}</div>
                           <div className="pd-lcell"><span className="pd-lthumb"><img src={_it.image} alt="" /></span></div>
@@ -409,12 +457,17 @@ defineTemplate(Component, (v) => (
                   <>
                     <div className="dv-note">
                     <NTV.Icon name="circle-info" size={v.i12} />
-                    <span>Use the arrows on each item to change play order, then press Done.</span>
+                    <span>Drag any content or block to a new spot to change the play order, then press Done.</span>
                   </div>
                   </>
                 ) : null}
               </section>
-              <span className="pd-foot">{"Showing "}{v.count}{" of "}{v.count}{" items"}</span>
+              {v.isList ? (
+                <div className="pd-foot pd-foot--pager">
+                  <span>{"Showing "}{v.listFrom}{"–"}{v.listFrom + (v.listItems || []).length - (v.listItems && v.listItems.length ? 1 : 0)}{" of "}{(v.items || []).length}{" items"}</span>
+                  <NTV.Pagination page={v.listPage} pages={v.listPages} onChange={v.setListPage} />
+                </div>
+              ) : null}
               </div>
               <aside className="dv-card pd-side">
                 <NTV.Input size="l" placeholder="Search Content or Folder" iconLeft="magnifying-glass" label="Search content or folder" value={v.libQ} onChange={v.setLibQ} />
