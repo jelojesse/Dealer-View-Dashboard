@@ -62,6 +62,7 @@ class Component extends DCLogic {
     var secs = function (d) { return parseInt(d, 10) || 15; };
     var loop = s.items.reduce(function (a, it) { return a + secs(it.dur); }, 0);
     var selKeys = Object.keys(s.sel).filter(function (k) { return s.sel[k]; });
+    var markable = s.items.filter(function (it) { return !it.blk; });
     var scs = p.screens.map(function (id) { return byId(D.screens, id); }).filter(Boolean);
     var move = function (i, d) { var a = self.state.items.slice(), j = i + d; if (j < 0 || j >= a.length) return; var t = a[i]; a[i] = a[j]; a[j] = t; self.setState({ items: a }); };
     var inPl = {}; s.items.forEach(function (it) { inPl[it.m.id] = 1; });
@@ -96,8 +97,9 @@ class Component extends DCLogic {
       clearKinds: function () { self.setState({ kinds: [], sched: '' }); },
       view: s.view, setView: function (x) { self.setState({ view: x, reorder: x === 'list' ? false : self.state.reorder }); },
       q: s.q, setQ: function (v) { self.setState({ q: val(v) }); },
-      allChecked: s.items.length > 0 && selKeys.length === s.items.length, someChecked: selKeys.length > 0 && selKeys.length < s.items.length,
-      markLabel: s.items.length > 0 && selKeys.length === s.items.length ? 'Unmark All' : 'Mark All',
+      // Mark All only covers standalone contents — blocks are never bulk-selected (they can still be clicked individually)
+      allChecked: markable.length > 0 && markable.every(function (it) { return s.sel[it.key]; }), someChecked: selKeys.length > 0 && !(markable.length > 0 && markable.every(function (it) { return s.sel[it.key]; })),
+      markLabel: markable.length > 0 && markable.every(function (it) { return s.sel[it.key]; }) ? 'Unmark All' : 'Mark All',
       bulkModify: function () { var k = selKeys[0], it = self.state.items.filter(function (x) { return x.key === k; })[0]; if (it) self.setState({ modal: 'modify', md: { key: it.key, tab: 'Basics', dur: it.dur, trans: it.trans, mute: it.mute, everywhere: it.everywhere, hosts: Object.assign({}, it.hosts), always: it.always, start: it.start || '2026-11-15', end: it.end || '2026-12-31', bulk: selKeys } }); },
       isGrid: s.view === 'grid', isList: s.view === 'list', toGrid: function () { self.setState({ view: 'grid' }); }, toList: function () { self.setState({ view: 'list' }); },
       libQ: s.libQ, setLibQ: function (v) { self.setState({ libQ: val(v), folder: val(v) ? '__search' : '', libLimit: 10 }); },
@@ -117,7 +119,7 @@ class Component extends DCLogic {
       pvZone: (function () { var sc = byId(D.screens, s.pvScreen); if (!sc) return 'main'; var z = Object.keys(sc.zones).filter(function (k) { return sc.zones[k] === p.name; })[0] || 'Main'; return z.toLowerCase(); })(),
       isContent: s.tab === 'Content', isScreens: s.tab === 'Screens',
       allSel: s.items.length > 0 && selKeys.length === s.items.length, someSel: selKeys.length > 0 && selKeys.length < s.items.length, noneSel: selKeys.length === 0, selCount: selKeys.length,
-      toggleAll: function () { var all = selKeys.length === s.items.length, o = {}; if (!all) s.items.forEach(function (it) { o[it.key] = true; }); self.setState({ sel: o }); },
+      toggleAll: function () { var all = markable.length > 0 && markable.every(function (it) { return s.sel[it.key]; }), o = {}; if (!all) markable.forEach(function (it) { o[it.key] = true; }); self.setState({ sel: o }); },
       reorder: s.reorder, notReorder: !s.reorder, reorderLabel: s.reorder ? 'Done' : 'Reorder', reorderVariant: s.reorder ? 'primary' : 'secondary',
       toggleReorder: function () { if (self.state.reorder) toast(self, 'Play order saved'); self.setState({ reorder: !self.state.reorder }); },
       askBulk: function () { self.setState({ modal: 'bulk' }); },
