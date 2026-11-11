@@ -36,7 +36,11 @@ class Component extends DCLogic {
     ];
     var n = this.state.range === 'Last 3 months' ? 3 : (this.state.range === 'Last 6 months' ? 6 : 12);
     var ms = months.slice(12 - n);
-    var X = function (i) { return n === 1 ? 620 : 60 + i * (1120 / (n - 1)); };
+    var column = this.state.chartType === 'Column';
+    // Lines run edge to edge; columns sit in the middle of equal-width month slots.
+    var X = column
+      ? function (i) { return 60 + (i + 0.5) * (1120 / n); }
+      : function (i) { return n === 1 ? 620 : 60 + i * (1120 / (n - 1)); };
     var Y = function (v) { return 260 - v * 2.4; };
     var series = seriesDef.map(function (s) {
       var vs = s.vals.slice(12 - n);
@@ -50,7 +54,21 @@ class Component extends DCLogic {
       };
     });
     var grid = [0, 20, 40, 60, 80, 100].map(function (v) { return { y: Y(v), label: v }; });
-    var step = n > 1 ? 1120 / (n - 1) : 1120;
+    var step = column ? 1120 / n : (n > 1 ? 1120 / (n - 1) : 1120);
+    // Column view: one group per month, one bar per series. The current month is faded (still in progress).
+    var bars = null;
+    if (column) {
+      var groupW = Math.min(step * 0.6, 150), barW = groupW / series.length, r = Math.min(4, barW / 2 - 1);
+      bars = [];
+      ms.forEach(function (m, i) {
+        series.forEach(function (sr, k) {
+          var x = X(i) - groupW / 2 + k * barW + 1, w = barW - 2, top = sr.pts[i].y, h = 260 - top, rr = Math.min(r, h);
+          bars.push({ key: sr.key + i, color: sr.color, live: i === n - 1,
+            d: 'M' + x + ' 260 V' + (top + rr) + ' Q' + x + ' ' + top + ' ' + (x + rr) + ' ' + top +
+               ' H' + (x + w - rr) + ' Q' + (x + w) + ' ' + top + ' ' + (x + w) + ' ' + (top + rr) + ' V260 Z' });
+        });
+      });
+    }
     var ticks = ms.map(function (m, i) { return { x: X(i), hx: X(i) - step / 2, m: i === n - 1 ? m + ' (to date)' : m, live: i === n - 1, hover: function () { self.setState({ hover: i }); } }; });
     var hi = this.state.hover >= 0 && this.state.hover < n ? this.state.hover : -1;
     var tip = hi < 0 ? { show: false } : { show: true, x: X(hi), flip: hi > n / 2, month: ms[hi] + (hi === n - 1 ? ' (to date)' : ''),
@@ -95,10 +113,10 @@ class Component extends DCLogic {
       rangeOptions: ['Last 3 months', 'Last 6 months', 'Last 12 months'],
       range: this.state.range,
       setRange: function (v) { self.setState({ range: val(v), hover: -1 }); },
-      chartTypeOptions: ['Line', 'Line with Annotations'],
+      chartTypeOptions: ['Line', 'Line with Annotations', 'Column'],
       chartType: this.state.chartType,
       setChartType: function (v) { self.setState({ chartType: val(v), hover: -1 }); },
-      growth: { series: series, grid: grid, ticks: ticks, step: step, anno: anno },
+      growth: { series: series, grid: grid, ticks: ticks, step: step, anno: anno, column: column, bars: bars },
       tip: tip, clearHover: function () { self.setState({ hover: -1 }); },
       statusRows: [
         { label: 'Online', n: 74, color: 'var(--status-online)', go: to('DealerLicenses.dc.html', { status: 'online' }) },
@@ -221,9 +239,15 @@ defineTemplate(Component, (v) => (
                 {(v.growth?.grid || []).map((_g, $index) => (
                   <line key={'h' + $index} x1="40" x2="1190" y1={_g?.y} y2={_g?.y} stroke="var(--container-border)" strokeDasharray="3 4" />
                 ))}
-                {(v.growth?.ticks || []).map((_t, $index) => (
+                {!v.growth?.column ? (v.growth?.ticks || []).map((_t, $index) => (
                   <line key={'v' + $index} x1={_t?.x} x2={_t?.x} y1="20" y2="260" stroke="var(--container-border)" strokeDasharray="3 4" />
-                ))}
+                )) : null}
+                {v.growth?.column && v.tip?.show ? (
+                  <rect x={v.tip.x - v.growth.step / 2} y="20" width={v.growth.step} height="240" fill="var(--primary-050)" />
+                ) : null}
+                {v.growth?.column ? (v.growth.bars || []).map((_b) => (
+                  <path key={_b.key} d={_b.d} fill={_b.color} opacity={_b.live ? 0.45 : 1} />
+                )) : null}
                 {v.growth?.anno ? (
                   <g className="db-anno-band">
                     <rect x={v.growth.anno.band.x} y="20" width={v.growth.anno.band.w} height="240" fill="var(--primary-050)" />
@@ -231,7 +255,7 @@ defineTemplate(Component, (v) => (
                     <text x={v.growth.anno.band.x + v.growth.anno.band.w - v.growth.anno.band.tw / 2} y="13" textAnchor="middle" className="db-anno-text">{v.growth.anno.band.text}</text>
                   </g>
                 ) : null}
-                {(v.growth?.series || []).map((_s) => (
+                {(v.growth?.column ? [] : v.growth?.series || []).map((_s) => (
                   <g key={_s.key}>
                     <path d={_s.line} fill="none" stroke={_s.color} strokeWidth="4" strokeLinejoin="round" strokeLinecap="round" />
                     <path d={_s.live} fill="none" stroke={_s.color} strokeWidth="4" strokeDasharray="2 8" strokeLinecap="round" />
@@ -264,7 +288,7 @@ defineTemplate(Component, (v) => (
                     ))}
                   </g>
                 ) : null}
-                {v.tip?.show ? (
+                {v.tip?.show && !v.growth?.column ? (
                   <>
                     <line x1={v.tip.x} x2={v.tip.x} y1="20" y2="260" stroke="var(--fg-faint)" strokeWidth="1" />
                     {v.tip.rows.map((_r) => (
