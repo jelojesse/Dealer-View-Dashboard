@@ -125,6 +125,12 @@
 .pg-media .ml-pnl-cards .ml-add{min-height:104px;height:100%}
 .pg-media .ml-eye--round{border-radius:999px;background:var(--primary-100)}
 .pg-media .ml-panel .ml-foot{margin-top:12px}
+/* Empty folder state (Figma 7659:130010) */
+.pg-media .ml-pnl-empty{flex:1 1 0;min-height:240px;margin-top:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;background:var(--bg-app);border:1px solid var(--container-border);border-radius:var(--radius-lg)}
+.pg-media .ml-pnl-empty-add{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;border:0;background:var(--fg-faint);color:var(--white);cursor:pointer;transition:background .15s}
+.pg-media .ml-pnl-empty-add:hover,.pg-media .ml-pnl-empty-add:focus-visible{background:var(--accent-action)}
+.pg-media .ml-pnl-empty-title{margin:0;font-size:14px;line-height:24px;font-weight:700;color:var(--fg-primary)}
+.pg-media .ml-pnl-empty-sub{margin:0;font-size:12px;line-height:20px;color:var(--fg-secondary)}
 .pg-media .ml-split{display:flex;gap:20px;align-items:stretch;height:560px}
 .pg-media .ml-main{flex:1 1 0}
 .pg-media .ml-split--open{height:670px}

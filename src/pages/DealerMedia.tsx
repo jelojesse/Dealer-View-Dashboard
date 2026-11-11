@@ -585,13 +585,24 @@ defineTemplate(Component, (v) => (
                   <span className="ml-pnl-label">{"Media Contents "}<span>({v.panel?.count})</span></span>
                   <NTV.Input size="l" placeholder="Search Images, Videos or Widgets" iconLeft="magnifying-glass" iconRight="sparkles" label="Search folder" value={v.panelQ} onChange={v.setPanelQ} className="ml-pnl-search" />
                 </div>
+                {v.panel?.count === 0 ? (
+                  // Empty folder (Figma 7659:130010): + opens Upload Content, same as the + tile.
+                  <div className="ml-pnl-empty">
+                    <button type="button" className="ml-pnl-empty-add" aria-label="Upload media to this folder" onClick={v.openAddToFolder}><NTV.Icon name="plus" size={22} /></button>
+                    <div>
+                      <p className="ml-pnl-empty-title">There’s no media contents yet</p>
+                      <p className="ml-pnl-empty-sub">Upload media to get started</p>
+                    </div>
+                  </div>
+                ) : (
                 <div className="ml-scroll ml-pnl-grid">
                   <div className="ml-pnl-cards">
                     <button type="button" className="ml-add" aria-label="Add files to folder" onClick={v.openAddToFolder}><NTV.Icon name="plus" size={24} /></button>
                     {(v.panel?.items || []).map((_m) => <MediaCard key={_m.id} c={_m} small />)}
                   </div>
-                  {v.panel?.empty ? <p className="dv-sub" style={{ marginTop: "12px" }}>This folder is empty. Use + to add files.</p> : null}
+                  {v.panel?.empty ? <p className="dv-sub" style={{ marginTop: "12px" }}>No media in this folder match “{v.panelQ}”.</p> : null}
                 </div>
+                )}
                 {v.panel?.hasMore ? (
                   <div className="dv-between ml-foot">
                     <span className="dv-sub" style={{ fontSize: "11px" }}>{"Showing "}{v.panel?.shown}{" of "}{v.panel?.matched}{" items"}</span>
