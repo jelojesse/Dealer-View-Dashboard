@@ -78,18 +78,14 @@
 .pg-media .ml-typesel .ntv-select{display:block;width:100%}
 .pg-media .ml-stat{display:flex;flex-direction:column;gap:16px}
 .pg-media .ml-folder{display:flex;align-items:center;gap:12px;height:48px;padding:0 6px 0 14px;border:1px solid var(--container-border);border-radius:var(--radius-md);background:var(--bg-surface);cursor:pointer;position:relative;font-size:12px;line-height:20px}
-.pg-media .ml-folder:hover{border-color:var(--accent-action)}
+.pg-media .ml-folder{user-select:none}
+/* States (recording): hover = soft fill; selected (single click) = accent border + accent icon/name; open (double click) = .on, solid accent. */
+.pg-media .ml-folder:hover:not(.on):not(.picked){background:var(--bg-app)}
 .pg-media .ml-folder.on{background:var(--accent-action);border-color:var(--accent-action);color:var(--white)}
 .pg-media .ml-folder.on .dv-ib{color:var(--white)}
 /* Folder selection for bulk actions: checkbox replaces the icon on hover / while selected. */
-.pg-media .ml-fsel{position:relative;display:flex;align-items:center;justify-content:center;flex:none;width:16px;height:16px}
-.pg-media .ml-fsel-icon,.pg-media .ml-fsel-cb{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
-.pg-media .ml-fsel-cb{opacity:0}
-.pg-media .ml-fsel-cb .ntv-check__box{background:var(--white)}
-.pg-media .ml-fsel-cb .ntv-check__box.is-on{background:var(--accent-action)}
-.pg-media .ml-folder:hover .ml-fsel-cb,.pg-media .ml-folder:focus-within .ml-fsel-cb,.pg-media .ml-folder.picked .ml-fsel-cb{opacity:1}
-.pg-media .ml-folder:hover .ml-fsel-icon,.pg-media .ml-folder:focus-within .ml-fsel-icon,.pg-media .ml-folder.picked .ml-fsel-icon{opacity:0}
-.pg-media .ml-folder.picked:not(.on){border-color:var(--accent-action);background:var(--accent-30)}
+.pg-media .ml-folder.picked:not(.on){border-color:var(--accent-action);background:var(--bg-surface);color:var(--accent-action)}
+.pg-media .ml-folder.picked:not(.on) .dv-ib{color:var(--accent-action)}
 .pg-media .ml-card{position:relative;border:2px solid transparent;border-radius:var(--radius-md);background:var(--bg-surface);box-shadow:0 0 0 1px var(--container-border);cursor:pointer}
 .pg-media .ml-card .ml-thumb{border-radius:calc(var(--radius-md) - 2px) calc(var(--radius-md) - 2px) 0 0}
 .pg-media .ml-card:hover{box-shadow:0 0 0 1px var(--accent-action)}
@@ -129,6 +125,12 @@
 .pg-media .ml-pnl-cards .ml-add{min-height:104px;height:100%}
 .pg-media .ml-eye--round{border-radius:999px;background:var(--primary-100)}
 .pg-media .ml-panel .ml-foot{margin-top:12px}
+/* Empty folder state (Figma 7659:130010) */
+.pg-media .ml-pnl-empty{flex:1 1 0;min-height:240px;margin-top:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;text-align:center;background:var(--bg-app);border:1px solid var(--container-border);border-radius:var(--radius-lg)}
+.pg-media .ml-pnl-empty-add{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:50%;border:0;background:var(--fg-faint);color:var(--white);cursor:pointer;transition:background .15s}
+.pg-media .ml-pnl-empty-add:hover,.pg-media .ml-pnl-empty-add:focus-visible{background:var(--accent-action)}
+.pg-media .ml-pnl-empty-title{margin:0;font-size:14px;line-height:24px;font-weight:700;color:var(--fg-primary)}
+.pg-media .ml-pnl-empty-sub{margin:0;font-size:12px;line-height:20px;color:var(--fg-secondary)}
 .pg-media .ml-split{display:flex;gap:20px;align-items:stretch;height:560px}
 .pg-media .ml-main{flex:1 1 0}
 .pg-media .ml-split--open{height:670px}
