@@ -49,9 +49,11 @@ class Component extends DCLogic {
     super(props);
     var f = arrived('DealerPlaylistDetail.dc.html') || {};
     var p = byId(D.playlists, f.id) || D.playlists[0];
-    var items = p.items.map(function (id, i) { var m = byId(D.media, id); var blk = !!(p.block && i === 0); var sc = (p.schedules || {})[id];
+    // blocks: p.blocks = { itemId: [memberIds] } (any item can be a block); p.blockByIndex = { position: [memberIds] } overrides
+    // members for one occurrence (same channel used twice); legacy: p.block + p.blockMembers = first item
+    var items = p.items.map(function (id, i) { var m = byId(D.media, id); var blk = p.blocks ? !!p.blocks[id] : !!(p.block && i === 0); var sc = (p.schedules || {})[id];
       return m ? { key: 'k' + i, blk: blk, m: m, dur: m.duration || '15 sec', trans: 'Fade', mute: true, everywhere: true, hosts: {}, always: !sc, start: sc ? sc[0] : '', end: sc ? sc[1] : '',
-        members: blk ? (p.blockMembers || []).map(function (mid) { return byId(D.media, mid); }).filter(Boolean) : null } : null; }).filter(Boolean);
+        members: blk ? (((p.blockByIndex || {})[i] || (p.blocks ? p.blocks[id] : p.blockMembers)) || []).map(function (mid) { return byId(D.media, mid); }).filter(Boolean) : null } : null; }).filter(Boolean);
     this.state = { view: 'grid', kinds: [], sched: '', q: '', folder: '', scQ: '', openHost: '', pvScreen: '', p: Object.assign({}, p), items: items, tab: 'Content', sel: {}, reorder: false, modal: '', menu: '', menuRect: null, hoverGrp: '', target: '', mvPos: '1', swQ: '', libQ: '', libLimit: 10, push: false, ad: null, md: null, info: null, toast: null };
   }
   componentWillUnmount() { clearTimeout(this._hoverT); if (this._tt) clearTimeout(this._tt); }
@@ -333,9 +335,6 @@ defineTemplate(Component, (v) => (
                                 <button type="button" className="dv-ib pd-capbtn" aria-label="Move earlier" onClick={_c.up}><NTV.Icon name="angle-up" size={v.i10} /></button>
                                 <button type="button" className="dv-ib pd-capbtn" aria-label="Move later" onClick={_c.down}><NTV.Icon name="angle-down" size={v.i10} /></button>
                               </>
-                            ) : null}
-                            {_c.gear && v.notReorder ? (
-                              <button type="button" className="dv-ib pd-capbtn" aria-label="Modify" onClick={_c.modify}><NTV.Icon name="gear" size={v.i10} /></button>
                             ) : null}
                           </div>
                         </div>
