@@ -63,7 +63,7 @@ defineTemplate(Component, (v) => (
           <section className="dv-card" aria-label="Progress" style={{ overflowX: "auto" }}><NTV.Stepper steps={v.steps} current={v.stepIndex} style={{ width: "100%" }} /></section>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", gap: "20px" }}>
             <section className="dv-card" aria-labelledby="details-title" style={{ flex: "1 1 380px", maxWidth: "450px", display: "flex", flexDirection: "column", gap: "16px" }}>
-              <h2 id="details-title" className="dv-h2">Screen Details</h2>
+              <h2 id="details-title" className="dv-h3">Screen Details</h2>
               <NTV.FormField label="Screen Name">
                 <NTV.Input size="l" placeholder="Enter Screen Name" label="Screen Name" value={v.name} onChange={v.setName} />
               </NTV.FormField>
@@ -85,7 +85,7 @@ defineTemplate(Component, (v) => (
             <section className="dv-card" aria-labelledby="template-title" style={{ flex: "999 1 560px", display: "flex", flexDirection: "column", gap: "16px" }}>
               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: "12px" }}>
                 <div>
-                  <h2 id="template-title" className="dv-h2">Choose Template</h2>
+                  <h2 id="template-title" className="dv-h3">Choose Template</h2>
                   <p className="dv-p" style={{ fontSize: "14px", lineHeight: "20px" }}>Pick how content is split across the screen</p>
                 </div>
                 {v.hasTemplate ? (

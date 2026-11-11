@@ -241,11 +241,11 @@ defineTemplate(Component, (v) => (
                 <div className="dv-row" style={{ gap: "14px", alignItems: "flex-start" }}>
                   <NTV.IconTile icon="chart-simple" tone="success" />
                   <div>
-                    <p style={{ margin: "0", fontSize: "18px", lineHeight: "28px", fontWeight: "700" }}>License Status</p>
-                    <p className="dv-sub" style={{ fontSize: "11px" }}>Overview of all active, inactive, and unassigned licenses.</p>
+                    <p style={{ margin: "0", fontSize: "20px", lineHeight: "32px", fontWeight: "700" }}>License Status</p>
+                    <p className="dv-sub" style={{ fontWeight: "500" }}>Overview of all active, inactive, and unassigned licenses.</p>
                   </div>
                 </div>
-                <span style={{ fontSize: "26px", lineHeight: "36px", fontWeight: "700" }}>{v.licCount}</span>
+                <span style={{ fontSize: "28px", lineHeight: "42px", fontWeight: "700" }}>{v.licCount}</span>
               </div>
               <div className="dv-between" style={{ fontSize: "12px" }}>
                 <span>
@@ -263,11 +263,11 @@ defineTemplate(Component, (v) => (
                 <div className="dv-row" style={{ gap: "14px", alignItems: "flex-start" }}>
                   <NTV.IconTile icon="chart-simple" tone="info" />
                   <div>
-                    <p style={{ margin: "0", fontSize: "18px", lineHeight: "28px", fontWeight: "700" }}>License Usage Trend</p>
-                    <p className="dv-sub" style={{ fontSize: "11px" }}>Tracks license usage growth or decline compared to last week.</p>
+                    <p style={{ margin: "0", fontSize: "20px", lineHeight: "32px", fontWeight: "700" }}>License Usage Trend</p>
+                    <p className="dv-sub" style={{ fontWeight: "500" }}>Tracks license usage growth or decline compared to last week.</p>
                   </div>
                 </div>
-                <span style={{ fontSize: "26px", lineHeight: "36px", fontWeight: "700" }}>{v.usage}</span>
+                <span style={{ fontSize: "28px", lineHeight: "42px", fontWeight: "700" }}>{v.usage}</span>
               </div>
               <div className="dv-between" style={{ fontSize: "12px" }}>
                 <span className="dv-row" style={{ gap: "8px" }}>
@@ -285,11 +285,11 @@ defineTemplate(Component, (v) => (
                 <div className="dv-row" style={{ gap: "14px", alignItems: "flex-start" }}>
                   <NTV.IconTile icon="arrows-rotate" tone="teal" />
                   <div>
-                    <p style={{ margin: "0", fontSize: "18px", lineHeight: "28px", fontWeight: "700" }}>Newly Activated</p>
-                    <p className="dv-sub" style={{ fontSize: "11px" }}>Licenses connected to a screen this week.</p>
+                    <p style={{ margin: "0", fontSize: "20px", lineHeight: "32px", fontWeight: "700" }}>Newly Activated</p>
+                    <p className="dv-sub" style={{ fontWeight: "500" }}>Licenses connected to a screen this week.</p>
                   </div>
                 </div>
-                <span style={{ fontSize: "26px", lineHeight: "36px", fontWeight: "700" }}>{v.newly}</span>
+                <span style={{ fontSize: "28px", lineHeight: "42px", fontWeight: "700" }}>{v.newly}</span>
               </div>
               <div className="dv-between" style={{ fontSize: "12px" }}>
                 <span className="dv-row" style={{ gap: "8px" }}>
@@ -327,7 +327,7 @@ defineTemplate(Component, (v) => (
               <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <div className="dv-between">
                 <div className="dv-row" style={{ gap: "20px" }}>
-                  <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>License Data</h2>
+                  <h2 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>License Data</h2>
                   <div className="dv-legend" aria-label="Legend">
                     {(v.legend || []).map((_g, $index) => (
                       <React.Fragment key={$index}>
@@ -417,7 +417,7 @@ defineTemplate(Component, (v) => (
               <NTV.Input size="l" placeholder="Search Content Name" iconLeft="magnifying-glass" label="Search content" value={v.contentQ} onChange={v.setContentQ} style={{ width: "380px" }} />
             </div>
               <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>
+              <h2 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>
                 {"Host Contents "}
                 <span className="dv-sub" style={{ display: "inline", fontWeight: "400" }}>({v.contentCount})</span>
               </h2>
@@ -450,7 +450,7 @@ defineTemplate(Component, (v) => (
               </div>
               <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div className="dv-row" style={{ gap: "20px" }}>
-                  <h2 style={{ margin: "0", fontSize: "14px", lineHeight: "20px", fontWeight: "700" }}>
+                  <h2 style={{ margin: "0", fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>
                     {"Advertisers Data "}
                     <span className="dv-sub" style={{ display: "inline", fontWeight: "400" }}>({v.advCount})</span>
                   </h2>

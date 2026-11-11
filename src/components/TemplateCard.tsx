@@ -68,7 +68,7 @@ defineTemplate(Component, (v) => (
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "16px", padding: "16px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
-          <span style={{ fontSize: "20px", lineHeight: "32px", fontWeight: "700" }}>{v.title}</span>
+          <span style={{ fontSize: "16px", lineHeight: "24px", fontWeight: "700" }}>{v.title}</span>
           {v.selected ? (
             <>
               <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", flex: "none", width: "24px", height: "24px", borderRadius: "var(--radius-full)", background: "var(--accent-action)", color: "var(--white)" }}><NTV.Icon name="check" size={v.checkSize} title="Selected" /></span>
