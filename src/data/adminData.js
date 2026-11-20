@@ -87,4 +87,4 @@ var dealerSeries = {
   risk: { ontrack: [16, 23, 33, 41, 42, 39, 47, 41, 30, 8, 42, 23], atrisk: [24, 26, 44, 11, 7, 9, 19, 39, 47, 40, 2, 7], highrisk: [55, 49, 37, 26, 22, 10, 6, 1, 0, 2, 1, 11] }
 };
 
-export var ADMIN = { dealers: dealers, dealerActivity: dealerActivity, impersonations: impersonations, programmatic: programmatic, territory: territory, dealerSeries: dealerSeries };
+export var ADMIN = { dealers: dealers, dealerActivity: dealerActivity, impersonations: impersonations, programmatic: programmatic, adminTerritory: territory, dealerSeries: dealerSeries };

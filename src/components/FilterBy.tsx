@@ -9,6 +9,7 @@
  *  - value:    { status: ['Active'] }   (selected options per group key)
  *  - onChange: (nextValue) => void
  *  - align:    'left' | 'right'          (which edge the panel lines up with)
+ *  - iconOnly: true                     (square funnel button, e.g. in narrow side panels)
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { NTV } from '../ds/ntv360';
@@ -48,9 +49,16 @@ export default function FilterBy(p) {
 
   return (
     <div className={'fb' + (p.align === 'right' ? ' fb--right' : '')} ref={ref}>
-      <NTV.Button variant="secondary" size="xl" iconLeft="filter" className={open || n ? 'is-open' : ''} onClick={function () { setOpen(!open); }}>
-        {(p.label || 'Filter by') + (n ? ' (' + n + ')' : '')}
-      </NTV.Button>
+      {p.iconOnly ? (
+        <button type="button" className={'fb__icon' + (open || n ? ' is-open' : '')} aria-label={(p.label || 'Filter by') + (n ? ' (' + n + ' active)' : '')} aria-expanded={open} onClick={function () { setOpen(!open); }}>
+          <NTV.Icon name="filter" size={14} />
+          {n ? <span className="fb__count">{n}</span> : null}
+        </button>
+      ) : (
+        <NTV.Button variant="secondary" size="xl" iconLeft="filter" className={open || n ? 'is-open' : ''} onClick={function () { setOpen(!open); }}>
+          {(p.label || 'Filter by') + (n ? ' (' + n + ')' : '')}
+        </NTV.Button>
+      )}
       {open ? (
         <div className="fb__panel" role="dialog" aria-label="Filters">
           {(p.groups || []).map(function (g) {

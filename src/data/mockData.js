@@ -2,6 +2,7 @@
 // screens, playlists, media, channels, tags). Edit values here to change what the UI shows.
 // Image paths like "images/<id>.jpg" point at public/images (placeholders; replace with real files of the same name).
 import { ADMIN } from './adminData';
+import { LOCATOR } from './locatorData';
 export const D = {
   "dealer": {
     "code": "001-IBNLI",
@@ -5473,3 +5474,5 @@ export const D = {
 
 // Admin view data (dealers, activity, impersonations, programmatic, territory) lives in adminData.js.
 Object.assign(D, ADMIN);
+// Locator page data (dealers + territory outlines) lives in locatorData.js.
+Object.assign(D, LOCATOR);
