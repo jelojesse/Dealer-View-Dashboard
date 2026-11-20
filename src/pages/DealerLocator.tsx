@@ -247,7 +247,8 @@ class Component extends DCLogic {
     if (!t || s.draft) return;
     if (s.mode === 'locator') { this.setState({ focus: id, popup: '', openHost: '', hostQ: '', hostFilters: {} }, () => this.fitTo(ringsOf(t))); return; }
     var picks = shift ? (s.picks.indexOf(id) !== -1 ? s.picks.filter(function (x) { return x !== id; }) : s.picks.concat([id])) : [id];
-    this.setState({ picks: picks, menu: false }, () => { if (!shift) this.fitTo(ringsOf(t)); });
+    // Shift + Click turns on the checklist so the picked territories show ticked and Merge (N) appears.
+    this.setState({ picks: picks, menu: false, checklist: shift ? true : s.checklist }, () => { if (!shift) this.fitTo(ringsOf(t)); });
   }
 
   /* Open a host's bubble and move the map so the whole 433px card (≈430px tall) fits above the pin. */
