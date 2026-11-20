@@ -127,18 +127,18 @@ defineTemplate(Component, (v) => (
         <main className="dv-main">
           <div className="dv-between dv-page-head"><h1 className="dv-h1">Licenses</h1></div>
           <section aria-label="License totals" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "20px" }}>
-            <div className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+            <div className="dv-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "16px", minHeight: "140px", boxSizing: "border-box" }}>
               <div className="dv-between" style={{ alignItems: "flex-start", flexWrap: "nowrap" }}>
-                <div className="dv-row" style={{ gap: "14px", alignItems: "flex-start" }}>
+                <div className="dv-row" style={{ gap: "16px", alignItems: "center" }}>
                   <NTV.IconTile icon="id-card" tone="danger" />
-                  <div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                     <p style={{ margin: "0", fontSize: "20px", lineHeight: "32px", fontWeight: "700" }}>Total Licenses</p>
-                    <p className="dv-sub" style={{ fontWeight: "500" }}>All licenses you own</p>
+                    <p className="dv-sub" style={{ margin: "0", fontSize: "12px", lineHeight: "20px", fontWeight: "500" }}>All licenses you own</p>
                   </div>
                 </div>
                 <span style={{ fontSize: "28px", lineHeight: "42px", fontWeight: "700" }}>{v.total}</span>
               </div>
-              <div className="dv-between" style={{ fontSize: "12px" }}>
+              <div className="dv-between" style={{ alignItems: "center", minHeight: "28px", fontSize: "12px", lineHeight: "20px" }}>
                 <span>
                   {"Ad "}
                   <strong style={{ color: "var(--warning-main)" }}>{v.byType?.Ad}</strong>
@@ -153,17 +153,17 @@ defineTemplate(Component, (v) => (
                 </span>
               </div>
             </div>
-            <div className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div className="dv-row" style={{ gap: "14px", alignItems: "flex-start" }}>
+            <div className="dv-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "16px", minHeight: "140px", boxSizing: "border-box" }}>
+              <div className="dv-row" style={{ gap: "16px", alignItems: "center" }}>
                 <NTV.IconTile icon="play" tone="danger" />
-                <div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                   <p style={{ margin: "0", fontSize: "20px", lineHeight: "32px", fontWeight: "700" }}>Player UI</p>
-                  <p className="dv-sub" style={{ fontWeight: "500" }}>Version running on your players</p>
+                  <p className="dv-sub" style={{ margin: "0", fontSize: "12px", lineHeight: "20px", fontWeight: "500" }}>Version running on your players</p>
                 </div>
               </div>
-              <div className="dv-between" style={{ fontSize: "12px" }}>
+              <div className="dv-between" style={{ alignItems: "center", minHeight: "28px", fontSize: "12px", lineHeight: "20px" }}>
                 <span>
-                  {"Current Version: "}
+                  {"Version: "}
                   <strong>3.0.42</strong>
                 </span>
                 <span>
@@ -176,17 +176,17 @@ defineTemplate(Component, (v) => (
                 </span>
               </div>
             </div>
-            <div className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-              <div className="dv-row" style={{ gap: "14px", alignItems: "flex-start" }}>
+            <div className="dv-card" style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", gap: "16px", minHeight: "140px", boxSizing: "border-box" }}>
+              <div className="dv-row" style={{ gap: "16px", alignItems: "center" }}>
                 <NTV.IconTile icon="network-wired" tone="danger" />
-                <div>
+                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                   <p style={{ margin: "0", fontSize: "20px", lineHeight: "32px", fontWeight: "700" }}>Player Server</p>
-                  <p className="dv-sub" style={{ fontWeight: "500" }}>Server version your players sync with</p>
+                  <p className="dv-sub" style={{ margin: "0", fontSize: "12px", lineHeight: "20px", fontWeight: "500" }}>Server version your players sync with</p>
                 </div>
               </div>
-              <div className="dv-between" style={{ fontSize: "12px" }}>
+              <div className="dv-between" style={{ alignItems: "center", minHeight: "28px", fontSize: "12px", lineHeight: "20px" }}>
                 <span>
-                  {"Current Version: "}
+                  {"Version: "}
                   <strong>2.9.2</strong>
                 </span>
                 <span>
