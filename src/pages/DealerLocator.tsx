@@ -97,7 +97,7 @@ class Component extends DCLogic {
     this.mapEl = React.createRef();
     this.state = {
       mode: 'locator', switching: '', panel: true,
-      dq: '', pickerOpen: false, selected: D.locDealers.slice(0, 10).map(function (d) { return d.id; }),
+      dq: '', pickerOpen: false, selected: [],
       vis: { merged: true, individual: true, unassigned: true },
       focus: '', hostQ: '', hostFilters: {}, openHost: '', popup: '',
       tq: '', checklist: false, hover: '', picks: [], tick: 0, toast: null,
@@ -139,7 +139,7 @@ class Component extends DCLogic {
       if (!s.vis[t.kind]) return false;
       if (s.draft && s.draft.kind === 'edit' && s.draft.id === t.id) return false;
       if (s.mode === 'territory') return true;
-      return t.kind === 'unassigned' || t.dealers.some(function (id) { return sel.indexOf(id) !== -1; });
+      return t.dealers.some(function (id) { return sel.indexOf(id) !== -1; });
     });
   }
   focusedHosts() {
@@ -156,9 +156,9 @@ class Component extends DCLogic {
       var k = t.color && t.kind === 'merged' ? { color: t.color, fill: t.color } : KIND[t.kind], focused = s.focus === t.id, picked = s.picks.indexOf(t.id) !== -1, hovered = s.hover === t.id;
       var style = terrMode
         ? { color: k.color, weight: picked ? 2.5 : 1.5, fillColor: k.fill, fillOpacity: picked ? 0.78 : (hovered ? 0.28 : 0.12), opacity: 1 }
-        : { color: k.color, weight: focused ? 3 : 2, fillColor: k.fill, fillOpacity: focused ? 0.08 : 0, opacity: 1 };
+        : { color: k.color, weight: focused ? 4 : 2, fillColor: k.fill, fillOpacity: 0, opacity: 1 };
       var poly = L.polygon(ringsOf(t).map(function (r) { return [r]; }), style).addTo(self.terrLayer);
-      poly.bindTooltip(t.name, { className: 'lc-tip', direction: 'top', sticky: true, offset: [0, -10] });
+      if (terrMode || !focused) poly.bindTooltip(t.name, { className: 'lc-tip', direction: 'top', sticky: true, offset: [0, -10] });
       poly.on('mouseover', function () { if (self.state.mode === 'territory') self.setState({ hover: t.id }); });
       poly.on('mouseout', function () { if (self.state.hover === t.id) self.setState({ hover: '' }); });
       poly.on('click', function (e) { L.DomEvent.stopPropagation(e); if (self.state.draft) { if (self.state.draft.kind === 'draw') self.map.fire('click', { latlng: e.latlng }); return; } self.pickTerritory(t.id, e.originalEvent && e.originalEvent.shiftKey); });
@@ -226,7 +226,7 @@ class Component extends DCLogic {
   fitTo(outlines, pad) {
     if (!this.map || !outlines.length) return;
     var b = L.latLngBounds([]); outlines.forEach(function (o) { b.extend(L.latLngBounds(o)); });
-    var s = this.state, left = s.panel ? 372 : 80, right = (s.mode === 'locator' ? s.focus : s.picks.length) ? 310 : 80;
+    var s = this.state, left = s.panel ? 420 : 80, right = (s.mode === 'locator' ? s.focus : s.picks.length) ? 380 : 80;
     this.map.flyToBounds(b, { paddingTopLeft: [left, 60], paddingBottomRight: [right, 60], duration: 0.8, maxZoom: pad || 11 });
   }
   pickTerritory(id, shift) {
@@ -324,7 +324,7 @@ class Component extends DCLogic {
       demoHost: function () { toast(self, 'This sample host has no details page', 'info'); },
       /* ---- Territory mode ---- */
       tq: s.tq, setTq: function (x) { self.setState({ tq: val(x) }); },
-      dealersSel: selDealers.length + ' dealers selected',
+      dealersSel: s.terrs.filter(function (t) { return s.vis[t.kind]; }).length + ' territories',
       checklist: s.checklist, setChecklist: function (on) { self.setState({ checklist: on }); },
       addTerritory: function () { self.setState({ modal: 'add', fName: '', fDealer: '', fErr: false, menu: false }); },
       dealerOptions: ['No dealer'].concat(D.locDealers.map(function (d) { return d.name; })),
@@ -493,7 +493,7 @@ defineTemplate(Component, (v) => (
               <>
                 <div className="dv-between lc-head">
                   <h1 className="lc-title">Locator</h1>
-                  <span className="lc-sub">{v.selCount}{" • "}<button type="button" className="lc-link" onClick={v.clearAll}>Clear all</button></span>
+                  {v.noDealers ? null : <span className="lc-sub">{v.selCount}{" • "}<button type="button" className="lc-link" onClick={v.clearAll}>Clear all</button></span>}
                 </div>
                 <div className="lc-list">
                   {v.dealers.map((_d) => (
@@ -514,7 +514,14 @@ defineTemplate(Component, (v) => (
                       </div>
                     </div>
                   ))}
-                  {v.noDealers ? <p className="lc-empty">No dealers selected. Use the search above to pick dealers.</p> : null}
+                  {v.noDealers ? (
+                    <div className="lc-zero">
+                      <span className="lc-zero__icon"><NTV.Icon name="users" size={v.i16} /></span>
+                      <strong>No dealers selected</strong>
+                      <span>Select dealers to see their territories and hosts on the map.</span>
+                      <NTV.Button variant="secondary" size="m" iconLeft="magnifying-glass" onClick={v.openPicker}>Select Dealers</NTV.Button>
+                    </div>
+                  ) : null}
                 </div>
               </>
             ) : null}
@@ -671,7 +678,7 @@ defineTemplate(Component, (v) => (
             </aside>
           ) : null}
 
-          {v.terrMode && !v.draft ? <div className="lc-hint" style={{ left: v.panel ? "380px" : "70px" }}><NTV.Icon name="circle-info" size={v.i12} />Shift + Click to select territories</div> : null}
+          {v.terrMode && !v.draft ? <div className="lc-hint" style={{ left: v.panel ? "416px" : "70px" }}><NTV.Icon name="circle-info" size={v.i12} />Shift + Click to select territories</div> : null}
 
           {v.draft ? (
             <div className="lc-drawbar" role="region" aria-label={v.draft.isDraw ? 'Drawing a territory' : 'Editing boundaries'}>
