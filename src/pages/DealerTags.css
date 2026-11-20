@@ -80,7 +80,7 @@
 /* ---- Layout per Figma "Main Page - Tags" (2357:46275) ---- */
 .pg-tags .tg-main{min-height:100%}
 .pg-tags .tg-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
-.pg-tags .tg-stat{display:flex;flex-direction:column;justify-content:space-between;gap:16px;min-height:140px;cursor:pointer;font-family:inherit;text-align:left;color:var(--fg-primary)}
+.pg-tags .tg-stat{display:flex;flex-direction:column;justify-content:space-between;gap:16px;min-height:142px;box-sizing:border-box;cursor:pointer;font-family:inherit;text-align:left;color:var(--fg-primary)}
 .pg-tags .tg-stat:hover{border-color:var(--accent-action)!important}
 .pg-tags .tg-stat-label{font-size:20px;line-height:32px;font-weight:700}
 .pg-tags .tg-stat-n{font-size:28px;line-height:42px;font-weight:700}

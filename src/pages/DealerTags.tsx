@@ -173,14 +173,14 @@ defineTemplate(Component, (v) => (
           <section className="tg-stats">
             {(v.cards || []).map((_k) => (
               <button key={_k.label} type="button" className="dv-card tg-stat" aria-pressed={_k.on} onClick={_k.pick} style={{ borderColor: `${s(_k.border)}` }}>
-                <div className="dv-between" style={{ width: "100%", flexWrap: "nowrap" }}>
-                  <div className="dv-row" style={{ gap: "20px" }}>
+                <div className="dv-between" style={{ width: "100%", flexWrap: "nowrap", alignItems: "flex-start" }}>
+                  <div className="dv-row" style={{ gap: "16px", alignItems: "center" }}>
                     <NTV.IconTile icon={_k.icon} tone={_k.tone} />
                     <span className="tg-stat-label">{_k.label}</span>
                   </div>
                   <span className="tg-stat-n">{_k.n}</span>
                 </div>
-                <div className="dv-between" style={{ width: "100%", fontSize: "12px" }}>
+                <div className="dv-between" style={{ width: "100%", alignItems: "center", minHeight: "28px", fontSize: "12px", lineHeight: "20px" }}>
                   <span className="dv-row" style={{ gap: "12px" }}>{"Last Week"}<NTV.Trend direction="down">-8.3%</NTV.Trend></span>
                   <span className="dv-row" style={{ gap: "12px" }}>{"This Week"}<NTV.Trend direction="up">+8.3%</NTV.Trend></span>
                 </div>

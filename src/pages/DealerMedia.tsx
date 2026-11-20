@@ -529,16 +529,16 @@ defineTemplate(Component, (v) => (
               <React.Fragment key={$index}>
                 <button type="button" className="dv-card ml-stat" onClick={_k?.pick} style={{ cursor: "pointer", fontFamily: "inherit", textAlign: "left", color: "var(--fg-primary)", borderColor: `${s(_k?.border)}` }}>
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px", width: "100%" }}>
-                    <div className="dv-row" style={{ gap: "14px", alignItems: "flex-start" }}>
+                    <div className="dv-row" style={{ gap: "16px", alignItems: "center", flexWrap: "nowrap", minWidth: "0" }}>
                       <NTV.IconTile icon={_k?.icon} tone={_k?.tone} />
-                      <div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: "0" }}>
                         <p style={{ margin: "0", fontSize: "20px", lineHeight: "32px", fontWeight: "700" }}>{_k?.label}</p>
-                        <p className="dv-sub" style={{ fontWeight: "500" }}>{_k?.desc}</p>
+                        <p className="dv-sub" style={{ margin: "0", fontSize: "12px", lineHeight: "20px", fontWeight: "500" }}>{_k?.desc}</p>
                       </div>
                     </div>
                     <span style={{ fontSize: "28px", lineHeight: "42px", fontWeight: "700" }}>{_k?.value}</span>
                   </div>
-                  <div className="dv-between" style={{ width: "100%", fontSize: "12px" }}>
+                  <div className="dv-between" style={{ width: "100%", alignItems: "center", minHeight: "28px", fontSize: "12px", lineHeight: "20px" }}>
                     <span className="dv-row" style={{ gap: "8px" }}>
                       {"Last Week "}
                       <NTV.Trend direction="down">{_k?.last}</NTV.Trend>
