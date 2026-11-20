@@ -235,3 +235,48 @@
 .pg-locator .lc-dc__go span{color:transparent;transition:color .15s}
 .pg-locator .lc-dc:hover .lc-dc__go span,.pg-locator .lc-dc__go:focus-visible span{color:var(--accent-action)}
 .pg-locator .lc-dc__go:hover{color:var(--accent-action)}
+
+/* Territory panel (Locator mode) — Figma locatorTab Type=Locator (5306:61213) */
+.pg-locator .lc-right.lc-tp{width:418px;padding:16px;gap:16px;background:var(--bg-app,#fafafa);border:1px solid var(--container-border);border-radius:4px;box-shadow:var(--shadow-card);overflow:hidden}
+.pg-locator .lc-modes.is-shifted,.pg-locator .lc-ctrls.is-shifted{right:452px}
+.pg-locator .lc-tp__head{display:flex;align-items:center;gap:8px;flex:none}
+.pg-locator .lc-tp__fab{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:6px;border:0;border-radius:30px;background:linear-gradient(74deg,#c41e5c 4%,#e8342a 72%,#ff6b00 123%);color:#fff;cursor:pointer;flex:none;box-sizing:border-box}
+.pg-locator .lc-tp__title{margin:0;font-size:14px;line-height:20px;font-weight:700;color:var(--fg-primary);flex:none}
+.pg-locator .lc-tp__card{display:flex;flex-direction:column;gap:8px;padding:16px;background:var(--bg-surface);border:1px solid var(--container-border);border-radius:6px;flex:none}
+.pg-locator .lc-tp__row{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;line-height:16px;white-space:nowrap}
+.pg-locator .lc-tp__row>span:first-child{color:var(--fg-secondary);font-weight:400}
+.pg-locator .lc-tp__row>span:last-child{color:var(--fg-primary);font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.pg-locator .lc-tp__who{display:inline-flex;align-items:center;gap:4px}
+.pg-locator .lc-tp__who i{display:inline-block;width:14px;height:14px;border-radius:16px;flex:none}
+.pg-locator .lc-tp__search{display:flex;align-items:flex-start;gap:10px;flex:none}
+.pg-locator .lc-tp__search .ntv-input{border-color:var(--fg-secondary)}
+.pg-locator .lc-tp__search .fb__icon{width:42px;height:40px;border-color:var(--fg-secondary);border-radius:4px}
+.pg-locator .lc-tp__list{flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:12px}
+/* Host card — Figma "Host Data" (5302:60610) */
+.pg-locator .lc-hd{display:flex;flex-direction:column;gap:8px;padding:12px;background:var(--bg-surface);border:1px solid var(--container-border);border-radius:6px;flex:none}
+.pg-locator .lc-hd.is-on{border-color:var(--accent-action);background:#fdeee3}
+.pg-locator .lc-hd__top{display:flex;align-items:center;gap:16px}
+.pg-locator .lc-hd__pin{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:0;border:0;background:none;cursor:pointer;flex:none}
+.pg-locator .lc-hd__details{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.pg-locator .lc-hd__line{display:flex;align-items:center;gap:10px;min-width:0}
+.pg-locator .lc-hd__name{max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border:0;background:none;padding:0;font:inherit;font-size:12px;line-height:16px;font-weight:600;color:var(--fg-primary);cursor:pointer;text-align:left}
+.pg-locator .lc-hd__name:hover{color:var(--accent-action)}
+.pg-locator .lc-hd__chip{display:inline-flex;align-items:center;justify-content:center;min-width:42px;padding:4px;border:.5px solid var(--success-main,#3adb30);border-radius:4px;background:var(--success-050,#e3fae1);color:var(--success-main,#3adb30);font-size:10px;line-height:12px;box-sizing:border-box;flex:none}
+.pg-locator .lc-hd.is-on .lc-hd__chip{background:var(--success-main,#3adb30);color:#fff}
+.pg-locator .lc-hd__chip.is-off{border-color:var(--primary-300);background:var(--primary-100);color:var(--fg-secondary)}
+.pg-locator .lc-hd__lic{margin-left:auto;display:inline-flex;align-items:center;gap:10px;padding:4px 8px;border:0;border-radius:35px;background:none;font:inherit;font-size:12px;line-height:18px;color:var(--fg-primary);cursor:pointer;white-space:nowrap;flex:none}
+.pg-locator .lc-hd__lic b{font-weight:700;margin-right:-7px}
+.pg-locator .lc-hd__lic:hover{background:var(--primary-050)}
+.pg-locator .lc-hd__addr{font-size:10px;line-height:12px;color:var(--fg-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-locator .lc-hd__rule{height:1px;width:100%;background:var(--container-border)}
+.pg-locator .lc-hd__more{display:grid;grid-template-columns:1fr 1.3fr;gap:12px;font-size:12px;line-height:18px;color:var(--fg-secondary)}
+.pg-locator .lc-hd__col{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pg-locator .lc-hd__col strong{color:var(--fg-primary);font-weight:600}
+.pg-locator .lc-hd__licrow{display:inline-flex;align-items:center;gap:8px}
+.pg-locator .lc-hd__hours{display:grid;grid-template-columns:auto 1fr;gap:0 8px;font-size:11px;line-height:17px}
+.pg-locator .lc-hd__foot{display:flex;align-items:center;justify-content:space-between}
+.pg-locator .lc-hd__go{display:inline-flex;align-items:center;gap:4px;border:0;background:none;padding:0;font:inherit;font-size:12px;line-height:20px;color:var(--fg-primary);cursor:pointer}
+.pg-locator .lc-hd__go > span:last-child{color:transparent;transition:color .15s}
+.pg-locator .lc-hd:hover .lc-hd__go > span:last-child,.pg-locator .lc-hd__go:focus-visible > span:last-child{color:var(--accent-action)}
+.pg-locator .lc-hd__coords{font-size:10px;line-height:12px;color:var(--fg-secondary)}
+.pg-locator .lc-hd__back{display:inline-flex;transform:scaleX(-1);color:var(--fg-primary)}

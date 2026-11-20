@@ -239,7 +239,7 @@ class Component extends DCLogic {
   fitTo(outlines, pad) {
     if (!this.map || !outlines.length) return;
     var b = L.latLngBounds([]); outlines.forEach(function (o) { b.extend(L.latLngBounds(o)); });
-    var s = this.state, left = s.panel ? 480 : 80, right = (s.mode === 'locator' ? s.focus : s.picks.length) ? 380 : 80;
+    var s = this.state, left = s.panel ? 480 : 80, right = (s.mode === 'locator' ? s.focus : s.picks.length) ? 460 : 80;
     this.map.flyToBounds(b, { paddingTopLeft: [left, 60], paddingBottomRight: [right, 60], duration: 0.8, maxZoom: pad || 11 });
   }
   pickTerritory(id, shift) {
@@ -325,7 +325,8 @@ class Component extends DCLogic {
       }),
       noDealers: selDealers.length === 0,
       /* ---- Locator mode: territory panel ---- */
-      focus: focusT ? { name: focusT.name, dealer: dealerNames(focusT).join(', ') || 'Unassigned', state: focusT.state, lng: focusT.lng, lat: focusT.lat, area: focusT.area, created: focusT.created, unassigned: focusT.kind === 'unassigned' } : null,
+      hoursList: HOURS,
+      focus: focusT ? { name: focusT.name, dealer: dealerNames(focusT).join(', ') || 'Unassigned', dealerColor: focusT.dealers.length === 1 ? (byId(D.locDealers, focusT.dealers[0]) || {}).color : '', state: focusT.state, lng: focusT.lng, lat: focusT.lat, area: focusT.area, created: focusT.created, unassigned: focusT.kind === 'unassigned' } : null,
       closeFocus: function () { self.setState({ focus: '', popup: '', openHost: '' }); },
       hostQ: s.hostQ, setHostQ: function (x) { self.setState({ hostQ: val(x) }); },
       hostFilterGroups: [{ key: 'state', title: 'Connection', options: ['Online', 'Pending', 'Offline'] }, { key: 'status', title: 'Status', options: ['Active', 'Inactive'] }],
@@ -632,52 +633,73 @@ defineTemplate(Component, (v) => (
 
           {/* ---------------- Right panel: Locator mode ---------------- */}
           {v.locMode && v.focus ? (
-            <aside className="lc-right" aria-label="Territory">
-              <div className="dv-row" style={{ gap: "8px" }}>
-                <button type="button" className="lc-close" aria-label="Close territory panel" onClick={v.closeFocus}><NTV.Icon name="angle-right" size={v.i10} /></button>
-                <h2 className="lc-h2">Territory</h2>
+            /* Figma locatorTab "Type=Locator" (5306:61213): bg-app container, 16px padding and gaps. */
+            <aside className="lc-right lc-tp" aria-label="Territory">
+              <div className="lc-tp__head">
+                <button type="button" className="lc-tp__fab" aria-label="Close territory panel" onClick={v.closeFocus}><NTV.Icon name="angle-right" size={v.i10} /></button>
+                <h2 className="lc-tp__title">Territory</h2>
               </div>
-              <div className="lc-box">
-                <Kv k="Territory Name">{v.focus.name}</Kv>
-                <Kv k="Assigned to">{v.focus.dealer}</Kv>
-                <Kv k="State">{v.focus.state}</Kv>
-                <Kv k="Longitude">{v.focus.lng}</Kv>
-                <Kv k="Latitude">{v.focus.lat}</Kv>
-                <Kv k="Total Area">{v.focus.area}</Kv>
-                <Kv k="Created">{v.focus.created}</Kv>
+              <div className="lc-tp__card">
+                <div className="lc-tp__row"><span>Territory Name</span><span>{v.focus.name}</span></div>
+                <div className="lc-tp__row"><span>Assigned to</span><span className="lc-tp__who">{v.focus.dealerColor ? <i style={{ background: v.focus.dealerColor }} /> : null}{v.focus.dealer}</span></div>
+                <div className="lc-tp__row"><span>State</span><span>{v.focus.state}</span></div>
+                <div className="lc-tp__row"><span>Longitude</span><span>{v.focus.lng}</span></div>
+                <div className="lc-tp__row"><span>Latitude</span><span>{v.focus.lat}</span></div>
+                <div className="lc-tp__row"><span>Total Area</span><span>{v.focus.area}</span></div>
+                <div className="lc-tp__row"><span>Created</span><span>{v.focus.created}</span></div>
               </div>
               {v.focus.unassigned ? (
-                <div className="lc-box" style={{ alignItems: "center", textAlign: "center", gap: "10px" }}>
+                <div className="lc-tp__card" style={{ alignItems: "center", textAlign: "center", gap: "10px" }}>
                   <strong style={{ fontSize: "14px" }}>Unassigned Territory</strong>
                   <p className="lc-warn">This territory has no dealer assigned yet. It won’t behave like a normal territory until you assign one.</p>
                   <NTV.Button variant="primary" size="m" onClick={v.assignDealer}>Assign Dealer</NTV.Button>
                 </div>
               ) : (
                 <>
-                  <h3 className="lc-h3">Hosts</h3>
-                  <div className="dv-row" style={{ gap: "8px" }}>
-                    <NTV.Input size="m" placeholder="Search Host Name or Licenses" iconRight="magnifying-glass" label="Search hosts" value={v.hostQ} onChange={v.setHostQ} style={{ flex: "1", minWidth: "0" }} />
-                    <FilterBy groups={v.hostFilterGroups} value={v.hostFilters} onChange={v.setHostFilters} align="right" iconOnly />
+                  <h3 className="lc-tp__title">Hosts</h3>
+                  <div className="lc-tp__search">
+                    <NTV.Input size="l" placeholder="Search Host Name or Licenses" iconRight="magnifying-glass" label="Search hosts" value={v.hostQ} onChange={v.setHostQ} style={{ flex: "1", minWidth: "0" }} />
+                    <FilterBy groups={v.hostFilterGroups} value={v.hostFilters} onChange={v.setHostFilters} align="right" iconOnly label="Filter hosts" />
                   </div>
-                  <div className="lc-list">
+                  <div className="lc-tp__list">
                     {v.hosts.map((_h) => (
-                      <div key={_h.id} className={'lc-host' + (_h.open ? ' is-on' : '')}>
-                        <div className="lc-host__top">
-                          <button type="button" className="lc-host__pin" aria-label={'Show ' + _h.name + ' on the map'} onClick={_h.locate}>
-                            <svg width="16" height="21" viewBox="0 0 26 34" aria-hidden="true"><path d="M13 0C5.8 0 0 5.6 0 12.6 0 22 13 34 13 34s13-12 13-21.4C26 5.6 20.2 0 13 0z" fill={_h.pin} /></svg>
+                      /* Figma "Host Data" (5302:60610): 12px padding, 8px gaps, 24px pin. */
+                      <div key={_h.id} className={'lc-hd' + (_h.open ? ' is-on' : '')}>
+                        <div className="lc-hd__top">
+                          <button type="button" className="lc-hd__pin" aria-label={'Show ' + _h.name + ' on the map'} onClick={_h.locate}>
+                            <svg width="18" height="24" viewBox="0 0 26 34" aria-hidden="true"><path d="M13 0C5.8 0 0 5.6 0 12.6 0 22 13 34 13 34s13-12 13-21.4C26 5.6 20.2 0 13 0z" fill={_h.pin} /></svg>
                           </button>
-                          <button type="button" className="lc-host__main" onClick={_h.locate}>
-                            <span className="dv-row" style={{ gap: "6px", flexWrap: "wrap" }}><strong>{_h.name}</strong><span className={'lc-chip' + (_h.active ? '' : ' is-off')}>{_h.status}</span></span>
-                            <span className="lc-meta">{_h.city}</span>
-                          </button>
-                          <button type="button" className="lc-host__lic" aria-expanded={_h.open} onClick={_h.toggle}><b>{_h.licN}</b>{" Licenses"}<NTV.Icon name={_h.open ? 'angle-up' : 'angle-down'} size={v.i12} /></button>
+                          <div className="lc-hd__details">
+                            <div className="lc-hd__line">
+                              <button type="button" className="lc-hd__name" onClick={_h.locate} title={_h.name}>{_h.name}</button>
+                              <span className={'lc-hd__chip' + (_h.active ? '' : ' is-off')}>{_h.status}</span>
+                              <button type="button" className="lc-hd__lic" aria-expanded={_h.open} onClick={_h.toggle}><b>{_h.licN}</b>Licenses<NTV.Icon name={_h.open ? 'angle-up' : 'angle-down'} size={v.i14} /></button>
+                            </div>
+                            <span className="lc-hd__addr">{_h.city}</span>
+                          </div>
                         </div>
                         {_h.open ? (
-                          <div className="lc-host__more">
-                            <div><strong>Category:</strong><span>{_h.category}</span><strong style={{ marginTop: "6px" }}>Licenses:</strong>{_h.lics.map((_l) => (<span key={_l} className="dv-row" style={{ gap: "6px" }}><span className="dv-dot" style={{ background: "var(--success-main)" }} />{_l}</span>))}</div>
-                          </div>
+                          <>
+                            <div className="lc-hd__rule" aria-hidden="true" />
+                            <div className="lc-hd__more">
+                              <div className="lc-hd__col">
+                                <strong>Category:</strong>
+                                <span>{_h.category}</span>
+                                <strong style={{ marginTop: "8px" }}>Licenses:</strong>
+                                {_h.lics.map((_l) => (<span key={_l} className="lc-hd__licrow"><span className="dv-dot" style={{ background: "var(--success-main)" }} />{_l}</span>))}
+                              </div>
+                              <div className="lc-hd__col">
+                                <strong>Operation Hours:</strong>
+                                <div className="lc-hd__hours">{v.hoursList.map((_r) => (<React.Fragment key={_r[0]}><span>{_r[0]}</span><span>{_r[1]}</span></React.Fragment>))}</div>
+                              </div>
+                            </div>
+                          </>
                         ) : null}
-                        <div className="lc-host__foot"><span>‹</span><span>{_h.coords}</span></div>
+                        <div className="lc-hd__rule" aria-hidden="true" />
+                        <div className="lc-hd__foot">
+                          <button type="button" className="lc-hd__go" onClick={_h.locate}><span className="lc-hd__back" aria-hidden="true"><NTV.Icon name="angle-right" size={v.i14} /></span><span>navigate to area</span></button>
+                          <span className="lc-hd__coords">{_h.coords}</span>
+                        </div>
                       </div>
                     ))}
                     {v.noHosts ? <p className="lc-empty">No hosts match.</p> : null}
