@@ -349,3 +349,7 @@
 .pg-locator .mp .mp-fill{z-index:2}
 .pg-locator .mp .mp-cat{z-index:3}
 .pg-locator .mp .mp-cat svg{position:static;z-index:auto}
+/* Modal dropdowns: menu matches the select's width and overlays the modal instead of making it scroll. */
+.pg-locator .lc-mov .ntv-modal{overflow:visible;max-height:none}
+.pg-locator .lc-mov .ntv-modal__body{overflow:visible}
+.pg-locator .lc-mov .ntv-select__menu{left:0;right:0;width:100%;min-width:0;max-height:240px;overflow-y:auto;z-index:30;box-sizing:border-box;background:var(--bg-surface);border:1px solid var(--container-border);border-radius:var(--radius-sm);box-shadow:0 8px 20px rgba(9,22,53,.14)}
