@@ -35,6 +35,8 @@ code, keep it consistent with the NTV360 design system, verify it, and commit.
 | `/channels`, `/channels/detail` | DealerChannels, DealerChannelDetail |
 | `/screens`, `/screens/new`, `/screens/new/assign-playlist`, `/screens/new/publish`, `/screens/detail` | DealerScreens, DealerNewScreen, DealerAssignPlaylist, DealerPublish, DealerScreenDetail |
 | `/tags` | DealerTags |
+| `/login` | Login (mock sign-in: pick Dealer or Admin view) |
+| `/dealers`, `/dealers/detail` | AdminDealers, AdminDealerDetail (Admin view) |
 
 ## How a page file is structured (keep this pattern)
 ```tsx
@@ -69,6 +71,12 @@ defineTemplate(Component, (v) => (          // Markup: plain JSX reading v.*
 - Keep the page shell: `<DealerNav active="…" activeItem="…"/>` at top, then `.dv-scroll > main.dv-main`.
 - A change to something shared (`components/*`, `dealer-view.css`, tokens) affects every page —
   say so when you do it, and check a couple of other pages.
+
+## Dealer view vs Admin view
+- Mock session in `src/lib/shared.js`: `getRole()` / `setRole()` / `logout()` (`localStorage.ntvRole`, missing = dealer),
+  `getImpersonating()` / `setImpersonating()`. Profile menu → Log out → `/login`.
+- `DealerNav` switches its menu items and user label by role; Admin-only data lives in `src/data/adminData.js` (merged into `D`).
+- Only one **primary** button per page header (the main action); the rest are secondary.
 
 ## Navigation (don't break it)
 Pages link to each other by **design file name** (`href="DealerHosts.dc.html"`, `go('DealerHostDetail.dc.html', { id })`,
