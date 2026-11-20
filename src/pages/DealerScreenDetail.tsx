@@ -123,8 +123,7 @@ class Component extends DCLogic {
       crumbs: [{ label: 'Screens', href: 'DealerScreens.dc.html' }, s.title || 'Screen'],
       title: s.title, desc: s.desc, type: s.type, notes: s.notes, created: sc.created, createdBy: sc.createdBy,
       infoSub: demo ? 'Read only' : 'Edit Screen Data',
-      hostName: demo ? 'N/A' : hostName(sc.host), hasHost: !demo,
-      openHost: navFn('DealerHostDetail.dc.html', { id: sc.host }),
+      hostName: demo ? 'N/A' : hostName(sc.host),
       templateName: tpl.title,
       previewHint: demo ? 'Click a zone to see its playlist' : 'Click a zone to edit its playlist',
       zonesHint: demo ? 'Zones of ' + tpl.title + ' and their playlists' : 'Below are the zones of ' + tpl.title + '. Click a Zone to edit its Playlist',
@@ -337,11 +336,6 @@ defineTemplate(Component, (v) => (
                 <label className="dv-label" htmlFor="sd-notes">Notes</label>
                 <textarea id="sd-notes" className="dv-field" rows="4" disabled={v.demo} onChange={v.setNotes} style={{ flex: "1 1 auto", minHeight: "100px" }} value={v.notes} />
               </div>
-              {v.hasHost ? (
-                <>
-                  <a className="dv-a" href="DealerHostDetail.dc.html" onClick={v.openHost} style={{ alignSelf: "flex-start", fontSize: "14px" }} data-nav={v.openHostNav}>{"View host: "}{v.hostName}{" →"}</a>
-                </>
-              ) : null}
             </section>
             <section aria-labelledby="preview-title" style={{ flex: "1 1 560px", minWidth: "0", display: "flex", flexDirection: "column", gap: "12px" }}>
               <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-end", justifyContent: "space-between", gap: "12px" }}>
