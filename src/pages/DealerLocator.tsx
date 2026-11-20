@@ -276,7 +276,7 @@ class Component extends DCLogic {
       if (!hs.length && !/^lt\d{1,2}$/.test(mainPick.id)) return { empty: true, segs: [] };
       (hs.length ? hs : D.hosts).forEach(function (h) { counts[h.category] = (counts[h.category] || 0) + 1; });
       var cats = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a]; }).slice(0, 8);
-      var tot = cats.reduce(function (a, c) { return a + counts[c]; }, 0) || 1, C = 2 * Math.PI * 42, acc = 0;
+      var tot = cats.reduce(function (a, c) { return a + counts[c]; }, 0) || 1, C = 2 * Math.PI * 37.5, acc = 0;
       return { total: mainPick.id === 'lt1' ? 142 : Math.max(tot * 7, 12), segs: cats.map(function (c, i) { var len = counts[c] / tot * C, seg = { label: c, color: CAT_COLORS[i], dash: len.toFixed(2) + ' ' + C.toFixed(2), off: (-acc).toFixed(2) }; acc += len; return seg; }) };
     })();
     var terrList = s.terrs.filter(function (t) { return s.vis[t.kind] && contains(t.name + ' ' + dealerNames(t).join(' '), s.tq); });
@@ -290,7 +290,7 @@ class Component extends DCLogic {
       setMode: function (m) { return function () {
         if (self.state.mode === m || self.state.switching) return;
         self.setState({ switching: m, popup: '' });
-        self._sw = setTimeout(function () { self.setState({ mode: m, switching: '', focus: '', picks: [], hover: '', openHost: '' }); }, 1100);
+        self._sw = setTimeout(function () { self.setState({ mode: m, switching: '', focus: '', picks: [], hover: '', openHost: '', panel: m === 'territory' ? true : self.state.panel }); }, 1100);
       }; },
       switching: s.switching, switchLabel: s.switching === 'territory' ? 'Shifting to Territory Mode' : 'Shifting to Locator Mode',
       panel: s.panel, togglePanel: function () { self.setState({ panel: !self.state.panel, pickerOpen: false }); }, panelIcon: s.panel ? 'angle-up' : 'angle-down',
@@ -435,7 +435,7 @@ class Component extends DCLogic {
           pick: function (e) { self.pickTerritory(t.id, e && e.shiftKey); }, check: function (on) { var p = on ? self.state.picks.concat([t.id]) : self.state.picks.filter(function (x) { return x !== t.id; }); self.setState({ picks: p }); },
           hover: function () { self.setState({ hover: t.id }); }, leave: function () { if (self.state.hover === t.id) self.setState({ hover: '' }); } };
       }),
-      pick: mainPick ? { name: mainPick.name, dealer: dealerNames(mainPick).join(', ') || 'Unassigned', state: mainPick.state, lng: mainPick.lng, lat: mainPick.lat, area: mainPick.area, created: mainPick.created, count: pickedTs.length } : null,
+      pick: mainPick ? { name: mainPick.name, dealer: dealerNames(mainPick).join(', ') || 'Unassigned', dealerColor: mainPick.dealers.length === 1 ? (byId(D.locDealers, mainPick.dealers[0]) || {}).color : '', state: mainPick.state, lng: mainPick.lng, lat: mainPick.lat, area: mainPick.area, created: mainPick.created, count: pickedTs.length } : null,
       donut: donut,
       clearPicks: function () { self.setState({ picks: [] }); },
       terrMenu: function () { toast(self, 'Rename, merge and delete come in the next pass', 'info'); },
@@ -711,14 +711,13 @@ defineTemplate(Component, (v) => (
 
           {/* ---------------- Right panel: Territory mode ---------------- */}
           {v.terrMode && v.pick ? (
-            <aside className="lc-right" aria-label="Territory details">
-              <div className="dv-between" style={{ flexWrap: "nowrap" }}>
-                <div className="dv-row" style={{ gap: "8px", minWidth: "0" }}>
-                  <button type="button" className="lc-close" aria-label="Close territory details" onClick={v.clearPicks}><NTV.Icon name="angle-right" size={v.i10} /></button>
-                  <h2 className="lc-h2" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{v.pick.count > 1 ? v.pick.count + ' territories selected' : v.pick.name}</h2>
-                </div>
-                <span style={{ position: "relative" }}>
-                  <button type="button" className="lc-x" aria-label="Territory actions" aria-haspopup="menu" aria-expanded={v.menuOpen} onClick={v.toggleMenu}><NTV.Icon name="ellipsis" size={v.i14} /></button>
+            /* Figma locatorTab "Type=Territory" (5379:57122): same container as the Locator-mode panel. */
+            <aside className="lc-right lc-tp" aria-label="Territory details">
+              <div className="lc-tp__head">
+                <button type="button" className="lc-tp__fab" aria-label="Close territory details" onClick={v.clearPicks}><NTV.Icon name="angle-right" size={v.i10} /></button>
+                <h2 className="lc-tp__title lc-tp__title--grow" title={v.pick.name}>{v.pick.count > 1 ? v.pick.count + ' territories selected' : v.pick.name}</h2>
+                <span style={{ position: "relative", flex: "none" }}>
+                  <button type="button" className="lc-tp__more" aria-label="Territory actions" aria-haspopup="menu" aria-expanded={v.menuOpen} onClick={v.toggleMenu}><NTV.Icon name="ellipsis" size={v.i16} /></button>
                   {v.menuOpen ? (
                     <div className="lc-menu" role="menu">
                       {v.menuItems.map((_m) => (<button key={_m.label} type="button" role="menuitem" className={'lc-mi' + (_m.danger ? ' is-danger' : '')} onClick={_m.run}><NTV.Icon name={_m.icon} size={v.i12} />{_m.label}</button>))}
@@ -726,37 +725,39 @@ defineTemplate(Component, (v) => (
                   ) : null}
                 </span>
               </div>
-              <div className="lc-box">
-                <h3 className="lc-h3" style={{ marginBottom: "4px" }}>General Information</h3>
-                <Kv k="State">{v.pick.state}</Kv>
-                <Kv k="Assigned to">{v.pick.dealer}</Kv>
-                <Kv k="Longitude">{v.pick.lng}</Kv>
-                <Kv k="Latitude">{v.pick.lat}</Kv>
-                <Kv k="Total Area">{v.pick.area}</Kv>
-                <Kv k="Created">{v.pick.created}</Kv>
+              <div className="lc-tp__scroll">
+                <div className="lc-tp__card">
+                  <h3 className="lc-tp__cardtitle">General Information</h3>
+                  <div className="lc-tp__row"><span>State</span><span>{v.pick.state}</span></div>
+                  <div className="lc-tp__row"><span>Assigned to</span><span className="lc-tp__who">{v.pick.dealerColor ? <i style={{ background: v.pick.dealerColor }} /> : null}{v.pick.dealer}</span></div>
+                  <div className="lc-tp__row"><span>Longitude</span><span>{v.pick.lng}</span></div>
+                  <div className="lc-tp__row"><span>Latitude</span><span>{v.pick.lat}</span></div>
+                  <div className="lc-tp__row"><span>Total Area</span><span>{v.pick.area}</span></div>
+                  <div className="lc-tp__row"><span>Created</span><span>{v.pick.created}</span></div>
+                </div>
+                {v.donut && v.donut.empty ? (
+                  <div className="lc-tp__card lc-tp__card--chart">
+                    <h3 className="lc-tp__cardtitle">Hosts Overview</h3>
+                    <p className="lc-empty" style={{ margin: "24px 0" }}>No hosts inside this territory yet.</p>
+                  </div>
+                ) : null}
+                {v.donut && !v.donut.empty ? (
+                  <div className="lc-tp__card lc-tp__card--chart">
+                    <h3 className="lc-tp__cardtitle">Hosts Overview</h3>
+                    <div className="lc-tp__donut">
+                      <svg viewBox="0 0 100 100" width="100%" height="100%" role="img" aria-label="Hosts by category">
+                        <g transform="rotate(-90 50 50)">
+                          {v.donut.segs.map((_g) => (<circle key={_g.label} cx="50" cy="50" r="37.5" fill="none" stroke={_g.color} strokeWidth="25" strokeDasharray={_g.dash} strokeDashoffset={_g.off} />))}
+                        </g>
+                      </svg>
+                      <div className="lc-tp__donutc"><strong>{v.donut.total}</strong><span>Total Hosts</span></div>
+                    </div>
+                    <div className="lc-tp__legend">
+                      {v.donut.segs.map((_g) => (<span key={_g.label}><span className="lc-tp__dot" style={{ background: _g.color }} />{_g.label}</span>))}
+                    </div>
+                  </div>
+                ) : null}
               </div>
-              {v.donut && v.donut.empty ? (
-                <div className="lc-box" style={{ gap: "6px" }}>
-                  <h3 className="lc-h3">Hosts Overview</h3>
-                  <p className="lc-empty" style={{ margin: "12px 0" }}>No hosts inside this territory yet.</p>
-                </div>
-              ) : null}
-              {v.donut && !v.donut.empty ? (
-                <div className="lc-box" style={{ gap: "12px" }}>
-                  <h3 className="lc-h3">Hosts Overview</h3>
-                  <div style={{ position: "relative", width: "200px", height: "200px", margin: "0 auto" }}>
-                    <svg viewBox="0 0 100 100" width="200" height="200" role="img" aria-label="Hosts by category">
-                      <g transform="rotate(-90 50 50)">
-                        {v.donut.segs.map((_g) => (<circle key={_g.label} cx="50" cy="50" r="42" fill="none" stroke={_g.color} strokeWidth="16" strokeDasharray={_g.dash} strokeDashoffset={_g.off} />))}
-                      </g>
-                    </svg>
-                    <div className="lc-donut-c"><strong>{v.donut.total}</strong><span>Total Hosts</span></div>
-                  </div>
-                  <div className="lc-legend">
-                    {v.donut.segs.map((_g) => (<span key={_g.label}><span className="dv-dot" style={{ background: _g.color }} />{_g.label}</span>))}
-                  </div>
-                </div>
-              ) : null}
             </aside>
           ) : null}
 

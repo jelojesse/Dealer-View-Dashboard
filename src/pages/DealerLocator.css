@@ -280,3 +280,18 @@
 .pg-locator .lc-hd:hover .lc-hd__go > span:last-child,.pg-locator .lc-hd__go:focus-visible > span:last-child{color:var(--accent-action)}
 .pg-locator .lc-hd__coords{font-size:10px;line-height:12px;color:var(--fg-secondary)}
 .pg-locator .lc-hd__back{display:inline-flex;transform:scaleX(-1);color:var(--fg-primary)}
+
+/* Territory-mode panel — Figma locatorTab Type=Territory (5379:57122); shares .lc-tp container styles */
+.pg-locator .lc-tp__title--grow{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-locator .lc-tp__more{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:0;border-radius:var(--radius-sm);background:none;color:var(--fg-secondary);cursor:pointer}
+.pg-locator .lc-tp__more:hover,.pg-locator .lc-tp__more[aria-expanded="true"]{background:var(--primary-100);color:var(--fg-primary)}
+.pg-locator .lc-tp__scroll{flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:16px}
+.pg-locator .lc-tp__cardtitle{margin:0 0 4px;font-size:14px;line-height:20px;font-weight:600;color:var(--fg-primary)}
+.pg-locator .lc-tp__card--chart{padding:20px;gap:16px}
+.pg-locator .lc-tp__donut{position:relative;width:100%;max-width:320px;aspect-ratio:1;margin:8px auto}
+.pg-locator .lc-tp__donutc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.pg-locator .lc-tp__donutc strong{font-size:32px;line-height:40px;font-weight:700;color:var(--fg-primary)}
+.pg-locator .lc-tp__donutc span{font-size:12px;line-height:16px;color:var(--fg-faint,#9aa0ab)}
+.pg-locator .lc-tp__legend{display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;font-size:12px;line-height:18px;color:var(--fg-secondary)}
+.pg-locator .lc-tp__legend>span{display:inline-flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-locator .lc-tp__dot{display:inline-block;width:10px;height:10px;border-radius:999px;flex:none}
