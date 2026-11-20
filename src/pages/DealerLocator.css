@@ -304,3 +304,48 @@
 .pg-locator .lc-picker{left:16px;right:16px;top:calc(16px + var(--lc-search-h, 40px) + 6px)}
 .pg-locator .lc-left .lc-terr{background:var(--bg-surface)}
 .pg-locator .lc-left .lc-search .ntv-input{background:var(--bg-surface)}
+
+/* Host map pin — Figma Map Pin (30×40) + category icon; glow when clicked (lib/mapPins.js) */
+.pg-locator .lc-pin{background:none;border:0}
+.pg-locator .mp{position:relative;display:block;width:30px;height:40px;cursor:pointer}
+.pg-locator .mp svg{display:block}
+.pg-locator .mp-border{position:absolute;inset:0;width:30px;height:40px}
+.pg-locator .mp-fill{position:absolute;left:4.55%;right:4.55%;top:3.39%;bottom:3.39%;width:auto;height:auto}
+.pg-locator .mp-glow{position:absolute;left:-106.67%;right:-106.67%;top:-79.55%;bottom:-79.55%;width:auto;height:auto;pointer-events:none}
+.pg-locator .mp-cat{position:absolute;left:26.67%;right:26.67%;top:calc(50% - 5.11px);transform:translateY(-50%);display:flex;align-items:center;justify-content:center;aspect-ratio:1}
+.pg-locator .mp-cat svg{width:14px;height:14px}
+.pg-locator .lc-pin:hover .mp:not(.is-clicked){transform:translateY(-2px);transition:transform .12s}
+
+/* Host bubble — Figma Bubble Locator (2869:57952) */
+.pg-locator .lc-pop{position:absolute;z-index:1050;width:433px;transform:translate(-50%, calc(-100% - 46px));display:flex;flex-direction:column;align-items:center;padding:0;background:none;border-radius:0;box-shadow:none;gap:0;filter:drop-shadow(0 8px 20px rgba(9,22,53,.18))}
+.pg-locator .lc-pop:after{display:none}
+.pg-locator .lc-pop__card{width:100%;display:flex;flex-direction:column;gap:20px;padding:20px;background:var(--bg-surface);border-radius:6px;box-sizing:border-box}
+.pg-locator .lc-pop__tip{width:0;height:0;margin-top:-1px;border-left:14px solid transparent;border-right:14px solid transparent;border-top:18px solid var(--bg-surface)}
+.pg-locator .lc-pop__head{display:flex;align-items:center;gap:12px}
+.pg-locator .lc-pop__img{width:60px;height:60px;border-radius:4px;overflow:hidden;flex:none;background:var(--primary-100)}
+.pg-locator .lc-pop__img img{width:100%;height:100%;object-fit:cover;display:block}
+.pg-locator .lc-pop__who{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.pg-locator .lc-pop__name{font-size:16px;line-height:24px;font-weight:600;color:var(--fg-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-locator .lc-pop__tags{display:flex;align-items:center;gap:10px}
+.pg-locator .lc-pop__status{display:inline-flex;align-items:center;gap:4px;font-size:12px;line-height:16px;font-weight:700;color:var(--success-main,#3adb30)}
+.pg-locator .lc-pop__status i{width:8px;height:8px;border-radius:999px;background:currentColor;display:inline-block}
+.pg-locator .lc-pop__status.is-off{color:var(--fg-secondary)}
+.pg-locator .lc-pop__cat{display:inline-flex;align-items:center;gap:10px;padding:6px 8px;border-radius:4px;background:rgba(9,90,243,.12);font-size:12px;line-height:16px;font-weight:600;color:var(--info-main,#095af3)}
+.pg-locator .lc-pop__caticon{display:inline-flex;width:14px;height:14px}
+.pg-locator .lc-pop__caticon svg{width:14px;height:14px}
+.pg-locator .lc-pop__hours{display:flex;flex-direction:column;gap:4px}
+.pg-locator .lc-pop__hourshead{display:flex;align-items:center;justify-content:space-between;width:100%;border:0;background:none;padding:0;font:inherit;font-size:12px;line-height:16px;font-weight:700;color:var(--fg-primary);cursor:pointer}
+.pg-locator .lc-pop__hourslist{display:flex;flex-direction:column;padding-left:10px;font-size:12px;line-height:16px;color:var(--fg-secondary)}
+.pg-locator .lc-pop__hourslist>div{display:flex;justify-content:space-between}
+.pg-locator .lc-pop__addr{display:flex;align-items:center;gap:8px;font-size:12px;line-height:16px;color:var(--fg-primary);min-width:0}
+.pg-locator .lc-pop__addr span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-locator .lc-pop__coords{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:4px;background:var(--bg-app,#fafafa);font-size:10px;line-height:12px;color:var(--fg-secondary)}
+.pg-locator .lc-pop__coords button{display:inline-flex;border:0;background:none;padding:0;color:var(--fg-primary);cursor:pointer}
+.pg-locator .lc-pop__btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:6px 10px;border:0;border-radius:4px;background:linear-gradient(16deg,#c41e5c 4%,#e8342a 72%,#ff6b00 123%);color:#fff;font-family:inherit;font-size:14px;line-height:20px;font-weight:600;text-decoration:none;cursor:pointer;box-sizing:border-box}
+.pg-locator .lc-pop__btn:hover{filter:brightness(1.05);color:#fff}
+/* Explicit pin layer order (Leaflet gives inner svgs a high z-index) */
+.pg-locator .mp .mp-glow{z-index:0}
+.pg-locator .mp .mp-border{z-index:1}
+.pg-locator .mp .mp-fill{z-index:2}
+.pg-locator .mp .mp-cat{z-index:3}
+.pg-locator .mp .mp-cat svg{position:static;z-index:auto}

@@ -26,6 +26,7 @@ import { STATUS, byId, contains, licsForHost, navFn, toast, toastVals, val, D } 
 import DealerNav from '../components/DealerNav';
 import FilterBy, { passes } from '../components/FilterBy';
 import EmptyState from '../components/EmptyState';
+import { categoryIcon, pinHtml } from '../lib/mapPins';
 import './DealerLocator.css';
 
 /* ============================== Logic ============================== */
@@ -86,10 +87,9 @@ function hostsForNew(t, all) {
   return base.filter(function (h) { return rings.some(function (r) { return pointIn([h.lat, h.lng], r); }); });
 }
 function dealerNames(t) { return t.dealers.map(function (id) { var d = byId(D.locDealers, id); return d ? d.name : ''; }).filter(Boolean); }
-function pinIcon(color, big) {
-  var w = big ? 34 : 26, h = Math.round(w * 1.32);
-  var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 26 34"><path d="M13 0C5.8 0 0 5.6 0 12.6 0 22 13 34 13 34s13-12 13-21.4C26 5.6 20.2 0 13 0z" fill="' + color + '" stroke="#fff" stroke-width="1.5"/><circle cx="13" cy="12.5" r="4.6" fill="#fff"/></svg>';
-  return L.divIcon({ className: 'lc-pin', html: svg, iconSize: [w, h], iconAnchor: [w / 2, h] });
+/* Host pin from Figma (status colour + category icon; glow when clicked) — see lib/mapPins.js. */
+function pinIcon(status, category, clicked) {
+  return L.divIcon({ className: 'lc-pin', html: pinHtml(status, category, clicked), iconSize: [30, 40], iconAnchor: [15, 40] });
 }
 
 /* Dealer filter (recording "Filters" view): one choice per group; no choice = All. */
@@ -114,7 +114,7 @@ class Component extends DCLogic {
       tq: '', checklist: false, hover: '', picks: [], tick: 0, toast: null,
       terrs: D.locTerritories.slice(), menu: false,
       modal: '', fName: '', fDealer: '', fErr: false, renameVal: '', assignQ: '', assignPick: '', mergeName: '', mergeColor: '#5b4bd6',
-      draft: null, overlapWith: [], success: null
+      draft: null, overlapWith: [], success: null, popHours: true
     };
   }
 
@@ -178,8 +178,8 @@ class Component extends DCLogic {
     });
     this.focusedHosts().forEach(function (h) {
       var big = s.popup === h.id || s.openHost === h.id;
-      var m = L.marker([h.lat, h.lng], { icon: pinIcon(PIN[h.st], big), title: h.name, riseOnHover: true, zIndexOffset: big ? 1000 : 0, keyboard: true }).addTo(self.pinLayer);
-      m.on('click', function (e) { L.DomEvent.stopPropagation(e); self.setState({ popup: h.id, openHost: h.id }); });
+      var m = L.marker([h.lat, h.lng], { icon: pinIcon(h.st, h.category, s.popup === h.id), title: h.name, riseOnHover: true, zIndexOffset: big ? 1000 : 0, keyboard: true }).addTo(self.pinLayer);
+      m.on('click', function (e) { L.DomEvent.stopPropagation(e); self.showHost(h, false); });
     });
     this.drawDraft();
   }
@@ -250,6 +250,14 @@ class Component extends DCLogic {
     this.setState({ picks: picks, menu: false }, () => { if (!shift) this.fitTo(ringsOf(t)); });
   }
 
+  /* Open a host's bubble and move the map so the whole 433px card (≈430px tall) fits above the pin. */
+  showHost(h, zoomIn) {
+    var map = this.map; if (!map) return;
+    var z = zoomIn ? Math.max(map.getZoom(), 13) : map.getZoom();
+    var pt = map.project([h.lat, h.lng], z).subtract([0, 210]);
+    map.flyTo(map.unproject(pt, z), z, { duration: 0.6 });
+    this.setState({ popup: h.id, openHost: h.id });
+  }
   startDraw() {
     var s = this.state;
     this.setState({ modal: '', panel: false, picks: [], menu: false, draft: { kind: 'draw', name: s.fName.trim(), dealer: s.fDealer, pts: [] } });
@@ -336,15 +344,16 @@ class Component extends DCLogic {
         return { id: h.id, name: h.name, city: (h.city + ' ' + (h.state || '') + ' ' + h.zip).replace(/\s+/g, ' ').trim(), status: h.status, active: h.status === 'Active', pin: PIN[h.st], lics: h.lics, licN: h.lics.length, open: open, category: h.category,
           coords: (+h.lat).toFixed(7) + ', ' + (+h.lng).toFixed(7),
           toggle: function () { self.setState({ openHost: open ? '' : h.id }); },
-          locate: function () { if (self.map) self.map.flyTo([h.lat, h.lng], Math.max(self.map.getZoom(), 13), { duration: 0.6 }); self.setState({ popup: h.id, openHost: h.id }); } };
+          locate: function () { self.showHost(h, true); } };
       }),
       noHosts: !!focusT && hosts.length === 0,
       assignDealer: function () { self.setState({ modal: 'assign', assignQ: '', assignPick: '' }); },
       /* ---- Host popup ---- */
       popup: popupHost && pt ? { show: true, left: pt.x, top: pt.y, name: popupHost.name, photo: popupHost.photo, status: popupHost.status, active: popupHost.status === 'Active', category: popupHost.category,
         address: popupHost.address + ', ' + popupHost.city + (popupHost.zip ? ' ' + popupHost.zip : ''), coords: (+popupHost.lat).toFixed(7) + ', ' + (+popupHost.lng).toFixed(7), hours: HOURS,
-        open: popupHost.real ? navFn('DealerHostDetail.dc.html', { id: popupHost.id }) : null, real: popupHost.real } : { show: false },
+        open: popupHost.real ? navFn('DealerHostDetail.dc.html', { id: popupHost.id }) : null, real: popupHost.real, catIcon: categoryIcon(popupHost.category, '#095af3', 14) } : { show: false },
       closePopup: function () { self.setState({ popup: '' }); },
+      popHours: s.popHours, togglePopHours: function () { self.setState({ popHours: !self.state.popHours }); },
       copyCoords: function () { var c = popupHost ? (+popupHost.lat).toFixed(7) + ', ' + (+popupHost.lng).toFixed(7) : ''; try { navigator.clipboard.writeText(c); } catch (e) {} toast(self, 'Coordinates copied', 'info'); },
       demoHost: function () { toast(self, 'This sample host has no details page', 'info'); },
       /* ---- Territory mode ---- */
@@ -785,26 +794,34 @@ defineTemplate(Component, (v) => (
 
           {/* ---------------- Host popup ---------------- */}
           {v.popup.show ? (
+            /* Figma host bubble (2869:57952): 433px card, 20px padding / gaps, pointer under it. */
             <div className="lc-pop" style={{ left: v.popup.left + "px", top: v.popup.top + "px" }} role="dialog" aria-label={v.popup.name} onClick={(e) => e.stopPropagation()}>
-              <div className="dv-row" style={{ gap: "12px", alignItems: "flex-start" }}>
-                <span className="lc-pop__img"><img src={v.popup.photo} alt="" /></span>
-                <div style={{ flex: "1", minWidth: "0" }}>
-                  <strong className="lc-pop__name">{v.popup.name}</strong>
-                  <span className="dv-row" style={{ gap: "6px", marginTop: "4px" }}><span className={'lc-chip' + (v.popup.active ? '' : ' is-off')}>{v.popup.status}</span><span className="lc-chip lc-chip--info">{v.popup.category}</span></span>
+              <div className="lc-pop__card">
+                <div className="lc-pop__head">
+                  <span className="lc-pop__img"><img src={v.popup.photo} alt="" /></span>
+                  <div className="lc-pop__who">
+                    <strong className="lc-pop__name" title={v.popup.name}>{v.popup.name}</strong>
+                    <div className="lc-pop__tags">
+                      <span className={'lc-pop__status' + (v.popup.active ? '' : ' is-off')}><i />{v.popup.status}</span>
+                      <span className="lc-pop__cat"><span className="lc-pop__caticon" dangerouslySetInnerHTML={{ __html: v.popup.catIcon }} />{v.popup.category}</span>
+                    </div>
+                  </div>
                 </div>
-                <button type="button" className="lc-x" aria-label="Close" onClick={v.closePopup}><NTV.Icon name="x" size={v.i10} /></button>
+                <div className="lc-pop__hours">
+                  <button type="button" className="lc-pop__hourshead" aria-expanded={v.popHours} onClick={v.togglePopHours}>Operating Hours<NTV.Icon name={v.popHours ? 'angle-up' : 'angle-down'} size={v.i12} /></button>
+                  {v.popHours ? (
+                    <div className="lc-pop__hourslist">{v.popup.hours.map((_h) => (<div key={_h[0]}><span>{_h[0]}</span><span>{_h[1]}</span></div>))}</div>
+                  ) : null}
+                </div>
+                <div className="lc-pop__addr"><NTV.Icon name="location-dot" size={v.i12} /><span>{v.popup.address}</span></div>
+                <div className="lc-pop__coords"><span>{v.popup.coords}</span><button type="button" aria-label="Copy coordinates" onClick={v.copyCoords}><NTV.Icon name="copy" size={v.i12} /></button></div>
+                {v.popup.real ? (
+                  <a className="lc-pop__btn" href="DealerHostDetail.dc.html" onClick={v.popup.open} data-nav={v.popup.openNav}><span>View Host Details</span><NTV.Icon name="angle-right" size={v.i12} /></a>
+                ) : (
+                  <button type="button" className="lc-pop__btn" onClick={v.demoHost}><span>View Host Details</span><NTV.Icon name="angle-right" size={v.i12} /></button>
+                )}
               </div>
-              <div className="lc-pop__sec">
-                <strong>Operating Hours</strong>
-                {v.popup.hours.map((_h) => (<div key={_h[0]} className="lc-kv lc-kv--sm"><span>{_h[0]}</span><span>{_h[1]}</span></div>))}
-              </div>
-              <div className="dv-row lc-meta" style={{ gap: "6px" }}><NTV.Icon name="location-dot" size={v.i12} />{v.popup.address}</div>
-              <div className="lc-pop__coords"><span>{v.popup.coords}</span><button type="button" className="lc-x" aria-label="Copy coordinates" onClick={v.copyCoords}><NTV.Icon name="copy" size={v.i12} /></button></div>
-              {v.popup.real ? (
-                <a className="ntv-btn ntv-btn--primary ntv-btn--default ntv-btn--l lc-pop__btn" href="DealerHostDetail.dc.html" onClick={v.popup.open} data-nav={v.popup.openNav}><span>View Host Details</span><NTV.Icon name="angle-right" size={v.i12} /></a>
-              ) : (
-                <NTV.Button variant="primary" size="l" iconRight="angle-right" onClick={v.demoHost} className="lc-pop__btn">View Host Details</NTV.Button>
-              )}
+              <span className="lc-pop__tip" aria-hidden="true" />
             </div>
           ) : null}
 
