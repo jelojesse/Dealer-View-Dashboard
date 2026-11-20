@@ -1,0 +1,14 @@
+/* Styles for Login. Scoped under .pg-login. */
+.pg-login .lg-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;box-sizing:border-box;background:var(--bg-app);font-family:var(--font-sans);color:var(--fg-primary)}
+.pg-login .lg-card{width:100%;max-width:520px;display:flex;flex-direction:column;gap:24px;padding:40px;box-sizing:border-box;background:var(--bg-surface);border:1px solid var(--container-border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card)}
+.pg-login .lg-h1{margin:0;font-size:20px;line-height:32px;font-weight:700;color:var(--accent-action)}
+.pg-login .lg-sub{margin:4px 0 0;font-size:14px;line-height:24px;color:var(--fg-secondary)}
+.pg-login .lg-options{display:flex;flex-direction:column;gap:12px}
+.pg-login .lg-option{display:flex;align-items:center;gap:16px;width:100%;padding:16px;border:1px solid var(--container-border);border-radius:var(--radius-md);background:var(--bg-surface);text-align:left;font-family:inherit;color:var(--fg-primary);cursor:pointer}
+.pg-login .lg-option:hover{border-color:var(--accent-action);background:var(--primary-050)}
+.pg-login .lg-option:focus-visible{outline:2px solid var(--accent-action);outline-offset:2px}
+.pg-login .lg-option__body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pg-login .lg-option__title{display:flex;align-items:center;gap:8px;font-size:16px;line-height:24px;font-weight:700}
+.pg-login .lg-option__last{height:20px;padding:0 8px;border-radius:999px;background:var(--primary-100);color:var(--fg-secondary);font-size:11px;line-height:20px;font-weight:600}
+.pg-login .lg-option__who{font-size:12px;line-height:20px;font-weight:600;color:var(--fg-primary)}
+.pg-login .lg-option__text{font-size:12px;line-height:20px;color:var(--fg-secondary)}

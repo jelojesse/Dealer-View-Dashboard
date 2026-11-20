@@ -1,0 +1,15 @@
+/* DealerNav: account menu + impersonation banner. Prefixed dn- (shared component, every page). */
+.dn-wrap .ntv-navbar__user{cursor:pointer;border-radius:var(--radius-sm);padding:4px 6px;margin:-4px -6px}
+.dn-wrap .ntv-navbar__user:hover{background:var(--primary-050)}
+.dn-wrap .ntv-navbar__user:focus-visible{outline:2px solid var(--accent-action);outline-offset:2px}
+.dn-menu{position:absolute;top:calc(100% - 14px);right:20px;z-index:60;min-width:240px;background:var(--list-bg,var(--bg-surface));border:1px solid var(--container-border);border-radius:var(--radius-md);box-shadow:var(--shadow-card);padding:6px 0;font-family:var(--font-sans)}
+.dn-menu__head{display:flex;align-items:center;gap:10px;padding:10px 14px 12px;border-bottom:1px solid var(--container-border);margin-bottom:4px}
+.dn-menu__avatar{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:999px;background:var(--primary-100);color:var(--fg-primary);flex:none}
+.dn-menu__name{display:block;font-size:14px;line-height:20px;font-weight:700;color:var(--fg-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dn-menu__role{display:block;font-size:12px;line-height:18px;color:var(--fg-secondary)}
+.dn-menu__item{display:flex;align-items:center;gap:10px;width:100%;padding:8px 14px;border:0;background:transparent;text-align:left;font-family:inherit;font-size:14px;line-height:20px;color:var(--danger-main);cursor:pointer}
+.dn-menu__item:hover,.dn-menu__item:focus-visible{background:var(--primary-050);outline:none}
+.dn-imp{display:flex;align-items:center;gap:10px;padding:8px 20px;background:var(--warning-050);border-top:1px solid var(--warning-200,var(--container-border));border-bottom:1px solid var(--warning-200,var(--container-border));color:var(--warning-700,var(--fg-primary));font-family:var(--font-sans);font-size:12px;line-height:20px}
+.dn-imp strong{font-weight:700}
+.dn-imp__end{margin-left:auto;height:28px;padding:0 12px;border:1px solid currentColor;border-radius:var(--radius-sm);background:var(--bg-surface);color:inherit;font-family:inherit;font-size:12px;line-height:20px;font-weight:700;cursor:pointer}
+.dn-imp__end:hover{background:var(--warning-100,var(--bg-surface))}

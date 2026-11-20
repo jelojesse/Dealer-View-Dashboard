@@ -46,4 +46,13 @@ try { if (!window.__ntvNavL) { window.__ntvNavL = 1; var _nl = function (e) { tr
 function addNav(o, d) { d = d || 0; if (!o || typeof o !== 'object' || d > 5) return o; try { if (Array.isArray(o)) { for (var i = 0; i < o.length; i++) addNav(o[i], d + 1); return o; } var ks = Object.keys(o); for (var j = 0; j < ks.length; j++) { var k = ks[j], x = o[k]; if (typeof x === 'function' && x.nav && !(k + 'Nav' in o)) o[k + 'Nav'] = x.nav; else if (x && typeof x === 'object') addNav(x, d + 1); } } catch (e) {} return o; }
 function peekNav(page) { try { var v = JSON.parse(localStorage.getItem('ntvNav') || 'null'); return !!(v && v.page === page && (!v.t || Date.now() - v.t < 20000)); } catch (e) { return false; } }
 
-export { D, STATUS, addNav, advsForHost, arrived, byId, contains, draft, go, hostName, licsForHost, mediaEntries, navFn, navHref, navPack, peekNav, plByName, screenName, stash, toast, toastVals, val };
+/* Mock session: which view is signed in ('dealer' | 'admin') and, for an admin impersonating a dealer, which dealer.
+   No real auth — stored in localStorage so it survives reloads. A missing role means the Dealer view. */
+function getRole() { try { return localStorage.getItem('ntvRole') || null; } catch (e) { return null; } }
+function isAdmin() { return getRole() === 'admin'; }
+function setRole(r) { try { if (r) localStorage.setItem('ntvRole', r); else localStorage.removeItem('ntvRole'); } catch (e) {} }
+function getImpersonating() { try { return localStorage.getItem('ntvImpersonate') || null; } catch (e) { return null; } }
+function setImpersonating(id) { try { if (id) localStorage.setItem('ntvImpersonate', id); else localStorage.removeItem('ntvImpersonate'); } catch (e) {} }
+function logout() { setRole(null); setImpersonating(null); }
+
+export { D, STATUS, addNav, advsForHost, arrived, byId, contains, draft, getImpersonating, getRole, go, hostName, isAdmin, licsForHost, logout, mediaEntries, navFn, navHref, navPack, peekNav, plByName, screenName, setImpersonating, setRole, stash, toast, toastVals, val };
