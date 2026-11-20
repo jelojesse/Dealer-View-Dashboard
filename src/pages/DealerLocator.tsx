@@ -239,7 +239,7 @@ class Component extends DCLogic {
   fitTo(outlines, pad) {
     if (!this.map || !outlines.length) return;
     var b = L.latLngBounds([]); outlines.forEach(function (o) { b.extend(L.latLngBounds(o)); });
-    var s = this.state, left = s.panel ? 420 : 80, right = (s.mode === 'locator' ? s.focus : s.picks.length) ? 380 : 80;
+    var s = this.state, left = s.panel ? 480 : 80, right = (s.mode === 'locator' ? s.focus : s.picks.length) ? 380 : 80;
     this.map.flyToBounds(b, { paddingTopLeft: [left, 60], paddingBottomRight: [right, 60], duration: 0.8, maxZoom: pad || 11 });
   }
   pickTerritory(id, shift) {
@@ -551,20 +551,31 @@ defineTemplate(Component, (v) => (
                 </div>
                 <div className="lc-list">
                   {v.dealers.map((_d) => (
-                    <div key={_d.id} className={'lc-dealer' + (_d.focused ? ' is-on' : '')}>
-                      <div className="dv-between" style={{ flexWrap: "nowrap", alignItems: "flex-start" }}>
-                        <div className="dv-row" style={{ gap: "10px", minWidth: "0" }}>
-                          <Avatar initials={_d.initials} color={_d.color} active={_d.active} />
-                          <span className="lc-dealer__body">
-                            <strong>{_d.name}</strong>
-                            <span className="lc-meta"><span className={_d.active ? 'lc-ok' : 'lc-off'}>{_d.status}</span><i />{"Hosts "}<b>{_d.hosts}</b><NTV.Icon name="map" size={v.i12} />{" Licenses "}<b>{_d.licenses}</b><NTV.Icon name="id-card" size={v.i12} /></span>
-                          </span>
+                    /* Figma "Dealer Option List" (5295:54472): 16px padding, 12px gaps, 46px profile thumbnail. */
+                    <div key={_d.id} className={'lc-dc' + (_d.focused ? ' is-on' : '')}>
+                      <div className="lc-dc__top">
+                        <div className="lc-dc__who">
+                          <img className="lc-dc__thumb" src={_d.active ? 'images/profile-thumb-active.svg' : 'images/profile-thumb-inactive.svg'} width="46" height="47" alt="" />
+                          <div className="lc-dc__info">
+                            <span className="lc-dc__name">{_d.name}</span>
+                            <div className="lc-dc__meta">
+                              <span className={_d.active ? 'lc-dc__ok' : 'lc-dc__off'}>{_d.status}</span>
+                              <span className="lc-dc__sep" aria-hidden="true" />
+                              <span className="lc-dc__stat">Hosts <b>{_d.hosts}</b><NTV.Icon name="map" size={v.i14} /></span>
+                              <span className="lc-dc__stat">Licenses <b>{_d.licenses}</b><NTV.Icon name="id-card" size={v.i14} /></span>
+                            </div>
+                          </div>
                         </div>
-                        <button type="button" className="lc-x" aria-label={'Remove ' + _d.name} onClick={_d.remove}><NTV.Icon name="x" size={v.i10} /></button>
+                        <button type="button" className="lc-dc__x" aria-label={'Remove ' + _d.name} onClick={_d.remove}><NTV.Icon name="x" size={v.i10} /></button>
                       </div>
-                      <div className="lc-dealer__foot">
-                        <span className="lc-meta"><b className="lc-ok">{_d.online}</b>{" Online"}<b className="lc-pend">{_d.pending}</b>{" Pending"}<b className="lc-bad">{_d.offline}</b>{" Offline"}</span>
-                        <button type="button" className="lc-go" aria-label={'Navigate to ' + _d.name + '’s area'} onClick={_d.go}><span>navigate to area</span><NTV.Icon name="angle-right" size={v.i14} /></button>
+                      <div className="lc-dc__rule" aria-hidden="true" />
+                      <div className="lc-dc__foot">
+                        <div className="lc-dc__counts">
+                          <span><b className="lc-dc__ok">{_d.online}</b>Online</span>
+                          <span><b className="lc-dc__pend">{_d.pending}</b>Pending</span>
+                          <span><b className="lc-dc__bad">{_d.offline}</b>Offline</span>
+                        </div>
+                        <button type="button" className="lc-dc__go" aria-label={'Navigate to ' + _d.name + '’s area'} onClick={_d.go}><span>navigate to area</span><NTV.Icon name="angle-right" size={v.i14} /></button>
                       </div>
                     </div>
                   ))}
@@ -727,7 +738,7 @@ defineTemplate(Component, (v) => (
             </aside>
           ) : null}
 
-          {v.terrMode && !v.draft ? <div className="lc-hint" style={{ left: v.panel ? "416px" : "70px" }}><NTV.Icon name="circle-info" size={v.i12} />Shift + Click to select territories</div> : null}
+          {v.terrMode && !v.draft ? <div className="lc-hint" style={{ left: v.panel ? "476px" : "70px" }}><NTV.Icon name="circle-info" size={v.i12} />Shift + Click to select territories</div> : null}
 
           {v.draft ? (
             <div className="lc-drawbar" role="region" aria-label={v.draft.isDraw ? 'Drawing a territory' : 'Editing boundaries'}>

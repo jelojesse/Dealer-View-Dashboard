@@ -22,7 +22,7 @@
 
 /* Floating panels */
 .pg-locator .lc-left,.pg-locator .lc-right{position:absolute;z-index:1000;top:16px;bottom:16px;display:flex;flex-direction:column;gap:16px;padding:20px;box-sizing:border-box;background:var(--bg-surface);border-radius:var(--radius-md);box-shadow:var(--shadow-card)}
-.pg-locator .lc-left{left:16px;width:380px}
+.pg-locator .lc-left{left:16px;width:440px}
 .pg-locator .lc-left.is-collapsed{bottom:auto}
 .pg-locator .lc-right{right:16px;width:340px;overflow:auto}
 .pg-locator .lc-list{flex:1 1 0;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:14px;padding:2px 6px 4px 2px}
@@ -206,3 +206,32 @@
 .pg-locator .lc-chip2:focus-visible{outline:2px solid var(--accent-action);outline-offset:2px}
 .pg-locator .lc-filters__foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 10px 4px;border-top:1px solid var(--container-border)}
 .pg-locator .lc-filters__foot .ntv-btn--secondary:hover{border-color:var(--accent-action);color:var(--accent-action)}
+
+/* Dealer card — Figma "Dealer Option List" (5295:54472) */
+.pg-locator .lc-dc{display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid var(--container-border);border-radius:4px;background:var(--bg-surface);box-sizing:border-box;width:100%;max-width:378px;flex:none}
+.pg-locator .lc-dc.is-on{border-color:var(--accent-action)}
+.pg-locator .lc-dc__top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.pg-locator .lc-dc__who{display:flex;align-items:center;gap:10px;min-width:0}
+.pg-locator .lc-dc__thumb{display:block;width:46px;height:47px;flex:none;margin-bottom:-1px}
+.pg-locator .lc-dc__info{display:flex;flex-direction:column;gap:3px;min-width:0}
+.pg-locator .lc-dc__name{font-size:14px;line-height:20px;font-weight:700;color:var(--fg-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-locator .lc-dc__meta{display:flex;align-items:center;gap:10px;font-size:12px;line-height:18px;color:var(--fg-secondary);white-space:nowrap}
+.pg-locator .lc-dc__sep{width:1px;height:18px;border-radius:4px;background:var(--container-border);flex:none}
+.pg-locator .lc-dc__stat{display:inline-flex;align-items:center;gap:4px}
+.pg-locator .lc-dc__stat b{font-weight:700}
+.pg-locator .lc-dc__stat .ntv-icon,.pg-locator .lc-dc__stat svg{color:var(--accent-action);flex:none}
+.pg-locator .lc-dc__ok{color:var(--success-main,#3adb30)}
+.pg-locator .lc-dc__off{color:var(--fg-secondary)}
+.pg-locator .lc-dc__pend{color:orange}
+.pg-locator .lc-dc__bad{color:#e73535}
+.pg-locator .lc-dc__x{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;padding:6px;flex:none;border:0;border-radius:4px;background:var(--primary-100,#e6e7ea);color:var(--fg-primary);cursor:pointer;box-sizing:border-box}
+.pg-locator .lc-dc__x:hover{background:var(--primary-200)}
+.pg-locator .lc-dc__rule{height:1px;width:100%;background:var(--container-border)}
+.pg-locator .lc-dc__foot{display:flex;align-items:center;justify-content:space-between}
+.pg-locator .lc-dc__counts{display:flex;align-items:center;gap:12px;font-size:12px;line-height:18px;color:var(--fg-secondary);white-space:nowrap}
+.pg-locator .lc-dc__counts span{display:inline-flex;align-items:center;gap:3px}
+.pg-locator .lc-dc__counts b{font-weight:700}
+.pg-locator .lc-dc__go{display:inline-flex;align-items:center;gap:4px;border:0;background:none;padding:0;font:inherit;font-size:12px;line-height:20px;color:var(--fg-primary);cursor:pointer}
+.pg-locator .lc-dc__go span{color:transparent;transition:color .15s}
+.pg-locator .lc-dc:hover .lc-dc__go span,.pg-locator .lc-dc__go:focus-visible span{color:var(--accent-action)}
+.pg-locator .lc-dc__go:hover{color:var(--accent-action)}

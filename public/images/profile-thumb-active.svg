@@ -1,0 +1,8 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="46" height="47" viewBox="0 0 46 47" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Profile Thumbnail">
+<rect x="1" y="1" width="44" height="44" rx="22" fill="#FFEBDC"/>
+<rect x="1" y="1" width="44" height="44" rx="22" stroke="#3ADB30" stroke-width="2"/>
+<path id="Vector" d="M17 17C17 15.4087 17.6321 13.8826 18.7574 12.7574C19.8826 11.6321 21.4087 11 23 11C24.5913 11 26.1174 11.6321 27.2426 12.7574C28.3679 13.8826 29 15.4087 29 17C29 18.5913 28.3679 20.1174 27.2426 21.2426C26.1174 22.3679 24.5913 23 23 23C21.4087 23 19.8826 22.3679 18.7574 21.2426C17.6321 20.1174 17 18.5913 17 17ZM12.5 33.6078C12.5 28.9906 16.2406 25.25 20.8578 25.25H25.1422C29.7594 25.25 33.5 28.9906 33.5 33.6078C33.5 34.3766 32.8766 35 32.1078 35H13.8922C13.1234 35 12.5 34.3766 12.5 33.6078Z" fill="#D10334"/>
+<circle id="Ellipse 1" cx="38.5" cy="39.5" r="6.5" fill="#3ADB30" stroke-width="2" stroke="white"/>
+</g>
+</svg>
