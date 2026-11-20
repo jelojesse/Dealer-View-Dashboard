@@ -96,7 +96,7 @@ class Component extends DCLogic {
     super(props);
     this.mapEl = React.createRef();
     this.state = {
-      mode: 'locator', switching: '', panel: true,
+      mode: 'locator', switching: '', panel: false, pickFilters: {},
       dq: '', pickerOpen: false, selected: [],
       vis: { merged: true, individual: true, unassigned: true },
       focus: '', hostQ: '', hostFilters: {}, openHost: '', popup: '',
@@ -120,6 +120,8 @@ class Component extends DCLogic {
     map.on('click', function (e) { var d = self.state.draft; if (d && d.kind === 'draw' && !self.state.modal) self.setState({ draft: Object.assign({}, d, { pts: d.pts.concat([[+e.latlng.lat.toFixed(5), +e.latlng.lng.toFixed(5)]]) }) }); });
     map.on('move zoom', function () { if (self.state.popup) self.setState({ tick: self.state.tick + 1 }); });
     map.on('click', function () { if (self.state.popup) self.setState({ popup: '' }); });
+    this._outside = function (e) { if (self.state.pickerOpen && !(e.target.closest && e.target.closest('.lc-left'))) self.setState({ pickerOpen: false }); };
+    document.addEventListener('mousedown', this._outside);
     this._keyUp = function (e) { if (e.key === 'Escape') { if (self.state.modal && self.state.modal !== 'wait') self.setState({ modal: '' }); else self.setState({ popup: '', pickerOpen: false, menu: false }); } };
     document.addEventListener('keydown', this._keyUp);
     this.drawLayers();
@@ -131,7 +133,7 @@ class Component extends DCLogic {
     if (prevState.draft !== s.draft && this.map) { var el = this.map.getContainer(); if (s.draft && s.draft.kind === 'draw') el.classList.add('lc-drawing'); else el.classList.remove('lc-drawing'); }
     if (prevState.panel !== s.panel || prevState.focus !== s.focus || prevState.picks !== s.picks) { var m = this.map; setTimeout(function () { m && m.invalidateSize(); }, 0); }
   }
-  componentWillUnmount() { if (this.map) this.map.remove(); this.map = null; document.removeEventListener('keydown', this._keyUp); if (this._tt) clearTimeout(this._tt); if (this._sw) clearTimeout(this._sw); if (this._wt) clearTimeout(this._wt); }
+  componentWillUnmount() { if (this.map) this.map.remove(); this.map = null; document.removeEventListener('keydown', this._keyUp); document.removeEventListener('mousedown', this._outside); if (this._tt) clearTimeout(this._tt); if (this._sw) clearTimeout(this._sw); if (this._wt) clearTimeout(this._wt); }
 
   visibleTerritories() {
     var s = this.state, sel = s.selected;
@@ -286,7 +288,9 @@ class Component extends DCLogic {
       openPicker: function () { self.setState({ pickerOpen: true }); },
       searchFocus: function (e) { if (self.state.mode === 'locator' && e.target && e.target.tagName === 'INPUT') self.setState({ pickerOpen: true, panel: true }); }, closePicker: function () { self.setState({ pickerOpen: false }); },
       pickerOpen: s.pickerOpen && !terrMode,
-      options: D.locDealers.filter(function (d) { return contains(d.name, s.dq); }).map(function (d) {
+      pickFilterGroups: [{ key: 'status', title: 'Status', options: ['Active', 'Inactive'] }],
+      pickFilters: s.pickFilters, setPickFilters: function (x) { self.setState({ pickFilters: x }); },
+      options: D.locDealers.filter(function (d) { return contains(d.name, s.dq) && passes(s.pickFilters, 'status', d.status); }).map(function (d) {
         var on = sel.indexOf(d.id) !== -1;
         return { id: d.id, name: d.name, on: on, initials: d.initials, color: d.color, status: d.status, active: d.status === 'Active', hosts: d.hosts, licenses: d.licenses,
           toggle: function () { self.setState({ selected: on ? self.state.selected.filter(function (x) { return x !== d.id; }) : self.state.selected.concat([d.id]) }); } };
@@ -470,22 +474,20 @@ defineTemplate(Component, (v) => (
             </div>
 
             {v.pickerOpen ? (
-              <div className="lc-picker" role="listbox" aria-label="Dealers" aria-multiselectable="true">
-                <div className="dv-between" style={{ padding: "0 2px 6px" }}>
-                  <span className="lc-sub">Select dealers to show</span>
-                  <button type="button" className="lc-link" onClick={v.closePicker}>Done</button>
+              <div className="lc-picker">
+                <div className="lc-picker__head">
+                  <span>{"Showing "}{v.options.length.toLocaleString('en-US')}{" Dealers"}</span>
+                  <FilterBy groups={v.pickFilterGroups} value={v.pickFilters} onChange={v.setPickFilters} align="right" iconOnly label="Filter dealers" />
                 </div>
-                {v.options.map((_o) => (
-                  <button key={_o.id} type="button" role="option" aria-selected={_o.on} className={'lc-dealer lc-dealer--opt' + (_o.on ? ' is-on' : '')} onClick={_o.toggle}>
-                    <Avatar initials={_o.initials} color={_o.color} active={_o.active} size={36} />
-                    <span className="lc-dealer__body">
-                      <strong>{_o.name}</strong>
-                      <span className="lc-meta"><span className={_o.active ? 'lc-ok' : 'lc-off'}>{_o.status}</span><i />{"Hosts "}<b>{_o.hosts}</b><i />{"Licenses "}<b>{_o.licenses}</b></span>
-                    </span>
-                    <span className="lc-check">{_o.on ? <NTV.Icon name="check" size={v.i10} /> : null}</span>
-                  </button>
-                ))}
-                {v.options.length === 0 ? <p className="lc-empty">No dealers match “{v.dq}”.</p> : null}
+                <div className="lc-picker__list" role="listbox" aria-label="Dealers" aria-multiselectable="true">
+                  {v.options.map((_o) => (
+                    <button key={_o.id} type="button" role="option" aria-selected={_o.on} className={'lc-opt' + (_o.on ? ' is-on' : '')} onClick={_o.toggle}>
+                      <span className="lc-opt__box" aria-hidden="true">{_o.on ? <NTV.Icon name="check" size={v.i10} /> : null}</span>
+                      <span className="lc-opt__name">{_o.name}</span>
+                    </button>
+                  ))}
+                  {v.options.length === 0 ? <p className="lc-empty">No dealers match “{v.dq}”.</p> : null}
+                </div>
               </div>
             ) : null}
 
@@ -516,10 +518,9 @@ defineTemplate(Component, (v) => (
                   ))}
                   {v.noDealers ? (
                     <div className="lc-zero">
-                      <span className="lc-zero__icon"><NTV.Icon name="users" size={v.i16} /></span>
-                      <strong>No dealers selected</strong>
-                      <span>Select dealers to see their territories and hosts on the map.</span>
-                      <NTV.Button variant="secondary" size="m" iconLeft="magnifying-glass" onClick={v.openPicker}>Select Dealers</NTV.Button>
+                      <NTV.Icon name="building" size={v.i16} />
+                      <strong>Empty Data</strong>
+                      <span>Select Dealers to get started</span>
                     </div>
                   ) : null}
                 </div>
