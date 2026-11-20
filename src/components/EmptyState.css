@@ -1,0 +1,14 @@
+/* NTV360 Design System › EmptyState (copied from the design system's bundle.css; uses the app's NTV360 tokens). */
+.ntvx-empty{display:flex;align-items:center;justify-content:center;padding:var(--rem-5);background:var(--bg-app);border:1px solid var(--container-border);border-radius:var(--radius-md);text-align:center;box-sizing:border-box;font-family:var(--font-sans)}
+.ntvx-empty--large{min-height:500px}
+.ntvx-empty--small{min-height:450px}
+.ntvx-empty__info{display:flex;flex-direction:column;align-items:center;gap:var(--rem-2);max-width:100%}
+.ntvx-empty__icon{color:var(--fg-primary);flex:none}
+.ntvx-empty__text{display:flex;flex-direction:column;align-items:center}
+.ntvx-empty__title{font-weight:700;color:var(--fg-primary)}
+.ntvx-empty__message{font-weight:400;color:var(--fg-disabled)}
+.ntvx-empty--large .ntvx-empty__title{font-size:16px;line-height:24px}
+.ntvx-empty--large .ntvx-empty__message{font-size:14px;line-height:20px}
+.ntvx-empty--small .ntvx-empty__title{font-size:14px;line-height:24px}
+.ntvx-empty--small .ntvx-empty__message{font-size:12px;line-height:18px}
+.ntvx-empty__actions{display:flex;gap:var(--rem-2-half);margin-top:var(--rem-2)}

@@ -170,10 +170,8 @@
 .pg-locator .lc-mov > .lc-loading{width:400px;padding:36px 24px}
 .pg-locator .lc-mov .ntv-select{width:100%;min-width:0}
 
-/* Empty state: no dealers selected (recording: "Empty Data") */
-.pg-locator .lc-zero{display:flex;flex-direction:column;align-items:center;gap:4px;padding:28px 16px;border:1px solid var(--container-border);border-radius:var(--radius-sm);text-align:center;font-size:11px;line-height:16px;color:var(--fg-secondary)}
-.pg-locator .lc-zero .ntv-icon,.pg-locator .lc-zero svg{color:var(--fg-primary);margin-bottom:6px}
-.pg-locator .lc-zero strong{font-size:13px;line-height:20px;font-weight:600;color:var(--fg-primary)}
+/* Empty state uses the design-system EmptyState (components/EmptyState); fill the panel's list area. */
+.pg-locator .lc-empty-ds{flex:1 1 auto;min-height:0}
 .pg-locator .lc-left.is-collapsed .lc-search{margin:0}
 
 /* Dealer picker (recording: "Showing N Dealers" + checkbox rows) */

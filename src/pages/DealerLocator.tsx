@@ -25,6 +25,7 @@ import Toast from '../components/Toast';
 import { STATUS, byId, contains, licsForHost, navFn, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
 import FilterBy, { passes } from '../components/FilterBy';
+import EmptyState from '../components/EmptyState';
 import './DealerLocator.css';
 
 /* ============================== Logic ============================== */
@@ -517,11 +518,7 @@ defineTemplate(Component, (v) => (
                     </div>
                   ))}
                   {v.noDealers ? (
-                    <div className="lc-zero">
-                      <NTV.Icon name="building" size={v.i16} />
-                      <strong>Empty Data</strong>
-                      <span>Select Dealers to get started</span>
-                    </div>
+                    <EmptyState size="small" type="host" className="lc-empty-ds" title="Select Dealers to get started" message="Search for dealers above to see their territories and hosts on the map." />
                   ) : null}
                 </div>
               </>
