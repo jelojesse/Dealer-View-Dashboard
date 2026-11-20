@@ -28,6 +28,7 @@ import DealerTags from './pages/DealerTags';
 import Login from './pages/Login';
 import AdminDealers from './pages/AdminDealers';
 import AdminDealerDetail from './pages/AdminDealerDetail';
+import AdminDashboard from './pages/AdminDashboard';
 
 export type PageRoute = { file: string; path: string; title: string; component: ComponentType<any> };
 
@@ -56,6 +57,7 @@ export const ROUTES: PageRoute[] = [
   { file: 'DealerTags.dc.html', path: '/tags', title: "Tags", component: DealerTags },
   // Mock sign-in (switch between Dealer and Admin views) and Admin-view pages.
   { file: 'Login.dc.html', path: '/login', title: "Sign in", component: Login },
+  { file: 'AdminDashboard.dc.html', path: '/admin', title: "Dashboard", component: AdminDashboard },
   { file: 'AdminDealers.dc.html', path: '/dealers', title: "Dealers", component: AdminDealers },
   { file: 'AdminDealerDetail.dc.html', path: '/dealers/detail', title: "Dealer Details", component: AdminDealerDetail },
 ];

@@ -23,7 +23,7 @@ class Component extends DCLogic {
       i16: 16,
       options: [
         { key: 'dealer', title: 'Dealer', who: 'Ibanez Lighting Inc.', role: 'Dealer Admin', text: 'Manage your hosts, advertisers, licenses, content and screens.', icon: 'building', tone: 'danger', pick: pick('dealer', 'DealerDashboard.dc.html'), last: last === 'dealer' },
-        { key: 'admin', title: 'Admin', who: 'Joe Admin', role: 'Super Admin', text: 'Oversee every dealer: onboarding, risk, licenses and impersonation.', icon: 'user-gear', tone: 'info', pick: pick('admin', 'AdminDealers.dc.html'), last: last === 'admin' }
+        { key: 'admin', title: 'Admin', who: 'Joe Admin', role: 'Super Admin', text: 'Oversee every dealer: onboarding, risk, licenses and impersonation.', icon: 'user-gear', tone: 'info', pick: pick('admin', 'AdminDashboard.dc.html'), last: last === 'admin' }
       ]
     };
   }
@@ -60,7 +60,7 @@ defineTemplate(Component, (v) => (
       {/* go(...) navigates by clicking these hidden design-file links (same as DealerNav). */}
       <div aria-hidden="true" style={{ display: "none" }}>
         <a data-go="DealerDashboard.dc.html" href="DealerDashboard.dc.html" tabIndex="-1">Dealer</a>
-        <a data-go="AdminDealers.dc.html" href="AdminDealers.dc.html" tabIndex="-1">Admin</a>
+        <a data-go="AdminDashboard.dc.html" href="AdminDashboard.dc.html" tabIndex="-1">Admin</a>
       </div>
     </div>
     </div>

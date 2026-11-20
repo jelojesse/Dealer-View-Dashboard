@@ -68,7 +68,7 @@ class Component extends DCLogic {
     var progRows = D.programmatic.filter(function (p) { return contains(p.name + ' ' + p.hosts.map(function (h) { return h.name; }).join(' '), q); });
     var allOn = D.programmatic.every(function (p) { return s.prog[p.id]; });
     var setProg = function (id, on) { var n = Object.assign({}, self.state.prog); n[id] = on; return n; };
-    var t = D.territory;
+    var t = D.adminTerritory;
     return {
       none: null, i12: 12, i14: 14, i16: 16, w520: 520,
       crumbs: [{ label: 'Dealers', href: 'AdminDealers.dc.html' }, d.business],

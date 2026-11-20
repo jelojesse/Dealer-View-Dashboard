@@ -1,0 +1,92 @@
+/* Admin Dashboard — Figma "Dashboard V2 – Overview" (4777:51026). Scoped under .pg-admin-dash. */
+.pg-admin-dash .ad-main{display:flex;flex-direction:column;gap:20px;padding:20px;box-sizing:border-box;width:100%}
+.pg-admin-dash .ad-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px}
+.pg-admin-dash .ad-h1{margin:0;font-size:24px;line-height:38px;font-weight:700;color:var(--fg-primary)}
+.pg-admin-dash .ad-sub{margin:0;font-size:14px;line-height:24px;color:var(--fg-primary)}
+.pg-admin-dash .ad-date{margin:0;font-size:14px;line-height:24px;font-weight:700;color:var(--fg-primary)}
+
+/* Layout: left area + right column, two rows */
+.pg-admin-dash .ad-grid{display:grid;grid-template-columns:minmax(0,1fr) clamp(320px,22vw,412px);gap:20px;align-items:stretch}
+.pg-admin-dash .ad-left{display:flex;flex-direction:column;gap:20px;min-width:0}
+.pg-admin-dash .ad-bottom{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;min-width:0}
+
+/* Cards */
+.pg-admin-dash .ad-card{display:flex;flex-direction:column;gap:20px;padding:20px;background:var(--bg-surface);border:1px solid var(--container-border);border-radius:10px;box-sizing:border-box;min-width:0}
+.pg-admin-dash .ad-card__head{display:flex;align-items:center;gap:10px;flex:none}
+.pg-admin-dash .ad-h2{margin:0;font-size:20px;line-height:32px;font-weight:700;color:var(--fg-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-admin-dash .ad-tile{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;flex:none;border-radius:6px;background:rgba(209,3,52,.12);color:var(--accent-action)}
+
+/* KPI cards (act as chart tabs) */
+.pg-admin-dash .ad-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px}
+.pg-admin-dash .ad-kpi{gap:10px;text-align:left;font-family:inherit;color:var(--fg-primary);cursor:pointer}
+.pg-admin-dash .ad-kpi:hover{border-color:var(--primary-300)}
+.pg-admin-dash .ad-kpi.is-on{border-color:var(--accent-action,#d10334)}
+.pg-admin-dash .ad-kpi:focus-visible{outline:2px solid var(--accent-action);outline-offset:2px}
+.pg-admin-dash .ad-kpi__head{display:flex;align-items:center;gap:10px;min-width:0}
+.pg-admin-dash .ad-kpi__title{font-size:20px;line-height:32px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-admin-dash .ad-kpi__row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.pg-admin-dash .ad-kpi__value{font-size:32px;line-height:46px;font-weight:700}
+.pg-admin-dash .ad-kpi__weeks{display:flex;gap:10px;font-size:12px;line-height:16px;color:var(--fg-secondary);white-space:nowrap}
+.pg-admin-dash .ad-kpi__weeks span{display:inline-flex;align-items:center;gap:5px}
+.pg-admin-dash .ad-kpi__weeks b{font-size:14px;line-height:20px;font-weight:700;color:var(--accent-action,#d10334)}
+
+/* Chart */
+.pg-admin-dash .ad-chart{flex:1 1 auto}
+.pg-admin-dash .ad-chart__head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.pg-admin-dash .ad-active{font-size:14px;line-height:24px;font-weight:700;color:var(--fg-primary)}
+.pg-admin-dash .ad-active b{font-size:18px;color:var(--success-main,#3adb30)}
+.pg-admin-dash .ad-chart__tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pg-admin-dash .ad-legend{display:inline-flex;gap:10px;margin-right:4px;font-size:14px;line-height:24px;font-weight:700}
+.pg-admin-dash .ad-legend span{display:inline-flex;align-items:center;gap:4px}
+.pg-admin-dash .ad-legend i,.pg-admin-dash .ad-tip i{display:inline-block;width:8px;height:8px;border-radius:999px}
+.pg-admin-dash .ad-sel{width:120px;flex:none}
+.pg-admin-dash .ad-sel .ntv-select{min-width:0;width:100%}
+.pg-admin-dash .ad-plot{position:relative;padding:0 0 26px}
+.pg-admin-dash .ad-ax-y{position:absolute;left:0;width:34px;text-align:right;transform:translateY(-50%);font-size:9px;line-height:10px;color:var(--fg-secondary)}
+.pg-admin-dash .ad-ax-x{position:absolute;bottom:0;transform:translateX(-50%);font-size:12px;line-height:14px;color:var(--fg-secondary)}
+.pg-admin-dash .ad-tip{position:absolute;min-width:118px;padding:16px 20px;border-radius:var(--radius-md);background:rgba(255,255,255,.92);box-shadow:var(--shadow-card);font-size:12px;line-height:20px;pointer-events:none;color:var(--fg-secondary)}
+.pg-admin-dash .ad-tip p{margin:0 0 5px;padding-bottom:5px;border-bottom:1px solid var(--container-border);color:var(--fg-primary)}
+.pg-admin-dash .ad-tip div{display:flex;justify-content:space-between;gap:18px}
+.pg-admin-dash .ad-tip span{display:inline-flex;align-items:center;gap:10px}
+
+/* Recent Activity */
+.pg-admin-dash .ad-recent{min-height:0}
+.pg-admin-dash .ad-recent__bar{display:flex;align-items:center;justify-content:space-between;font-size:14px;line-height:24px;font-weight:600;color:var(--fg-primary)}
+.pg-admin-dash .ad-link{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--accent-action,#d10334);cursor:pointer}
+.pg-admin-dash .ad-link:hover{text-decoration:underline}
+.pg-admin-dash .ad-recent__list{flex:1 1 0;min-height:200px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-right:4px}
+.pg-admin-dash .ad-act{display:flex;align-items:center;gap:10px;min-height:60px;padding:10px 20px;border:1px solid #f3f3f5;border-radius:8px;background:var(--bg-surface);box-sizing:border-box;flex:none}
+.pg-admin-dash .ad-fab{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;flex:none;border-radius:30px;background:linear-gradient(74deg,#c41e5c 4%,#e8342a 72%,#ff6b00 123%);color:#fff}
+.pg-admin-dash .ad-act__text{display:flex;flex-direction:column;min-width:0;font-size:12px;line-height:20px;color:var(--fg-primary)}
+.pg-admin-dash .ad-act__text small{font-size:11px;line-height:16px;color:var(--fg-secondary)}
+
+/* Raspberry Pi Versions */
+.pg-admin-dash .ad-pi__body{flex:1;display:flex;align-items:center;gap:20px;min-width:0}
+.pg-admin-dash .ad-pi__chart{position:relative;width:140px;height:140px;flex:none}
+.pg-admin-dash .ad-pi__total{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;line-height:24px;font-weight:700;color:var(--fg-primary)}
+.pg-admin-dash .ad-pi__legend{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;font-size:12px;line-height:20px;font-weight:700;color:var(--fg-primary)}
+.pg-admin-dash .ad-pi__legend div{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pg-admin-dash .ad-pi__legend span{display:inline-flex;align-items:center;gap:10px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pg-admin-dash .ad-pi__legend i{display:inline-block;width:8px;height:8px;border-radius:999px;flex:none}
+
+/* Installations / Users */
+.pg-admin-dash .ad-big{font-size:32px;line-height:46px;font-weight:700;color:var(--accent-action,#d10334)}
+.pg-admin-dash .ad-statgrid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.pg-admin-dash .ad-statgrid div{display:flex;flex-direction:column}
+.pg-admin-dash .ad-statgrid b{font-size:24px;line-height:32px;font-weight:700;color:var(--accent-action,#d10334)}
+.pg-admin-dash .ad-statgrid span{font-size:14px;line-height:24px;font-weight:600;color:var(--fg-secondary)}
+
+/* Top Dealers */
+.pg-admin-dash .ad-top__list{flex:1 1 0;min-height:0;overflow-y:auto;margin:0;padding:0 4px 0 0;list-style:none;display:flex;flex-direction:column;gap:10px}
+.pg-admin-dash .ad-top__list li{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.pg-admin-dash .ad-top__list a{font-size:14px;line-height:24px;font-weight:600;color:var(--fg-primary);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-admin-dash .ad-top__list a:hover{color:var(--accent-action)}
+.pg-admin-dash .ad-top__list li>span{display:inline-flex;align-items:center;gap:10px;font-size:12px;line-height:20px;font-weight:700}
+.pg-admin-dash .ad-top__list .is-up{color:var(--success-main,#3adb30)}
+.pg-admin-dash .ad-top__list .is-down{color:var(--danger-main,#e73535)}
+.pg-admin-dash .ad-top__list .is-down .ntv-icon,.pg-admin-dash .ad-top__list .is-down svg{transform:rotate(90deg)}
+
+@media (max-width:1400px){
+  .pg-admin-dash .ad-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pg-admin-dash .ad-bottom{grid-template-columns:1fr}
+}

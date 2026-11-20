@@ -97,7 +97,7 @@ defineTemplate(Component, (v) => (
     <div className="pg-channel-detail" style={{ display: "contents" }}>
     <div className="ntv-root" style={{ height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column", background: "var(--bg-app)" }}>
       <div style={{ flex: "none", position: "relative", zIndex: "10" }}>
-        <DealerNav active="channel" activeItem="" />
+        <DealerNav active="channel" activeItem="Channel Manager" />
       </div>
       <div className="dv-scroll">
         <main className="dv-main">
