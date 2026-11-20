@@ -21,8 +21,12 @@ var DEALERS = [
   ['ld12', 'Tomás Reyes', 'Inactive', 4, 11, 0, 1, 3, '#5b6475']
 ];
 
-var dealers = DEALERS.map(function (r) {
-  return { id: r[0], name: r[1], status: r[2], hosts: r[3], licenses: r[4], online: r[5], pending: r[6], offline: r[7], color: r[8],
+/* Extra fields for the dealer filter: [risk, age in months, unassigned licenses %] (same order as DEALERS). */
+var EXTRA = [['highrisk', 14, 7], ['ontrack', 3, 12], ['ontrack', 6, 25], ['atrisk', 1, 31], ['ontrack', 12, 4], ['ontrack', 8, 18], ['atrisk', 2, 22], ['ontrack', 5, 9], ['highrisk', 11, 35], ['ontrack', 0, 15], ['ontrack', 7, 3], ['highrisk', 9, 41]];
+
+var dealers = DEALERS.map(function (r, i) {
+  var x = EXTRA[i] || ['ontrack', 1, 0];
+  return { id: r[0], name: r[1], status: r[2], hosts: r[3], licenses: r[4], online: r[5], pending: r[6], offline: r[7], color: r[8], risk: x[0], age: x[1], unassignedPct: x[2],
     initials: r[1].split(' ').map(function (w) { return w.charAt(0); }).join('').slice(0, 2).toUpperCase() };
 });
 

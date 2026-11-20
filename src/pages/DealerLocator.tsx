@@ -92,12 +92,22 @@ function pinIcon(color, big) {
   return L.divIcon({ className: 'lc-pin', html: svg, iconSize: [w, h], iconAnchor: [w / 2, h] });
 }
 
+/* Dealer filter (recording "Filters" view): one choice per group; no choice = All. */
+var DEALER_FILTERS = [
+  { key: 'risk', title: 'Status', options: [['ontrack', 'On Track'], ['atrisk', 'At Risk'], ['highrisk', 'High Risk']], test: function (d, v) { return d.risk === v; } },
+  { key: 'age', title: 'Age', options: [['0-3', '0-3 months'], ['4-9', '4-9 months'], ['10+', '10+ months']], test: function (d, v) { return v === '0-3' ? d.age <= 3 : v === '4-9' ? d.age >= 4 && d.age <= 9 : d.age >= 10; } },
+  { key: 'unassigned', title: 'Unassigned', options: [['lt20', 'less than 20%'], ['gt10', 'greater than 10%'], ['gt20', 'greater than 20%']], test: function (d, v) { return v === 'lt20' ? d.unassignedPct < 20 : v === 'gt10' ? d.unassignedPct > 10 : d.unassignedPct > 20; } },
+  { key: 'hosts', title: 'Hosts', options: [['0-5', '0-5 hosts'], ['6-10', '6-10 hosts'], ['10+', '10+ hosts']], test: function (d, v) { return v === '0-5' ? d.hosts <= 5 : v === '6-10' ? d.hosts >= 6 && d.hosts <= 10 : d.hosts > 10; } },
+  { key: 'licenses', title: 'Licenses', options: [['0-5', '0-5 licenses'], ['6-10', '6-10 licenses'], ['10+', '10+ licenses']], test: function (d, v) { return v === '0-5' ? d.licenses <= 5 : v === '6-10' ? d.licenses >= 6 && d.licenses <= 10 : d.licenses > 10; } }
+];
+function dealerPasses(d, f) { return DEALER_FILTERS.every(function (g) { return !f[g.key] || g.test(d, f[g.key]); }); }
+
 class Component extends DCLogic {
   constructor(props) {
     super(props);
     this.mapEl = React.createRef();
     this.state = {
-      mode: 'locator', switching: '', panel: false, pickFilters: {},
+      mode: 'locator', switching: '', panel: false, pickFilters: {}, pickView: 'list', pickDraft: {},
       dq: '', pickerOpen: false, selected: [],
       vis: { merged: true, individual: true, unassigned: true },
       focus: '', hostQ: '', hostFilters: {}, openHost: '', popup: '',
@@ -289,9 +299,18 @@ class Component extends DCLogic {
       openPicker: function () { self.setState({ pickerOpen: true }); },
       searchFocus: function (e) { if (self.state.mode === 'locator' && e.target && e.target.tagName === 'INPUT') self.setState({ pickerOpen: true }); }, closePicker: function () { self.setState({ pickerOpen: false }); },
       pickerOpen: s.pickerOpen && !terrMode,
-      pickFilterGroups: [{ key: 'status', title: 'Status', options: ['Active', 'Inactive'] }],
-      pickFilters: s.pickFilters, setPickFilters: function (x) { self.setState({ pickFilters: x }); },
-      options: D.locDealers.filter(function (d) { return contains(d.name, s.dq) && passes(s.pickFilters, 'status', d.status); }).map(function (d) {
+      pickView: s.pickView, pickFilterCount: Object.keys(s.pickFilters).filter(function (k) { return s.pickFilters[k]; }).length,
+      openPickFilters: function () { self.setState({ pickView: 'filters', pickDraft: Object.assign({}, self.state.pickFilters) }); },
+      closePickFilters: function () { self.setState({ pickView: 'list' }); },
+      pickGroups: DEALER_FILTERS.map(function (g) {
+        var cur = s.pickDraft[g.key] || '';
+        var setTo = function (v) { return function () { var d = Object.assign({}, self.state.pickDraft); if (!v || d[g.key] === v) delete d[g.key]; else d[g.key] = v; self.setState({ pickDraft: d }); }; };
+        return { key: g.key, title: g.title, chips: [{ v: '', label: 'All', on: false, pick: setTo('') }].concat(g.options.map(function (o) { return { v: o[0], label: o[1], on: cur === o[0], pick: setTo(o[0]) }; })) };
+      }),
+      draftCount: D.locDealers.filter(function (d) { return contains(d.name, s.dq) && dealerPasses(d, s.pickDraft); }).length,
+      clearPickDraft: function () { self.setState({ pickDraft: {} }); },
+      applyPickFilters: function () { self.setState({ pickFilters: Object.assign({}, self.state.pickDraft), pickView: 'list' }); },
+      options: D.locDealers.filter(function (d) { return contains(d.name, s.dq) && dealerPasses(d, s.pickFilters); }).map(function (d) {
         var on = sel.indexOf(d.id) !== -1;
         return { id: d.id, name: d.name, on: on, initials: d.initials, color: d.color, status: d.status, active: d.status === 'Active', hosts: d.hosts, licenses: d.licenses,
           toggle: function () { self.setState({ selected: on ? self.state.selected.filter(function (x) { return x !== d.id; }) : self.state.selected.concat([d.id]) }); } };
@@ -476,9 +495,39 @@ defineTemplate(Component, (v) => (
 
             {v.pickerOpen ? (
               <div className="lc-picker">
+                {v.pickView === 'filters' ? (
+                  <>
+                    <div className="lc-picker__head">
+                      <button type="button" className="lc-back" onClick={v.closePickFilters}><NTV.Icon name="arrow-left-long" size={v.i14} />Filters</button>
+                    </div>
+                    <div className="lc-filters">
+                      {v.pickGroups.map((_g) => (
+                        <div key={_g.key} className="lc-fgroup" role="radiogroup" aria-label={_g.title}>
+                          <span className="lc-fgroup__title">{_g.title}</span>
+                          <div className="lc-chips">
+                            {_g.chips.map((_c) => (
+                              <button key={_c.label} type="button" role="radio" aria-checked={_c.on} className={'lc-chip2' + (_c.on ? ' is-on' : '')} onClick={_c.pick}>
+                                {_c.on ? <NTV.Icon name="check" size={v.i10} /> : null}{_c.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="lc-filters__foot">
+                      <NTV.Button variant="secondary" size="m" onClick={v.clearPickDraft}>Clear All</NTV.Button>
+                      <NTV.Button variant="primary" size="m" onClick={v.applyPickFilters}>{'Show ' + v.draftCount + ' Dealers'}</NTV.Button>
+                    </div>
+                  </>
+                ) : null}
+                {v.pickView !== 'filters' ? (
+                <>
                 <div className="lc-picker__head">
                   <span>{"Showing "}{v.options.length.toLocaleString('en-US')}{" Dealers"}</span>
-                  <FilterBy groups={v.pickFilterGroups} value={v.pickFilters} onChange={v.setPickFilters} align="right" iconOnly icon="bars-filter" label="Filter dealers" />
+                  <button type="button" className={'lc-fbtn' + (v.pickFilterCount ? ' is-on' : '')} aria-label={'Filter dealers' + (v.pickFilterCount ? ' (' + v.pickFilterCount + ' active)' : '')} onClick={v.openPickFilters}>
+                    <NTV.Icon name="bars-filter" size={v.i14} />
+                    {v.pickFilterCount ? <span className="lc-fbtn__n">{v.pickFilterCount}</span> : null}
+                  </button>
                 </div>
                 <div className="lc-picker__list" role="listbox" aria-label="Dealers" aria-multiselectable="true">
                   {v.options.map((_o) => (
@@ -487,8 +536,10 @@ defineTemplate(Component, (v) => (
                       <span className="lc-opt__name">{_o.name}</span>
                     </button>
                   ))}
-                  {v.options.length === 0 ? <p className="lc-empty">No dealers match “{v.dq}”.</p> : null}
+                  {v.options.length === 0 ? <p className="lc-empty">No dealers match your search or filters.</p> : null}
                 </div>
+                </>
+                ) : null}
               </div>
             ) : null}
 

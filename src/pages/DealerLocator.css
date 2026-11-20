@@ -189,3 +189,20 @@
 .pg-locator .lc-opt__box{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;flex:none;border:1.5px solid var(--fg-secondary);border-radius:3px;color:#fff;box-sizing:border-box}
 .pg-locator .lc-opt.is-on .lc-opt__box{background:var(--accent-action);border-color:var(--accent-action)}
 .pg-locator .lc-opt__name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Dealer filter view inside the dropdown (recording: "← Filters", chip groups, Clear All / Show N Dealers) */
+.pg-locator .lc-fbtn{position:relative;display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border:0;border-radius:var(--radius-sm);background:none;color:var(--fg-secondary);cursor:pointer}
+.pg-locator .lc-fbtn:hover,.pg-locator .lc-fbtn.is-on{color:var(--accent-action);background:var(--primary-050)}
+.pg-locator .lc-fbtn__n{position:absolute;top:-4px;right:-4px;min-width:15px;height:15px;padding:0 3px;border-radius:999px;background:var(--accent-action);color:#fff;font-size:9px;line-height:15px;font-weight:700;box-sizing:border-box}
+.pg-locator .lc-back{display:inline-flex;align-items:center;gap:10px;border:0;background:none;padding:0;font:inherit;font-size:13px;line-height:20px;font-weight:700;color:var(--fg-secondary);cursor:pointer}
+.pg-locator .lc-back:hover{color:var(--accent-action)}
+.pg-locator .lc-filters{flex:0 1 auto;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:4px 10px 12px}
+.pg-locator .lc-fgroup{display:flex;flex-direction:column;gap:6px}
+.pg-locator .lc-fgroup__title{font-size:13px;line-height:20px;color:var(--fg-secondary)}
+.pg-locator .lc-chips{display:flex;flex-wrap:wrap;gap:8px}
+.pg-locator .lc-chip2{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border:1px solid var(--fg-secondary);border-radius:999px;background:var(--bg-surface);font-family:inherit;font-size:12px;line-height:20px;color:var(--fg-secondary);cursor:pointer;white-space:nowrap}
+.pg-locator .lc-chip2:hover{border-color:var(--fg-primary);color:var(--fg-primary)}
+.pg-locator .lc-chip2.is-on{background:#0b1838;border-color:#0b1838;color:#fff}
+.pg-locator .lc-chip2:focus-visible{outline:2px solid var(--accent-action);outline-offset:2px}
+.pg-locator .lc-filters__foot{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 10px 4px;border-top:1px solid var(--container-border)}
+.pg-locator .lc-filters__foot .ntv-btn--secondary:hover{border-color:var(--accent-action);color:var(--accent-action)}
