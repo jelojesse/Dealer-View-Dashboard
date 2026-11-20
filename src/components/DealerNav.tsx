@@ -27,7 +27,7 @@ var MAP = {
   channel: 'DealerChannels.dc.html', 'Channel Manager': 'DealerChannels.dc.html', Screens: 'DealerScreens.dc.html', Tags: 'DealerTags.dc.html'
 };
 /* Extra pages the nav can jump to programmatically (go(...) clicks these hidden links). */
-var EXTRA = ['Login.dc.html', 'AdminDealers.dc.html', 'AdminDealerDetail.dc.html'];
+var EXTRA = ['Login.dc.html', 'AdminDashboard.dc.html', 'AdminDealers.dc.html', 'AdminDealerDetail.dc.html'];
 /* Admin menus follow the Admin-view walkthrough recording. Items without a page yet just toast. */
 var SYSTEM = ['Tools', 'Programmatic', 'Activity Logs'];
 
@@ -87,7 +87,7 @@ class Component extends DCLogic {
       nav: function (key, item) {
         if (item && !MAP[item]) { toast(self, item + ' isn’t designed yet', 'info'); return; }
         // Admin "Dashboard" opens Dealers until an admin dashboard is designed.
-        var target = admin && key === 'dashboard' && !item ? MAP.Dealers : (MAP[item] || MAP[key]);
+        var target = admin && key === 'dashboard' && !item ? 'AdminDashboard.dc.html' : (MAP[item] || MAP[key]);
         if (!target) return;
         var a = document.querySelector('a[data-go="' + target + '"]');
         if (a) a.click();
