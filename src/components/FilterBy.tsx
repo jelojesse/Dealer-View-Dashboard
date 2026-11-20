@@ -9,7 +9,8 @@
  *  - value:    { status: ['Active'] }   (selected options per group key)
  *  - onChange: (nextValue) => void
  *  - align:    'left' | 'right'          (which edge the panel lines up with)
- *  - iconOnly: true                     (square funnel button, e.g. in narrow side panels)
+ *  - iconOnly: true                     (square icon button, e.g. in narrow side panels)
+ *  - icon:     icon name for iconOnly     (default 'filter')
  */
 import React, { useEffect, useRef, useState } from 'react';
 import { NTV } from '../ds/ntv360';
@@ -51,7 +52,7 @@ export default function FilterBy(p) {
     <div className={'fb' + (p.align === 'right' ? ' fb--right' : '')} ref={ref}>
       {p.iconOnly ? (
         <button type="button" className={'fb__icon' + (open || n ? ' is-open' : '')} aria-label={(p.label || 'Filter by') + (n ? ' (' + n + ' active)' : '')} aria-expanded={open} onClick={function () { setOpen(!open); }}>
-          <NTV.Icon name="filter" size={14} />
+          <NTV.Icon name={p.icon || 'filter'} size={14} />
           {n ? <span className="fb__count">{n}</span> : null}
         </button>
       ) : (

@@ -120,7 +120,7 @@ class Component extends DCLogic {
     map.on('click', function (e) { var d = self.state.draft; if (d && d.kind === 'draw' && !self.state.modal) self.setState({ draft: Object.assign({}, d, { pts: d.pts.concat([[+e.latlng.lat.toFixed(5), +e.latlng.lng.toFixed(5)]]) }) }); });
     map.on('move zoom', function () { if (self.state.popup) self.setState({ tick: self.state.tick + 1 }); });
     map.on('click', function () { if (self.state.popup) self.setState({ popup: '' }); });
-    this._outside = function (e) { if (self.state.pickerOpen && !(e.target.closest && e.target.closest('.lc-left'))) self.setState({ pickerOpen: false }); };
+    this._outside = function (e) { if (self.state.pickerOpen && !(e.target.closest && e.target.closest('.lc-left'))) self.setState({ pickerOpen: false, panel: self.state.panel || self.state.selected.length > 0 }); };
     document.addEventListener('mousedown', this._outside);
     this._keyUp = function (e) { if (e.key === 'Escape') { if (self.state.modal && self.state.modal !== 'wait') self.setState({ modal: '' }); else self.setState({ popup: '', pickerOpen: false, menu: false }); } };
     document.addEventListener('keydown', this._keyUp);
@@ -286,7 +286,7 @@ class Component extends DCLogic {
       /* ---- Locator mode: dealers ---- */
       dq: s.dq, setDq: function (x) { self.setState({ dq: val(x), pickerOpen: true }); },
       openPicker: function () { self.setState({ pickerOpen: true }); },
-      searchFocus: function (e) { if (self.state.mode === 'locator' && e.target && e.target.tagName === 'INPUT') self.setState({ pickerOpen: true, panel: true }); }, closePicker: function () { self.setState({ pickerOpen: false }); },
+      searchFocus: function (e) { if (self.state.mode === 'locator' && e.target && e.target.tagName === 'INPUT') self.setState({ pickerOpen: true }); }, closePicker: function () { self.setState({ pickerOpen: false }); },
       pickerOpen: s.pickerOpen && !terrMode,
       pickFilterGroups: [{ key: 'status', title: 'Status', options: ['Active', 'Inactive'] }],
       pickFilters: s.pickFilters, setPickFilters: function (x) { self.setState({ pickFilters: x }); },
@@ -477,7 +477,7 @@ defineTemplate(Component, (v) => (
               <div className="lc-picker">
                 <div className="lc-picker__head">
                   <span>{"Showing "}{v.options.length.toLocaleString('en-US')}{" Dealers"}</span>
-                  <FilterBy groups={v.pickFilterGroups} value={v.pickFilters} onChange={v.setPickFilters} align="right" iconOnly label="Filter dealers" />
+                  <FilterBy groups={v.pickFilterGroups} value={v.pickFilters} onChange={v.setPickFilters} align="right" iconOnly icon="bars-filter" label="Filter dealers" />
                 </div>
                 <div className="lc-picker__list" role="listbox" aria-label="Dealers" aria-multiselectable="true">
                   {v.options.map((_o) => (
@@ -491,7 +491,7 @@ defineTemplate(Component, (v) => (
               </div>
             ) : null}
 
-            {v.panel && !v.pickerOpen && v.locMode ? (
+            {v.panel && v.locMode ? (
               <>
                 <div className="dv-between lc-head">
                   <h1 className="lc-title">Locator</h1>
