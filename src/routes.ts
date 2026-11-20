@@ -25,6 +25,9 @@ import DealerAssignPlaylist from './pages/DealerAssignPlaylist';
 import DealerPublish from './pages/DealerPublish';
 import DealerScreenDetail from './pages/DealerScreenDetail';
 import DealerTags from './pages/DealerTags';
+import Login from './pages/Login';
+import AdminDealers from './pages/AdminDealers';
+import AdminDealerDetail from './pages/AdminDealerDetail';
 
 export type PageRoute = { file: string; path: string; title: string; component: ComponentType<any> };
 
@@ -51,6 +54,10 @@ export const ROUTES: PageRoute[] = [
   { file: 'DealerPublish.dc.html', path: '/screens/new/publish', title: "Create Screen · 3 Publish", component: DealerPublish },
   { file: 'DealerScreenDetail.dc.html', path: '/screens/detail', title: "Screen Details", component: DealerScreenDetail },
   { file: 'DealerTags.dc.html', path: '/tags', title: "Tags", component: DealerTags },
+  // Mock sign-in (switch between Dealer and Admin views) and Admin-view pages.
+  { file: 'Login.dc.html', path: '/login', title: "Sign in", component: Login },
+  { file: 'AdminDealers.dc.html', path: '/dealers', title: "Dealers", component: AdminDealers },
+  { file: 'AdminDealerDetail.dc.html', path: '/dealers/detail', title: "Dealer Details", component: AdminDealerDetail },
 ];
 
 export const ROUTE_BY_FILE: Record<string, string> = Object.fromEntries(ROUTES.map((r) => [r.file, r.path]));
