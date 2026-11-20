@@ -24,11 +24,12 @@ import './DealerNav.css';
 var MAP = {
   dashboard: 'DealerDashboard.dc.html', Dealers: 'AdminDealers.dc.html', Hosts: 'DealerHosts.dc.html', Advertisers: 'DealerAdvertisers.dc.html',
   Licenses: 'DealerLicenses.dc.html', Locator: 'DealerLocator.dc.html', 'Media Library': 'DealerMedia.dc.html', Playlists: 'DealerPlaylists.dc.html',
-  channel: 'DealerChannels.dc.html', Screens: 'DealerScreens.dc.html', Tags: 'DealerTags.dc.html'
+  channel: 'DealerChannels.dc.html', 'Channel Manager': 'DealerChannels.dc.html', Screens: 'DealerScreens.dc.html', Tags: 'DealerTags.dc.html'
 };
 /* Extra pages the nav can jump to programmatically (go(...) clicks these hidden links). */
 var EXTRA = ['Login.dc.html', 'AdminDealers.dc.html', 'AdminDealerDetail.dc.html'];
-var SYSTEM = ['Users', 'Roles & Permissions', 'Settings'];
+/* Admin menus follow the Admin-view walkthrough recording. Items without a page yet just toast. */
+var SYSTEM = ['Tools', 'Programmatic', 'Activity Logs'];
 
 class Component extends DCLogic {
   constructor(props) { super(props); this.state = { menu: false, toast: null }; this.wrap = React.createRef(); }
@@ -62,10 +63,10 @@ class Component extends DCLogic {
     var admin = role === 'admin';
     var items = admin ? [
       { key: 'dashboard', label: 'Dashboard', icon: 'grid-2' },
-      { key: 'network', label: 'Network', icon: 'network-wired', menu: ['Dealers', 'Hosts', 'Advertisers', 'Licenses'] },
-      { key: 'content', label: 'Content', icon: 'clapperboard-play', menu: ['Media Library', 'Playlists'] },
-      { key: 'channel', label: 'Channel', icon: 'earth-americas' },
-      { key: 'display', label: 'Display', icon: 'tv', menu: ['Screens', 'Tags'] },
+      { key: 'network', label: 'Network', icon: 'network-wired', menu: ['Dealers', 'Hosts', 'Advertisers', 'Licenses', 'Locator'] },
+      { key: 'content', label: 'Content', icon: 'clapperboard-play', menu: ['Media Library', 'Widgets', 'Playlists'] },
+      { key: 'channel', label: 'Channel', icon: 'earth-americas', menu: ['Channel Manager', 'Channel Library'] },
+      { key: 'display', label: 'Display', icon: 'tv', menu: ['Screens', 'Templates', 'Installations', 'Reports', 'Tags'] },
       { key: 'system', label: 'System', icon: 'gear', menu: SYSTEM }
     ] : [
       { key: 'dashboard', label: 'Dashboard', icon: 'grid-2' },
@@ -84,7 +85,7 @@ class Component extends DCLogic {
       items: items, userName: userName, userRole: userRole, roleLabel: admin ? 'Admin view' : 'Dealer view',
       links: hrefs.map(function (h) { return { href: h, label: h }; }),
       nav: function (key, item) {
-        if (key === 'system') { toast(self, (item || 'System') + ' isn’t designed yet', 'info'); return; }
+        if (item && !MAP[item]) { toast(self, item + ' isn’t designed yet', 'info'); return; }
         // Admin "Dashboard" opens Dealers until an admin dashboard is designed.
         var target = admin && key === 'dashboard' && !item ? MAP.Dealers : (MAP[item] || MAP[key]);
         if (!target) return;
