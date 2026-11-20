@@ -1,6 +1,7 @@
 // Mock data shared by every Dealer View page (dealer, hosts, advertisers, licenses,
 // screens, playlists, media, channels, tags). Edit values here to change what the UI shows.
 // Image paths like "images/<id>.jpg" point at public/images (placeholders; replace with real files of the same name).
+import { ADMIN } from './adminData';
 export const D = {
   "dealer": {
     "code": "001-IBNLI",
@@ -5469,3 +5470,6 @@ export const D = {
     "unused": 64
   }
 };
+
+// Admin view data (dealers, activity, impersonations, programmatic, territory) lives in adminData.js.
+Object.assign(D, ADMIN);
