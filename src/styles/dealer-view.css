@@ -14,3 +14,9 @@ body{margin:0;background:var(--bg-app);font-family:var(--font-sans);color:var(--
 .ntv-crumbs a.ntv-crumbs__item:hover{color:var(--accent-action)}
 /* Tray: inset container that holds a grid of tiles inside a card (16px padding, app fill, border stroke). */
 .dv-tray{padding:16px;background:var(--bg-app);border:1px solid var(--container-border);border-radius:var(--radius-md);box-sizing:border-box}
+
+/* --- Page shell consistency (all pages) --- */
+/* Always reserve the scrollbar's space so content doesn't shift sideways when switching between short and long pages. */
+.dv-scroll{scrollbar-gutter:stable}
+/* Page title row on list pages: same height whether or not it has a button (xl buttons are 40px), title vertically centred. */
+.dv-page-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;min-height:40px}

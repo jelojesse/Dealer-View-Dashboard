@@ -164,7 +164,7 @@ defineTemplate(Component, (v) => (
       </div>
       <div className="dv-scroll">
         <main className="dv-main tg-main">
-          <div className="dv-between">
+          <div className="dv-between dv-page-head">
             <h1 className="dv-h1">Tags</h1>
             <NTV.Button variant="primary" size="xl" iconRight="plus" onClick={v.openNew}>Create Tag</NTV.Button>
           </div>

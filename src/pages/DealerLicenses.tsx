@@ -125,7 +125,7 @@ defineTemplate(Component, (v) => (
       </div>
       <div className="dv-scroll">
         <main className="dv-main">
-          <div className="dv-between"><h1 className="dv-h1">Licenses</h1></div>
+          <div className="dv-between dv-page-head"><h1 className="dv-h1">Licenses</h1></div>
           <section aria-label="License totals" style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "20px" }}>
             <div className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <div className="dv-between" style={{ alignItems: "flex-start", flexWrap: "nowrap" }}>

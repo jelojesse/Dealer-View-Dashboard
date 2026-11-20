@@ -90,7 +90,7 @@ defineTemplate(Component, (v) => (
       </div>
       <div className="dv-scroll">
         <main className="dv-main" style={{ minHeight: "100%" }}>
-          <div className="dv-between" style={{ paddingTop: "5px" }}>
+          <div className="dv-between dv-page-head">
             <h1 className="dv-h1">Screens</h1>
             <a href="DealerNewScreen.dc.html" className="ntv-btn ntv-btn--primary ntv-btn--default ntv-btn--xl" style={{ textDecoration: "none" }}>
               <span>New Screen</span>

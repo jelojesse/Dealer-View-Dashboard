@@ -90,7 +90,7 @@ defineTemplate(Component, (v) => (
       </div>
       <div className="dv-scroll">
         <main className="dv-main">
-          <div className="dv-between" style={{ paddingTop: "5px" }}>
+          <div className="dv-between dv-page-head">
             <h1 className="dv-h1">Hosts</h1>
             <div className="dv-row">
               <NTV.Button variant="secondary" size="xl" iconLeft="chart-simple" iconRight={v.analyticsIcon} onClick={v.toggleAnalytics}>{v.analyticsLabel}</NTV.Button>

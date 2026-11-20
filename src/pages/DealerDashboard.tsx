@@ -157,7 +157,7 @@ defineTemplate(Component, (v) => (
       <div style={{ flex: "none", position: "relative", zIndex: "10" }}>
         <DealerNav active="dashboard" />
       </div>
-      <div style={{ flex: "1 1 0", minHeight: "0", overflowY: "auto" }}>
+      <div style={{ flex: "1 1 0", minHeight: "0", overflowY: "auto", scrollbarGutter: "stable" }}>
         <main style={{ display: "flex", flexDirection: "column", gap: "20px", padding: "20px", boxSizing: "border-box" }}>
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" }}>
             <div>

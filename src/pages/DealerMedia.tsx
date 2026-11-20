@@ -516,8 +516,8 @@ defineTemplate(Component, (v) => (
       </div>
       <div className="dv-scroll">
         <main className="dv-main">
-          <div className="dv-between">
-            <h1 className="dv-h1" style={{ fontSize: "20px", lineHeight: "32px" }}>Media Library</h1>
+          <div className="dv-between dv-page-head">
+            <h1 className="dv-h1">Media Library</h1>
             <div className="dv-row">
               {/* Secondary style per Figma 7673:130020 (white, gray border + text). */}
               <NTV.Button variant="secondary" size="xl" iconRight="folder-plus" className="ml-btn-nf" onClick={v.newFolder}>New Folder</NTV.Button>
