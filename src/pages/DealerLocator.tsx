@@ -239,7 +239,7 @@ class Component extends DCLogic {
   fitTo(outlines, pad) {
     if (!this.map || !outlines.length) return;
     var b = L.latLngBounds([]); outlines.forEach(function (o) { b.extend(L.latLngBounds(o)); });
-    var s = this.state, left = s.panel ? 480 : 80, right = (s.mode === 'locator' ? s.focus : s.picks.length) ? 460 : 80;
+    var s = this.state, left = s.panel ? 472 : 80, right = (s.mode === 'locator' ? s.focus : s.picks.length) ? 460 : 80;
     this.map.flyToBounds(b, { paddingTopLeft: [left, 60], paddingBottomRight: [right, 60], duration: 0.8, maxZoom: pad || 11 });
   }
   pickTerritory(id, shift) {
@@ -761,7 +761,7 @@ defineTemplate(Component, (v) => (
             </aside>
           ) : null}
 
-          {v.terrMode && !v.draft ? <div className="lc-hint" style={{ left: v.panel ? "476px" : "70px" }}><NTV.Icon name="circle-info" size={v.i12} />Shift + Click to select territories</div> : null}
+          {v.terrMode && !v.draft ? <div className="lc-hint" style={{ left: v.panel ? "468px" : "70px" }}><NTV.Icon name="circle-info" size={v.i12} />Shift + Click to select territories</div> : null}
 
           {v.draft ? (
             <div className="lc-drawbar" role="region" aria-label={v.draft.isDraw ? 'Drawing a territory' : 'Editing boundaries'}>

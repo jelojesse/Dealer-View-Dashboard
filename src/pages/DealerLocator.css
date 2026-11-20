@@ -295,3 +295,12 @@
 .pg-locator .lc-tp__legend{display:grid;grid-template-columns:1fr 1fr;gap:20px 16px;font-size:12px;line-height:18px;color:var(--fg-secondary)}
 .pg-locator .lc-tp__legend>span{display:inline-flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pg-locator .lc-tp__dot{display:inline-block;width:10px;height:10px;border-radius:999px;flex:none}
+
+/* Left panel (dealer / territory list) — same container as the Territory panel (Figma Locator Nav Panel, 432px):
+   bg-app, 1px border, 4px radius, 16px padding and 16px gaps. */
+.pg-locator .lc-left{width:432px;padding:16px;gap:16px;background:var(--bg-app,#fafafa);border:1px solid var(--container-border);border-radius:4px}
+.pg-locator .lc-left .lc-list{gap:12px;padding:0 4px 0 0}
+.pg-locator .lc-left .lc-head{margin:0}
+.pg-locator .lc-picker{left:16px;right:16px;top:calc(16px + var(--lc-search-h, 40px) + 6px)}
+.pg-locator .lc-left .lc-terr{background:var(--bg-surface)}
+.pg-locator .lc-left .lc-search .ntv-input{background:var(--bg-surface)}
