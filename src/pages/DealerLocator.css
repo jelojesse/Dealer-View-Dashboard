@@ -177,8 +177,8 @@
 /* Dealer picker (recording: "Showing N Dealers" + checkbox rows) */
 .pg-locator .lc-search:focus-within .ntv-input{border-color:var(--accent-action)}
 .pg-locator .lc-search:focus-within .ntv-input input::placeholder{color:var(--accent-action)}
-.pg-locator .lc-picker{position:absolute;z-index:5;left:0;right:0;top:calc(100% - 12px);max-height:min(420px, calc(100vh - 360px));display:flex;flex-direction:column;padding:12px 12px 8px;background:var(--bg-surface);border-radius:0 0 var(--radius-md) var(--radius-md);box-shadow:0 10px 24px rgba(9,22,53,.14)}
-.pg-locator .lc-left:not(.is-collapsed) .lc-picker{top:72px;bottom:auto;border-radius:var(--radius-md);margin:0 12px}
+/* Dropdown spans exactly the search row (search box + chevron), with its own 1px border, just below it. */
+.pg-locator .lc-picker{position:absolute;z-index:5;left:20px;right:20px;top:calc(20px + var(--lc-search-h, 40px) + 6px);max-height:min(420px, calc(100vh - 360px));overflow:hidden;display:flex;flex-direction:column;gap:0;padding:8px 8px 6px;background:var(--bg-surface);border:1px solid var(--container-border);border-radius:var(--radius-sm);box-shadow:0 8px 20px rgba(9,22,53,.10);box-sizing:border-box}
 .pg-locator .lc-picker__head{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 10px 10px;border-bottom:1px solid var(--container-border);margin-bottom:6px;font-size:13px;line-height:20px;color:var(--fg-secondary)}
 .pg-locator .lc-picker__head .fb__icon{border:0;width:28px;height:28px;color:var(--fg-secondary)}
 .pg-locator .lc-picker__list{flex:0 1 auto;min-height:0;overflow-y:auto;display:flex;flex-direction:column}
