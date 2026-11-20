@@ -12,6 +12,7 @@ import { NTV } from '../ds/ntv360';
 import Toast from '../components/Toast';
 import { STATUS, addNav, arrived, byId, contains, go, hostName, navFn, peekNav, plByName, screenName, toast, toastVals, val, D } from '../lib/shared';
 import DealerNav from '../components/DealerNav';
+import FilterBy, { filterCount, passes } from '../components/FilterBy';
 import './DealerLicenseDetail.css';
 
 /* ============================== Logic ============================== */
@@ -39,7 +40,7 @@ class Component extends DCLogic {
     super(props);
     var f = arrived('DealerLicenseDetail.dc.html') || {};
     var l = byId(D.licenses, f.id) || byId(D.licenses, 'l44');
-    this.state = { seePlaying: true, gridQ: '', l: Object.assign({}, l), tab: 'Details', zone: 'All', showBg: true, now: 0, actions: false, modal: '', cf: null, aliasDraft: '', tagMenu: false, pwShown: false, speed: null, shots: null, shooting: false, code: '', linking: false, toast: null,
+    this.state = { seePlaying: true, gridQ: '', l: Object.assign({}, l), tab: 'Details', zone: 'All', filters: {}, now: 0, actions: false, modal: '', cf: null, aliasDraft: '', tagMenu: false, pwShown: false, speed: null, shots: null, shooting: false, code: '', linking: false, toast: null,
       settings: { shot: true, speed: false, email: true, display: false, notify: true, resource: false, dcp: false }, dcpPw: '', bootDelay: '',
       reboots: [blankTime(), blankTime(), blankTime(), blankTime(), blankTime(), blankTime()] };
   }
@@ -50,10 +51,11 @@ class Component extends DCLogic {
     var st = STATUS[l.status];
     var sc = l.screen ? byId(D.screens, l.screen) : null;
     var online = l.status === 'online';
-    var zones = sc ? Object.keys(sc.zones).filter(function (z) { return s.showBg || z !== 'Background'; }) : [];
+    var zones = sc ? Object.keys(sc.zones) : [];
     var zoneItems = function (z) { var p = plByName(sc.zones[z]); return p ? p.items.map(function (id) { var m = byId(D.media, id); return m ? { m: m, zone: z, pl: p.name } : null; }).filter(Boolean) : []; };
     var all = []; zones.forEach(function (z) { if (s.zone === 'All' || s.zone === z) all = all.concat(zoneItems(z)); });
-    var shown = all.filter(function (x) { return contains(x.m.title, s.gridQ); });
+    var kindLabel = function (k) { return k ? k.charAt(0).toUpperCase() + k.slice(1) : ''; };
+    var shown = all.filter(function (x) { return contains(x.m.title, s.gridQ) && passes(s.filters, 'type', kindLabel(x.m.kind)); });
     var kinds = {}; all.forEach(function (x) { kinds[x.m.kind] = (kinds[x.m.kind] || 0) + 1; });
     var kc = { image: 'var(--chart-1)', video: 'var(--chart-2)', widget: 'var(--chart-3)' };
     var durItems = zones.filter(function (z) { return s.zone === 'All' || s.zone === z; }).map(function (z) { var t = zoneItems(z).reduce(function (a, x) { return a + secs(x.m); }, 0); return { label: z, n: t, value: fmtS(t), color: ZC[z] }; });
@@ -113,10 +115,13 @@ class Component extends DCLogic {
       conn: online ? 'Good' : 'No signal', down: online ? (s.speed && s.speed !== 'testing' ? '41.20 Mbps' : '25.43 Mbps') : '—', up: online ? (s.speed && s.speed !== 'testing' ? '12.04 Mbps' : '21.40 Mbps') : '—',
       seePlaying: s.seePlaying, toggleSee: function (on) { self.setState({ seePlaying: typeof on === 'boolean' ? on : !self.state.seePlaying }); },
       gridQ: s.gridQ, setGridQ: function (v) { self.setState({ gridQ: val(v) }); },
+      filterGroups: [{ key: 'type', title: 'Type', options: ['Image', 'Video', 'Widget'] }],
+      filters: s.filters, setFilters: function (x) { self.setState({ filters: x, now: 0 }); },
+      gridEmptyText: filterCount(s.filters) ? 'No content matches these filters.' : 'No content in this zone.',
       zoneLabel: s.zone === 'All' ? 'All Zones' : s.zone + ' Zone',
       zc: { main: s.zone === 'Main' ? 'var(--info-800)' : '#3a4f8f', vertical: s.zone === 'Vertical' ? 'var(--info-800)' : '#5b73b8', horizontal: s.zone === 'Horizontal' ? 'var(--info-800)' : '#8ea4dc' },
       zn: { main: sc ? zoneItems('Main').length : 0, vertical: sc ? zoneItems('Vertical').length : 0, horizontal: sc ? zoneItems('Horizontal').length : 0 },
-      bgFill: s.showBg ? (s.zone === 'Background' ? 'var(--info-800)' : '#b4ccfb') : 'var(--primary-100)',
+      bgFill: s.zone === 'Background' ? 'var(--info-800)' : '#b4ccfb',
       zMain: function () { self.setState({ zone: self.state.zone === 'Main' ? 'All' : 'Main', now: 0 }); },
       zVert: function () { self.setState({ zone: self.state.zone === 'Vertical' ? 'All' : 'Vertical', now: 0 }); },
       zHor: function () { self.setState({ zone: self.state.zone === 'Horizontal' ? 'All' : 'Horizontal', now: 0 }); },
@@ -147,7 +152,7 @@ class Component extends DCLogic {
       speedOff: !online || s.speed === 'testing', speedLabel: s.speed === 'testing' ? 'Testing…' : 'Run Speedtest',
       runSpeed: function () { self.setState({ speed: 'testing' }); self._x = setTimeout(function () { self.setState({ speed: '41 MB/s ↓ · 12 MB/s ↑' }); toast(self, 'Speedtest done'); }, 1800); },
       zoneChips: ['All'].concat(zones).map(function (z) { return { label: z === 'All' ? 'All Zones' : z, on: s.zone === z, pick: function () { self.setState({ zone: z, now: 0 }); } }; }),
-      showBg: s.showBg, toggleBg: function (on) { self.setState({ showBg: typeof on === 'boolean' ? on : !self.state.showBg, zone: 'All' }); },
+      bgSelected: s.zone === 'Background', selectBackground: function () { self.setState({ zone: self.state.zone === 'Background' ? 'All' : 'Background', now: 0 }); },
       assets: (function () { var src = { Hosts: 0, Advertisers: 0, Widgets: 0, Others: 0 }; all.forEach(function (x) { var k = x.m.source === 'Channels' ? 'Others' : x.m.source; src[k in src ? k : 'Others']++; }); var cc = { Hosts: 'var(--danger-main)', Advertisers: 'var(--warning-main)', Widgets: 'var(--info-main)', Others: 'var(--success-main)' }; return { total: all.length, segs: donut(Object.keys(src).map(function (k) { return { label: k, n: src[k], value: src[k], color: cc[k] }; })) }; })(),
       dur: { total: fmtS(durTot), segs: donut(durItems) },
       gridLabel: s.zone === 'All' ? all.length + ' items across ' + zones.length + ' zones' : s.zone + ' · ' + all.length + ' items',
@@ -511,39 +516,36 @@ defineTemplate(Component, (v) => (
                 </div>
                 <div className="dv-between">
                   <NTV.Button variant="primary" size="m" iconRight="play" onClick={v.openPreview}>Preview</NTV.Button>
-                  <span className="dv-row" style={{ gap: "8px", fontSize: "12px" }}>
-                    <NTV.Switch checked={v.showBg} onChange={v.toggleBg} label="Background contents" />
-                    Background Contents
-                  </span>
+                  <button type="button" aria-pressed={v.bgSelected} onClick={v.selectBackground} style={{ display: "inline-flex", alignItems: "center", height: "28px", padding: "4px 8px", border: "0", borderRadius: "var(--radius-sm)", background: "#5273c0", color: "var(--white)", cursor: "pointer", fontFamily: "inherit", fontSize: "14px", lineHeight: "20px", fontWeight: "500" }}>Select Background</button>
                 </div>
               </section>
-              <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div className="dv-between">
                   <h2 className="dv-h3">Assets Breakdown</h2>
                   <span className="dv-sub">{v.zoneLabel}</span>
                 </div>
-                <div className="dv-row" style={{ gap: "24px" }}>
+                <div className="dv-row" style={{ flex: "1 1 auto", alignItems: "center", gap: "24px", flexWrap: "nowrap" }}>
                   <div style={{ position: "relative", width: "150px", height: "150px", flex: "none" }}>
-                    <svg viewBox="0 0 140 140" width="150" height="150" role="img" aria-label="Assets breakdown">
+                    <svg viewBox="13 13 114 114" width="150" height="150" role="img" aria-label="Assets breakdown">
                       <g transform="rotate(-90 70 70)">
-                        <circle cx="70" cy="70" r="50" fill="none" stroke="var(--primary-100)" strokeWidth="16" />
+                        <circle cx="70" cy="70" r="50" fill="none" stroke="var(--primary-100)" strokeWidth="14" />
                         {(v.assets?.segs || []).map((_g, $index) => (
                           <React.Fragment key={$index}>
-                            <circle cx="70" cy="70" r="50" fill="none" stroke={_g?.color} strokeWidth="16" strokeDasharray={_g?.dash} strokeDashoffset={_g?.off} />
+                            <circle cx="70" cy="70" r="50" fill="none" stroke={_g?.color} strokeWidth="14" strokeDasharray={_g?.dash} strokeDashoffset={_g?.off} />
                           </React.Fragment>
                         ))}
                       </g>
                     </svg>
                     <div style={{ position: "absolute", inset: "0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
                       <strong style={{ fontSize: "20px", lineHeight: "24px" }}>{v.assets?.total}</strong>
-                      <span style={{ fontSize: "9px", lineHeight: "12px", color: "var(--fg-secondary)" }}>{v.zoneLabel}</span>
+                      <span style={{ fontSize: "12px", lineHeight: "16px", color: "var(--fg-secondary)" }}>{v.zoneLabel}</span>
                     </div>
                   </div>
-                  <div style={{ flex: "1", display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div style={{ flex: "1", minWidth: "0", display: "flex", flexDirection: "column", gap: "15px" }}>
                     {(v.assets?.segs || []).map((_g, $index) => (
                       <React.Fragment key={$index}>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 30px 36px", fontSize: "12px" }}>
-                          <span className="dv-row" style={{ gap: "8px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 80px 56px", fontSize: "12px", lineHeight: "20px" }}>
+                          <span className="dv-row" style={{ gap: "8px", fontWeight: "600" }}>
                             <span className="dv-dot" style={{ background: `${s(_g?.color)}` }} />
                             {_g?.label}
                           </span>
@@ -555,33 +557,33 @@ defineTemplate(Component, (v) => (
                   </div>
                 </div>
               </section>
-              <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+              <section className="dv-card" style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div className="dv-between">
                   <h2 className="dv-h3">Duration Breakdown</h2>
                   <span className="dv-sub">{v.zoneLabel}</span>
                 </div>
-                <div className="dv-row" style={{ gap: "24px" }}>
+                <div className="dv-row" style={{ flex: "1 1 auto", alignItems: "center", gap: "24px", flexWrap: "nowrap" }}>
                   <div style={{ position: "relative", width: "150px", height: "150px", flex: "none" }}>
-                    <svg viewBox="0 0 140 140" width="150" height="150" role="img" aria-label="Duration breakdown">
+                    <svg viewBox="13 13 114 114" width="150" height="150" role="img" aria-label="Duration breakdown">
                       <g transform="rotate(-90 70 70)">
-                        <circle cx="70" cy="70" r="50" fill="none" stroke="var(--primary-100)" strokeWidth="16" />
+                        <circle cx="70" cy="70" r="50" fill="none" stroke="var(--primary-100)" strokeWidth="14" />
                         {(v.dur?.segs || []).map((_g, $index) => (
                           <React.Fragment key={$index}>
-                            <circle cx="70" cy="70" r="50" fill="none" stroke={_g?.color} strokeWidth="16" strokeDasharray={_g?.dash} strokeDashoffset={_g?.off} />
+                            <circle cx="70" cy="70" r="50" fill="none" stroke={_g?.color} strokeWidth="14" strokeDasharray={_g?.dash} strokeDashoffset={_g?.off} />
                           </React.Fragment>
                         ))}
                       </g>
                     </svg>
                     <div style={{ position: "absolute", inset: "0", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
                       <strong style={{ fontSize: "20px", lineHeight: "24px" }}>{v.dur?.total}</strong>
-                      <span style={{ fontSize: "9px", lineHeight: "12px", color: "var(--fg-secondary)" }}>Total Play Time</span>
+                      <span style={{ fontSize: "12px", lineHeight: "16px", color: "var(--fg-secondary)" }}>Total Play Time</span>
                     </div>
                   </div>
-                  <div style={{ flex: "1", display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div style={{ flex: "1", minWidth: "0", display: "flex", flexDirection: "column", gap: "15px" }}>
                     {(v.dur?.segs || []).map((_g, $index) => (
                       <React.Fragment key={$index}>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 50px 36px", fontSize: "12px" }}>
-                          <span className="dv-row" style={{ gap: "8px" }}>
+                        <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 80px 56px", fontSize: "12px", lineHeight: "20px" }}>
+                          <span className="dv-row" style={{ gap: "8px", fontWeight: "600" }}>
                             <span className="dv-dot" style={{ background: `${s(_g?.color)}` }} />
                             {_g?.label}
                           </span>
@@ -603,6 +605,7 @@ defineTemplate(Component, (v) => (
                     <NTV.Switch checked={v.seePlaying} onChange={v.toggleSee} label="See what's playing" />
                   </span>
                   <NTV.Input size="l" placeholder="Search a content" iconLeft="magnifying-glass" label="Search content" value={v.gridQ} onChange={v.setGridQ} style={{ width: "280px" }} />
+                  <FilterBy groups={v.filterGroups} value={v.filters} onChange={v.setFilters} align="right" />
                 </div>
               </div>
               <div className="dv-grid" style={{ gridTemplateColumns: "repeat(9, minmax(0, 1fr))", gap: "10px" }}>
@@ -625,7 +628,7 @@ defineTemplate(Component, (v) => (
               </div>
               {v.gridEmpty ? (
                 <>
-                  <div className="dv-empty">No content in this zone.</div>
+                  <div className="dv-empty">{v.gridEmptyText}</div>
                 </>
               ) : null}
             </section>

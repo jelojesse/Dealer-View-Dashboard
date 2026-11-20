@@ -73,7 +73,7 @@ defineTemplate(Component, (v) => (
       </div>
       <div className="dv-scroll">
         <main className="dv-main">
-          <div className="dv-between">
+          <div className="dv-between dv-page-head">
             <h1 className="dv-h1">Advertiser</h1>
             <a href="DealerNewAdvertiser.dc.html" className="ntv-btn ntv-btn--primary ntv-btn--default ntv-btn--xl" style={{ textDecoration: "none" }}>
               <span>Add Advertiser Profile</span>

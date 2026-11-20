@@ -133,7 +133,7 @@ defineTemplate(Component, (v) => (
       </div>
       <div className="dv-scroll">
         <main className="dv-main">
-          <div className="dv-between">
+          <div className="dv-between dv-page-head">
             <h1 className="dv-h1">Playlist</h1>
             <NTV.Button variant="primary" size="xl" iconRight="plus" onClick={v.openCreate}>Create Playlist</NTV.Button>
           </div>
